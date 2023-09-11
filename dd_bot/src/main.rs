@@ -68,29 +68,31 @@ fn main() {
     
     start_game(&mut enigo, "blacksmith");
 
-    // Run python script that gets the play button coordinates
-    let output = Command::new("python3")
-    .arg("obj_detection.py")
-    .output()
-    .expect("Failed to execute command");
+    let output = Command::new("python")
+        .arg("obj_detection.py")
+        .output()
+        .expect("Failed to execute command");
 
-    let output_str = String::from_utf8(output.stdout).expect("Failed to convert to String");
+    let output_str = String::from_utf8(output.stdout).unwrap();
+    println!("{}", output_str);
 
-    // Split the output by whitespace and collect the numbers
-    let numbers: Vec<i32> = output_str
-        .split_whitespace()
-        .filter_map(|s| s.parse().ok())
-        .collect();
+    let (mut x1, mut y1, mut x2, mut y2) = (0, 0, 0, 0);
 
-    if numbers.len() == 2 {
-        println!("Number 1: {}", numbers[0]);
-        println!("Number 2: {}", numbers[1]);
+    if output.status.success() {
+        let mut splits = output_str.trim().split_whitespace();
+        x1 = splits.next().and_then(|s| s.parse().ok()).unwrap_or_default();
+        y1 = splits.next().and_then(|s| s.parse().ok()).unwrap_or_default();
+        x2 = splits.next().and_then(|s| s.parse().ok()).unwrap_or_default();
+        y2 = splits.next().and_then(|s| s.parse().ok()).unwrap_or_default();
+
+        println!("x1: {}, y1: {}, x2: {}, y2: {}", x1, y1, x2, y2);
     } else {
-        println!("Unexpected output from Python script");
+        eprintln!("Command executed with errors.\nOutput:\n{}", output_str);
     }
 
 
-    enigo.mouse_move_to(1479, 922);
+    enigo.mouse_move_to(x1, y1);
+    enigo.mouse_click(MouseButton::Left);
     
     /*
     
@@ -109,5 +111,5 @@ fn start_game(enigo: &mut Enigo, launcher_name: &str) {
     enigo.key_sequence_parse(launcher_name);
     sleep(Duration::from_millis(5000));
     enigo.key_click(Key::Return);
-    sleep(Duration::from_millis(15000));
+    sleep(Duration::from_millis(60000));
 }

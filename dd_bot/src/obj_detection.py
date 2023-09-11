@@ -41,9 +41,10 @@ x, y, w, h = cv2.getWindowImageRect(window_name)
 screen_top_left = (x + top_left[0], y + top_left[1])
 screen_bottom_right = (x + bottom_right[0], y + bottom_right[1])
 
-print("Screen Coordinates:")
-print("Top Left:", screen_top_left)
-print("Bottom Right:", screen_bottom_right)
+# Top left coords, Bottom right coords.
+# x1 y1 x2 y2
+print(screen_top_left[0], screen_top_left[1], screen_bottom_right[0], screen_bottom_right[1])
+
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
