@@ -63,9 +63,11 @@ fn main() {
         (control_x, control_y)
     );
 
-    start_game(&mut enigo, "blacksmith");
+    enigo.mouse_move_to(1479, 922);
     
     /*
+    start_game(&mut enigo, "blacksmith");
+    
     enigo.key_click(Key::Meta);
     bezier_move(
         &mut enigo, start_x, start_y, end_x, end_y, control_x, control_y, steps,
@@ -81,4 +83,5 @@ fn start_game(enigo: &mut Enigo, launcher_name: &str) {
     enigo.key_sequence_parse(launcher_name);
     sleep(Duration::from_millis(5000));
     enigo.key_click(Key::Return);
+    sleep(Duration::from_millis(5000));
 }
