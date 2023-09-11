@@ -1,7 +1,10 @@
-use enigo::*;
-use rand::Rng;
 use std::thread::sleep;
 use std::time::Duration;
+use std::process::Command;
+
+use enigo::*;
+use rand::Rng;
+
 
 fn bezier_move(
     enigo: &mut Enigo,
@@ -55,18 +58,41 @@ fn main() {
 
     let end_x = 1000;
     let end_y = 100;
-
+    
     println!(
         "Start: {:?}\nEnd: {:?}\nControl: {:?}",
         (start_x, start_y),
         (end_x, end_y),
         (control_x, control_y)
     );
+    
+    start_game(&mut enigo, "blacksmith");
+
+    // Run python script that gets the play button coordinates
+    let output = Command::new("python3")
+    .arg("obj_detection.py")
+    .output()
+    .expect("Failed to execute command");
+
+    let output_str = String::from_utf8(output.stdout).expect("Failed to convert to String");
+
+    // Split the output by whitespace and collect the numbers
+    let numbers: Vec<i32> = output_str
+        .split_whitespace()
+        .filter_map(|s| s.parse().ok())
+        .collect();
+
+    if numbers.len() == 2 {
+        println!("Number 1: {}", numbers[0]);
+        println!("Number 2: {}", numbers[1]);
+    } else {
+        println!("Unexpected output from Python script");
+    }
+
 
     enigo.mouse_move_to(1479, 922);
     
     /*
-    start_game(&mut enigo, "blacksmith");
     
     enigo.key_click(Key::Meta);
     bezier_move(
@@ -83,5 +109,5 @@ fn start_game(enigo: &mut Enigo, launcher_name: &str) {
     enigo.key_sequence_parse(launcher_name);
     sleep(Duration::from_millis(5000));
     enigo.key_click(Key::Return);
-    sleep(Duration::from_millis(5000));
+    sleep(Duration::from_millis(15000));
 }

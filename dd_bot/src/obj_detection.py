@@ -15,7 +15,6 @@ main_image = cv2.cvtColor(main_image, cv2.COLOR_RGB2GRAY)
 template = cv2.imread('play.png', cv2.IMREAD_GRAYSCALE)
 
 
-
 # Use template matching
 result = cv2.matchTemplate(main_image, template, cv2.TM_CCOEFF_NORMED)
 min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
