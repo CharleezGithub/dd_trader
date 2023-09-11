@@ -1,4 +1,4 @@
-use enigo::{Enigo, MouseControllable};
+use enigo::*;
 use rand::Rng;
 use std::thread::sleep;
 use std::time::Duration;
@@ -20,8 +20,9 @@ fn bezier_move(
             (1.0 - t).powi(2) * x1 as f32 + 2.0 * (1.0 - t) * t * cx as f32 + t.powi(2) * x2 as f32;
         let y =
             (1.0 - t).powi(2) * y1 as f32 + 2.0 * (1.0 - t) * t * cy as f32 + t.powi(2) * y2 as f32;
+
         enigo.mouse_move_to(x.round() as i32, y.round() as i32);
-        sleep(Duration::from_millis(10)); // Does not work as intended.
+        sleep(Duration::from_millis(rng.gen_range(1..3)));
         println!("{}", i)
     }
 }
@@ -31,7 +32,7 @@ fn main() {
 
     let mut rng = rand::thread_rng();
 
-    let steps = rng.gen_range(700..701);
+    let steps = rng.gen_range(50..100);
 
     let screen_size = enigo.main_display_size();
 
@@ -52,8 +53,8 @@ fn main() {
         control_y = screen_size.1;
     }
 
-    let end_x = 1900;
-    let end_y = 1000;
+    let end_x = 1000;
+    let end_y = 100;
 
     println!(
         "Start: {:?}\nEnd: {:?}\nControl: {:?}",
@@ -62,7 +63,11 @@ fn main() {
         (control_x, control_y)
     );
 
+    enigo.key_click(Key::Meta);
+
     bezier_move(
         &mut enigo, start_x, start_y, end_x, end_y, control_x, control_y, steps,
     );
+
+    enigo.mouse_click(MouseButton::Left)
 }
