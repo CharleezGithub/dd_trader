@@ -21,7 +21,7 @@ fn bezier_move(
         let y =
             (1.0 - t).powi(2) * y1 as f32 + 2.0 * (1.0 - t) * t * cy as f32 + t.powi(2) * y2 as f32;
         enigo.mouse_move_to(x.round() as i32, y.round() as i32);
-        sleep(Duration::from_nanos(1)); // Adjust this delay as needed
+        sleep(Duration::from_millis(10)); // Does not work as intended.
         println!("{}", i)
     }
 }
