@@ -89,7 +89,7 @@ fn main() {
     let mouse_location_y = enigo.mouse_location().1;
 
     // Minize before moving cursor to stay undetected
-    enigo.key_sequence_parse("{+META}m{-META}");
+    //enigo.key_sequence_parse("{+META}m{-META}");
 
     // Move to the center of the play button and click it
 
@@ -104,7 +104,7 @@ fn main() {
         control_y,
         steps,
     );
-    enigo.key_sequence_parse("{+ALT}{+TAB}{-ALT}{-TAB}");
+    //enigo.key_sequence_parse("{+ALT}{+TAB}{-ALT}{-TAB}");
 
     enigo.mouse_click(MouseButton::Left);
 
