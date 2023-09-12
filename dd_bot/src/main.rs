@@ -35,8 +35,10 @@ fn main() {
     // Minimizes all tabs so that only the game is opened. To avoid clicking on other tabs
     enigo.key_sequence_parse("{+META}m{-META}");
 
+    // Start the launcher
     start_game(&mut enigo, "blacksmith");
 
+    // Run the launcher play button detector
     let output = Command::new("python")
         .arg("obj_detection.py")
         .output()
@@ -75,17 +77,37 @@ fn main() {
     let middle_point_x = ((x2 - x1) / 2) + x1;
     let middle_point_y = ((y2 - y1) / 2) + y1;
 
+    let mut rng = rand::thread_rng();
+
+    let steps = rng.gen_range(50..100);
+
+    // Generate a random point from the cursor to the end of the screen for x and y
+    let control_x = rng.gen_range(enigo.mouse_location().0..enigo.main_display_size().0);
+    let control_y = rng.gen_range(enigo.mouse_location().1..enigo.main_display_size().1);
+
+    let mouse_location_x = enigo.mouse_location().0;
+    let mouse_location_y = enigo.mouse_location().1;
+
+    // Minize before moving cursor to stay undetected
+    enigo.key_sequence_parse("{+META}m{-META}");
+
+    // Move to the center of the play button and click it
+
     enigo.mouse_move_to(middle_point_x, middle_point_y);
+    bezier_move(
+        &mut enigo,
+        mouse_location_x,
+        mouse_location_y,
+        middle_point_x,
+        middle_point_y,
+        control_x,
+        control_y,
+        steps,
+    );
     enigo.mouse_click(MouseButton::Left);
 
     /*
-    let mut rng = rand::thread_rng();
-
-    let _steps = rng.gen_range(50..100);
     enigo.key_click(Key::Meta);
-    bezier_move(
-        &mut enigo, start_x, start_y, end_x, end_y, control_x, control_y, steps,
-    );
 
     enigo.mouse_click(MouseButton::Left)
     */
