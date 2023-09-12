@@ -1,22 +1,30 @@
 import cv2
 import numpy as np
 from PIL import ImageGrab
+import time
 
-# Capture a screenshot using ImageGrab
-screenshot = ImageGrab.grab()
 
-# Convert the screenshot to an OpenCV format
-main_image = np.array(screenshot)
+max_val = 0.00
 
-# Convert the screenshot image from BGR to RGB (OpenCV loads images in BGR by default)
-main_image = cv2.cvtColor(main_image, cv2.COLOR_BGR2RGB)
+while max_val < 0.90:
+    # Capture a screenshot using ImageGrab
+    screenshot = ImageGrab.grab()
 
-# Load the template
-template = cv2.imread('play.png', cv2.IMREAD_COLOR)
+    # Convert the screenshot to an OpenCV format
+    main_image = np.array(screenshot)
 
-# Use template matching
-result = cv2.matchTemplate(main_image, template, cv2.TM_CCOEFF_NORMED)
-min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+    # Convert the screenshot image from BGR to RGB (OpenCV loads images in BGR by default)
+    main_image = cv2.cvtColor(main_image, cv2.COLOR_BGR2RGB)
+
+    # Load the template
+    template = cv2.imread('play.png', cv2.IMREAD_COLOR)
+
+    # Use template matching
+    result = cv2.matchTemplate(main_image, template, cv2.TM_CCOEFF_NORMED)
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+
+    time.sleep(1)
+    #print(f"Certainty Score: {max_val:.2f}")
 
 # Get the top-left corner of the matched area
 top_left = max_loc
@@ -44,7 +52,7 @@ screen_bottom_right = (x + bottom_right[0], y + bottom_right[1])
 print(screen_top_left[0], screen_top_left[1], screen_bottom_right[0], screen_bottom_right[1])
 
 # Print the certainty score (i.e., the maximum correlation coefficient)
-print(f"Certainty Score: {max_val:.2f}")
+#print(f"Certainty Score: {max_val:.2f}")
 
-cv2.waitKey(0)
+#cv2.waitKey(0)
 cv2.destroyAllWindows()
