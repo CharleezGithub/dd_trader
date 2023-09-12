@@ -104,6 +104,8 @@ fn main() {
         control_y,
         steps,
     );
+    enigo.key_sequence_parse("{+ALT}{+TAB}{-ALT}{-TAB}");
+
     enigo.mouse_click(MouseButton::Left);
 
     /*
@@ -119,5 +121,5 @@ fn start_game(enigo: &mut Enigo, launcher_name: &str) {
     enigo.key_sequence_parse(launcher_name);
     sleep(Duration::from_millis(2000));
     enigo.key_click(Key::Return);
-    sleep(Duration::from_millis(60000));
+    sleep(Duration::from_millis(180000));
 }
