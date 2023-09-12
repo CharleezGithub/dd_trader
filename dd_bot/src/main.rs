@@ -35,10 +35,6 @@ fn main() {
     // Minimizes all tabs so that only the game is opened. To avoid clicking on other tabs
     enigo.key_sequence_parse("{+META}m{-META}");
 
-    let mut rng = rand::thread_rng();
-
-    let _steps = rng.gen_range(50..100);
-
     start_game(&mut enigo, "blacksmith");
 
     let output = Command::new("python")
@@ -49,7 +45,7 @@ fn main() {
     let output_str = String::from_utf8(output.stdout).unwrap();
     println!("{}", output_str);
 
-    let (mut x1, mut y1, mut _x2, mut _y2) = (0, 0, 0, 0);
+    let (mut x1, mut y1, mut x2, mut y2) = (0, 0, 0, 0);
 
     if output.status.success() {
         let mut splits = output_str.trim().split_whitespace();
@@ -61,25 +57,31 @@ fn main() {
             .next()
             .and_then(|s| s.parse().ok())
             .unwrap_or_default();
-        _x2 = splits
+        x2 = splits
             .next()
             .and_then(|s| s.parse().ok())
             .unwrap_or_default();
-        _y2 = splits
+        y2 = splits
             .next()
             .and_then(|s| s.parse().ok())
             .unwrap_or_default();
 
-        println!("x1: {}, y1: {}, x2: {}, y2: {}", x1, y1, _x2, _y2);
+        println!("x1: {}, y1: {}, x2: {}, y2: {}", x1, y1, x2, y2);
     } else {
         eprintln!("Command executed with errors.\nOutput:\n{}", output_str);
     }
 
-    enigo.mouse_move_to(x1, y1);
+    // Gets the middle of the detected play button and clicks it
+    let middle_point_x = ((x2 - x1) / 2) + x1;
+    let middle_point_y = ((y2 - y1) / 2) + y1;
+
+    enigo.mouse_move_to(middle_point_x, middle_point_y);
     enigo.mouse_click(MouseButton::Left);
 
     /*
+    let mut rng = rand::thread_rng();
 
+    let _steps = rng.gen_range(50..100);
     enigo.key_click(Key::Meta);
     bezier_move(
         &mut enigo, start_x, start_y, end_x, end_y, control_x, control_y, steps,

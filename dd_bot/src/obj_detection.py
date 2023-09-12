@@ -9,10 +9,10 @@ screenshot = ImageGrab.grab()
 main_image = np.array(screenshot)
 
 # Convert the RGB image to grayscale
-main_image = cv2.cvtColor(main_image, cv2.COLOR_RGB2GRAY)
+#main_image = cv2.cvtColor(main_image, cv2.COLOR_RGB2GRAY)
 
 # Load the template as grayscale
-template = cv2.imread('play.png', cv2.IMREAD_GRAYSCALE)
+template = cv2.imread('play.png', cv2.IMREAD_COLOR)
 
 
 # Use template matching
@@ -46,5 +46,5 @@ screen_bottom_right = (x + bottom_right[0], y + bottom_right[1])
 print(screen_top_left[0], screen_top_left[1], screen_bottom_right[0], screen_bottom_right[1])
 
 
-#cv2.waitKey(0)
+cv2.waitKey(0)
 cv2.destroyAllWindows()
