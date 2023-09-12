@@ -32,12 +32,12 @@ fn bezier_move(
 fn main() {
     let mut enigo = Enigo::new();
 
+    // Minimizes all tabs so that only the game is opened. To avoid clicking on other tabs
     enigo.key_sequence_parse("{+META}m{-META}");
 
     let mut rng = rand::thread_rng();
 
     let _steps = rng.gen_range(50..100);
-
 
     start_game(&mut enigo, "blacksmith");
 
