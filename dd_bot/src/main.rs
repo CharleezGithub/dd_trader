@@ -90,7 +90,6 @@ fn main() {
 }
 
 fn start_game(enigo: &mut Enigo, launcher_name: &str) {
-    enigo.key_sequence_parse("{+Meta}m{-Meta}");
     enigo.key_click(Key::Meta);
     sleep(Duration::from_millis(2000));
     enigo.key_sequence_parse(launcher_name);
