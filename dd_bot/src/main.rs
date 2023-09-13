@@ -56,6 +56,12 @@ fn main() {
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
 
+    // New the bot is in the lobby "play" tab
+    // It waits untill a trade request is sent to the discord bot and then goes into the trading tab and connects to bards trade post.
+    // Why bard? Because it has the least amount of active traders and therefore not as demanding to be in.
+    // **After waiting..
+    
+
     /*
     enigo.key_click(Key::Meta);
 
