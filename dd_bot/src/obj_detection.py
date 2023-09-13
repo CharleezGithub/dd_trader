@@ -2,7 +2,16 @@ import cv2
 import numpy as np
 from PIL import ImageGrab
 import time
+import sys
 
+
+# sys.argv[0] is the script name itself.
+# sys.argv[1] will be "my_argument_value" if provided.
+
+if len(sys.argv) > 1:
+    image_name = sys.argv[1]
+else:
+    image_name = ""
 
 max_val = 0.00
 
@@ -17,7 +26,7 @@ while max_val < 0.90:
     main_image = cv2.cvtColor(main_image, cv2.COLOR_BGR2RGB)
 
     # Load the template
-    template = cv2.imread('play.png', cv2.IMREAD_COLOR)
+    template = cv2.imread(image_name, cv2.IMREAD_COLOR)
 
     # Use template matching
     result = cv2.matchTemplate(main_image, template, cv2.TM_CCOEFF_NORMED)
