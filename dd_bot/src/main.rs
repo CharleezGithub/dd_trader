@@ -60,7 +60,32 @@ fn main() {
     // It waits untill a trade request is sent to the discord bot and then goes into the trading tab and connects to bards trade post.
     // Why bard? Because it has the least amount of active traders and therefore not as demanding to be in.
     // **After waiting..
-    
+    // Run the "Trade" tab detector
+    let output = Command::new("python")
+        .arg("obj_detection.py")
+        .arg("images/trade_tab.png")
+        .output()
+        .expect("Failed to execute command");
+
+    match click_buton(&mut enigo, output, true) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    // Now enter bards trading post
+    // Run the "bard_trade" button detector
+    let output = Command::new("python")
+        .arg("obj_detection.py")
+        .arg("images/bard_trade.png")
+        .output()
+        .expect("Failed to execute command");
+
+    match click_buton(&mut enigo, output, true) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    // Now wait for a trading request
 
     /*
     enigo.key_click(Key::Meta);
