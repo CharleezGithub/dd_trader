@@ -25,6 +25,21 @@ bot = commands.Bot(command_prefix='!')
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name} ({bot.user.id})')
+    await bot.change_presence(activity=discord.Game(name="!help - Keeping the trading community happy and healthy"))
+
+
+
+@bot.remove_command("help")  # Remove the default help command
+@bot.command()
+async def help(ctx):
+    embed = discord.Embed(title="Bot Commands", description="Here are the available commands:", color=0x00ff00)
+
+    embed.add_field(name="!trader-register <message>", value="Stores your provided message with your user ID.", inline=False)
+    embed.add_field(name="!retrieve <user_id>", value="Retrieves all messages associated with the provided user ID.", inline=False)
+    embed.add_field(name="!help", value="Displays the help message.", inline=False)
+
+    await ctx.send(embed=embed)
+
 
 @bot.command(name="trader-register")
 async def trader_register(ctx, *, content: str = None):
