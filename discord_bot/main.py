@@ -3,7 +3,7 @@ import asyncio
 import discord
 from discord.ext import commands, tasks
 
-TOKEN = "YOUR_BOT_TOKEN"
+TOKEN = "MTE1MTQ0MTUwMjk1NDg0ODMwNw.GtRAIh.YBUChh8QJi3Cs8jeFbuE18kRJYrAwiCpcxcnz8"
 
 intents = (
     discord.Intents.default()
@@ -16,14 +16,16 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     print(f"Bot is logged in as {bot.user.name} - {bot.user.id}")
-    change_status.start()
+    await bot.change_presence(activity=discord.Game(name="First Status"))
 
 
+"""
 @tasks.loop(seconds=10)  # Looping background task
 async def change_status():
     await bot.change_presence(activity=discord.Game(name="First Status"))
     await asyncio.sleep(10)
     await bot.change_presence(activity=discord.Game(name="Second Status"))
+"""
 
 
 @bot.event
@@ -32,7 +34,7 @@ async def on_member_join(member):
     if channel:
         await channel.send(f"Welcome {member.mention} to {member.guild.name}!")
 
-
+"""
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -42,11 +44,18 @@ async def on_message(message):
     await bot.process_commands(
         message
     )  # To process commands alongside the on_message event
+"""
 
-
+"""
 @bot.command()
 async def ping(ctx):
     await ctx.send(f"Pong! {round(bot.latency * 1000)}ms")
+"""
+
+
+@bot.command()
+async def trade_register(ctx, *, content: str):
+    print(f"Resgistering new trader: {ctx.author}")
 
 
 @bot.command()
