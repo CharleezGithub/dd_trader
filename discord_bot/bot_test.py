@@ -26,16 +26,15 @@ bot = commands.Bot(command_prefix='!')
 async def on_ready():
     print(f'Logged in as {bot.user.name} ({bot.user.id})')
 
-@bot.event
-async def on_message(message):
-    if message.author == bot.user:
+@bot.command(name="trader-register")
+async def trader_register(ctx, *, content: str = None):
+    if not content:
+        await ctx.send("Please provide the content/message you want to register.")
         return
-    if bot.user.mentioned_in(message):
-        # Store the message and user ID when the bot is mentioned
-        cursor.execute("INSERT INTO messages (user_id, content) VALUES (?, ?)", (message.author.id, message.content))
-        conn.commit()
-        await message.channel.send(f"Stored message: {message.content} from user ID: {message.author.id}")
-    await bot.process_commands(message)
+    cursor.execute("INSERT INTO messages (user_id, content) VALUES (?, ?)", (ctx.author.id, content))
+    conn.commit()
+    await ctx.send(f"Stored message: {content} from user ID: {ctx.author.id}")
+
 
 @bot.command()
 async def retrieve(ctx, user_id: int):
