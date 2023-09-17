@@ -5,12 +5,33 @@ use std::time::Duration;
 use enigo::*;
 use rand::Rng;
 
+// import Rocket
+#[macro_use]
+extern crate rocket;
+
+
 #[derive(Debug)]
 enum CommandError {
     ExecutionFailed(String), // This contains the error message.
 }
 
+struct TradeBotInfo {
+    ready: bool,
+    id: String,
+}
+
+struct Trader {
+    id: String,
+    discord_id: String,
+
+}
+
 fn main() {
+    let mut bot_info = TradeBotInfo {
+        ready: false,
+        id: String::new(),
+    };
+
     let mut enigo = Enigo::new();
 
     // Minimizes all tabs so that only the game is opened. To avoid clicking on other tabs
@@ -56,10 +77,26 @@ fn main() {
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
 
-    // New the bot is in the lobby "play" tab
-    // It waits untill a trade request is sent to the discord bot and then goes into the trading tab and connects to bards trade post.
-    // Why bard? Because it has the least amount of active traders and therefore not as demanding to be in.
+    // Now the bot is in the lobby "play" tab
+    // It waits untill a trade request is sent by the discord bot
+    bot_info.ready = true;
+    
+    #[get("/trade_request/<in_game_id>/<discord_id>")]
+    fn trade_request(in_game_id: String, discord_id: String) -> String {
+        // TODO: Handle the trade request logic here.
+    
+        format!("In game id: {}, Discord id {}", in_game_id, discord_id)
+    }
+    
+    #[launch]
+    fn rocket() -> _ {
+        rocket::build().mount("/", routes![trade_request])
+    }
+    
+    // Listen to "localhost::"
     // **After waiting..
+    // Goes into the trading tab and connects to bards trade post.
+    // Why bard? Because it has the least amount of active traders and therefore not as demanding to be in.
     // Run the "Trade" tab detector
     let output = Command::new("python")
         .arg("obj_detection.py")
@@ -130,6 +167,7 @@ fn click_buton(enigo: &mut Enigo, output: Output, smooth: bool) -> Result<(), Co
         println!("x1: {}, y1: {}, x2: {}, y2: {}", x1, y1, x2, y2);
     } else {
         eprintln!("Command executed with errors.\nOutput:\n{}", output_str);
+        return Err(CommandError::ExecutionFailed(output_str))
     }
 
     // Gets the middle of the detected play button and clicks it

@@ -1,77 +1,372 @@
-import asyncio
-
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
+import sqlite3
+
+from PIL import Image
+from PIL import ImageDraw, ImageFont
+import requests
+from io import BytesIO
 
 TOKEN = "MTE1MTQ0MTUwMjk1NDg0ODMwNw.GtRAIh.YBUChh8QJi3Cs8jeFbuE18kRJYrAwiCpcxcnz8"
 
-intents = (
-    discord.Intents.default()
-)  # Use this if you want to access certain privileged events
-intents.messages = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+# SQLite setup
+conn = sqlite3.connect("database/discord_messages.db")
+cursor = conn.cursor()
+
+
+def create_table():
+    cursor.execute(
+        """
+    CREATE TABLE IF NOT EXISTS messages (
+        user_id INTEGER NOT NULL,
+        content TEXT NOT NULL
+    )
+    """
+    )
+    conn.commit()
+
+
+create_table()
+
+bot = commands.Bot(command_prefix="!")
+
+# Dictionary to store trade requests. Format: {requester_id: requestee_id}
+trade_requests = {}
 
 
 @bot.event
 async def on_ready():
-    print(f"Bot is logged in as {bot.user.name} - {bot.user.id}")
-    await bot.change_presence(activity=discord.Game(name="First Status"))
+    print(f"Logged in as {bot.user.name} ({bot.user.id})")
+    await bot.change_presence(
+        activity=discord.Game(
+            name="!help - Keeping the trading community happy and healthy"
+        )
+    )
 
 
-"""
-@tasks.loop(seconds=10)  # Looping background task
-async def change_status():
-    await bot.change_presence(activity=discord.Game(name="First Status"))
-    await asyncio.sleep(10)
-    await bot.change_presence(activity=discord.Game(name="Second Status"))
-"""
+# Disable the default help command
+bot.remove_command("help")
+
+
+@bot.command(name="help", aliases=["h"])
+async def custom_help(ctx, *, command_name=None):
+    """Displays help information for available commands."""
+
+    if command_name is None:
+        embed = discord.Embed(
+            title="Help", description="List of available commands:", color=0x55A7F7
+        )
+
+        embed.add_field(
+            name="!trade @user",
+            value="Send a trade request to a user. You cannot trade with bots or yourself.",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!trade-accept @user",
+            value="Accept a trade request from a user. You can only accept trade requests from users who have sent you a trade invitation.",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!help [command]",
+            value="Get detailed help on a specific command.",
+            inline=False,
+        )
+
+        await ctx.send(embed=embed)
+    else:
+        if command_name.lower() in ["trade", "!trade"]:
+            embed = discord.Embed(
+                title="!trade @user",
+                description="Send a trade request to a user.",
+                color=0x55A7F7,
+            )
+            embed.add_field(name="Usage", value="!trade @user")
+            embed.add_field(
+                name="Notes", value="You cannot trade with bots or yourself."
+            )
+            await ctx.send(embed=embed)
+        elif command_name.lower() in ["trade-accept", "!trade-accept"]:
+            embed = discord.Embed(
+                title="!trade-accept @user",
+                description="Accept a trade request from a user.",
+                color=0x55A7F7,
+            )
+            embed.add_field(name="Usage", value="!trade-accept @user")
+            embed.add_field(
+                name="Notes",
+                value="You can only accept trade requests from users who have sent you a trade invitation.",
+            )
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send(f"I couldn't find any help related to `{command_name}`.")
 
 
 @bot.event
-async def on_member_join(member):
-    channel = member.guild.system_channel
-    if channel:
-        await channel.send(f"Welcome {member.mention} to {member.guild.name}!")
+async def on_command_error(ctx, error):
+    """Handle errors triggered by bot commands."""
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(
+            "You missed a required argument. Please check the command and try again."
+        )
+    elif isinstance(error, commands.MemberNotFound):
+        await ctx.send(
+            "I couldn't find that member. Please tag a valid user and try again."
+        )
+    elif isinstance(error, commands.CommandNotFound):
+        await ctx.send(
+            f"I don't recognize the command `{ctx.invoked_with}`. Please check and try again."
+        )
+    else:
+        await ctx.send("An error occurred. Please try again later.")
+        print(f"Unexpected error: {error}")
 
-"""
-@bot.event
-async def on_message(message):
-    if message.author == bot.user:
+
+@bot.command()
+async def trade(ctx, user: discord.Member):
+    """Send a trade request to a user."""
+    if user.bot:
+        await ctx.send("You can't trade with bots!")
         return
-    if "hello" in message.content.lower():
-        await message.channel.send("Hello!")
-    await bot.process_commands(
-        message
-    )  # To process commands alongside the on_message event
-"""
 
-"""
-@bot.command()
-async def ping(ctx):
-    await ctx.send(f"Pong! {round(bot.latency * 1000)}ms")
-"""
+    if ctx.author.id == user.id:
+        await ctx.send("You can't trade with yourself!")
+        return
+
+    trade_requests[ctx.author.id] = user.id
+    await ctx.send(
+        f"{ctx.author.mention} has sent a trade request to {user.mention}! {user.mention}, use `!trade-accept @{ctx.author.name}` to accept the trade!"
+    )
 
 
-@bot.command()
-async def trade_register(ctx, *, content: str):
-    print(f"Resgistering new trader: {ctx.author}")
+@bot.command(name="trade-accept")
+async def trade_accept(ctx, user: discord.Member):
+    """Accept a trade request."""
+    # Check if there's a pending trade from the mentioned user to the command user
+    if user.id in trade_requests and trade_requests[user.id] == ctx.author.id:
+        await ctx.send(
+            f"{ctx.author.mention} has accepted the trade request from {user.mention}!"
+        )
+
+        # Fetch or create the "Middleman Trades" category
+        category_name = "Middleman Trades"
+        category = discord.utils.get(ctx.guild.categories, name=category_name)
+        if category is None:
+            category = await ctx.guild.create_category(category_name)
+
+        # Create a private channel with permissions for only the two trading users and the bot
+        overwrites = {
+            ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            ctx.author: discord.PermissionOverwrite(
+                read_messages=True, send_messages=True
+            ),
+            user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+            ctx.guild.me: discord.PermissionOverwrite(
+                read_messages=True, send_messages=True
+            ),
+        }
+
+        channel_name = f"trade-{ctx.author.name}-and-{user.name}"
+        trade_channel = await ctx.guild.create_text_channel(
+            channel_name, overwrites=overwrites, category=category
+        )
+
+        await trade_channel.send(
+            f"This channel has been created for {ctx.author.mention} and {user.mention} to discuss their trade. Please keep all trade discussions in this channel.\nThe processing fee is 50 gold."
+        )
+
+        del trade_requests[user.id]
+    else:
+        await ctx.send(
+            f"{ctx.author.mention}, you don't have a pending trade request from {user.mention}!"
+        )
 
 
-@bot.command()
-async def echo(ctx, *, content: str):
-    await ctx.send(content)
+# This dictionary will hold the items for each trade.
+# Format: {channel_id: {user_id: [link1, link2, ...]}}
+trade_items = {}
 
 
-@bot.command()
-async def info(ctx, user: discord.Member = None):
-    if user is None:
-        user = ctx.author
-    embed = discord.Embed(title=f"{user.name}'s Info", color=user.color)
-    embed.add_field(name="Username:", value=user.name, inline=False)
-    embed.add_field(name="ID:", value=user.id, inline=False)
-    embed.set_thumbnail(url=user.avatar_url)
-    await ctx.send(embed=embed)
+@bot.command(name="add-items")
+async def add_items(ctx, *links: str):
+    """Add item image links to a specific trade."""
+
+    # Ensure the command is used in the "Middleman Trades" category
+    if ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+
+    # Ensure the links provided are valid URLs (for simplicity, we check if they start with "http")
+    for link in links:
+        if not link.startswith("http"):
+            await ctx.send(
+                f"The link `{link}` seems invalid. Make sure to provide valid URLs!"
+            )
+            return
+
+    # Use the channel ID to identify the trade
+    channel_id = ctx.channel.id
+
+    # Check if the trade already has items stored
+    if channel_id not in trade_items:
+        trade_items[channel_id] = {}
+
+    # Add items to the user's collection within that trade
+    if ctx.author.id in trade_items[channel_id]:
+        trade_items[channel_id][ctx.author.id].extend(links)
+    else:
+        trade_items[channel_id][ctx.author.id] = list(links)
+
+    await ctx.send(f"Added {len(links)} item(s) to this trade!")
+
+
+@bot.command(name="show-items")
+async def show_items(ctx):
+    """Display the items for both users in a specific trade."""
+
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+
+    channel_id = ctx.channel.id
+
+    # If no items at all for this trade
+    if channel_id not in trade_items:
+        await ctx.send("No items have been added to this trade yet!")
+        return
+
+    # Fetch the items for the command issuer
+    user_items = trade_items[channel_id].get(ctx.author.id, [])
+
+    # Try to determine the other user in the trade (assuming there are only two users)
+    other_users = [
+        uid for uid in trade_items[channel_id].keys() if uid != ctx.author.id
+    ]
+
+    if not other_users:
+        other_user_name = "Other User"
+        other_user_items = []
+    else:
+        other_user_id = other_users[0]
+        other_user = await bot.fetch_user(other_user_id)  # Fetching the user
+        other_user_name = other_user.name if other_user else "Failed to Retrieve User"
+        other_user_items = trade_items[channel_id].get(other_user_id, [])
+
+    # Display the items
+    embed = discord.Embed(
+        title="Items for Trade",
+        description=f"Trade between {ctx.author.name} and {other_user_name}",
+        color=0x55A7F7,
+    )
+
+    user_items_value = (
+        "\n".join([f"[Item {i+1}]({link})" for i, link in enumerate(user_items)])
+        if user_items
+        else "No items added."
+    )
+    other_user_items_value = (
+        "\n".join([f"[Item {i+1}]({link})" for i, link in enumerate(other_user_items)])
+        if other_user_items
+        else "No items added."
+    )
+
+    embed.add_field(
+        name=f"{ctx.author.name}'s Items", value=user_items_value, inline=True
+    )
+    embed.add_field(
+        name=f"{other_user_name}'s Items", value=other_user_items_value, inline=True
+    )
+
+    buffer = await stitch_images(user_items, other_user_items)
+
+    # Set the image URL in the embed to reference the attachment directly
+    embed.set_image(url="attachment://items.png")
+
+    # Send the embed and the attached image in the same message
+    await ctx.send(embed=embed, file=discord.File(buffer, filename="items.png"))
+
+
+
+async def stitch_images(user1_urls, user2_urls):
+    """Stitch together images from the provided URLs for both users."""
+    user1_images = [Image.open(BytesIO(requests.get(url).content)) for url in user1_urls]
+    user2_images = [Image.open(BytesIO(requests.get(url).content)) for url in user2_urls]
+
+    # Padding values (change these to adjust the space)
+    arrow_padding = 30  # Added space on each side of the arrow
+    side_padding = 20  # Added space on each side of the items
+
+    # Determine max width and total height for each user's images
+    max_width_user1 = max(img.width for img in user1_images) + 2 * side_padding
+    max_width_user2 = max(img.width for img in user2_images) + 2 * side_padding
+    total_height_user1 = sum(img.height for img in user1_images)
+    total_height_user2 = sum(img.height for img in user2_images)
+
+    # Create an arrow image with added padding and the same height as the tallest column
+    max_height = max(total_height_user1, total_height_user2)
+    arrow_image_width = 50 + 2 * arrow_padding
+    arrow_image = Image.new('RGB', (arrow_image_width, max_height), color='white')
+    draw = ImageDraw.Draw(arrow_image)
+    font = ImageFont.truetype("arial.ttf", 35)
+    draw.text((arrow_padding, (max_height - 35) // 2), "<->", font=font, fill="black")
+
+    # Create the final stitched image
+    total_width = max_width_user1 + arrow_image.width + max_width_user2
+    new_image = Image.new('RGB', (total_width, max_height), color='white')
+
+    # Paste user1 images with side padding
+    y_offset = (max_height - total_height_user1) // 2
+    for img in user1_images:
+        x_offset = side_padding
+        new_image.paste(img, (x_offset, y_offset))
+        y_offset += img.height
+
+    # Paste arrow
+    new_image.paste(arrow_image, (max_width_user1, 0))
+
+    # Paste user2 images with side padding
+    y_offset = (max_height - total_height_user2) // 2
+    for img in user2_images:
+        x_offset = max_width_user1 + arrow_image.width + side_padding
+        new_image.paste(img, (x_offset, y_offset))
+        y_offset += img.height
+
+    buffer = BytesIO()
+    new_image.save(buffer, "PNG")
+    buffer.seek(0)
+
+    return buffer
+
+
+
+@bot.command(name="complete-trade")
+async def complete_trade(ctx, in_game_id: str):
+    try:
+        # Construct the API endpoint URL
+        api_endpoint = f"http://localhost:8051/trade_request/{in_game_id}/{ctx.author.id}"
+
+        # Make the API request
+        response = requests.post(api_endpoint)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            data = response.json()
+            if 'message' in data:
+                await ctx.send(data['message'])  # Send the message from the API response, if provided
+            else:
+                await ctx.send("Trade completed successfully!")
+        else:
+            await ctx.send(f"Failed to complete the trade. Error {response.status_code}: {response.text}")
+
+    except Exception as e:
+        await ctx.send(f"Unexpected error occurred: {str(e)}")
 
 
 bot.run(TOKEN)
