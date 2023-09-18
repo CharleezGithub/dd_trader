@@ -30,12 +30,9 @@ struct Trader {
 // 1. Opens the blacksmith launcher and presses play
 // 2. Goes into the lobby.
 // 3. Changes the TradeBotInfo ready variable to true when ready.
-async fn open_game_go_to_lobby(bot_info: Arc<Mutex<TradeBotInfo>>) {
+async fn open_game_go_to_lobby(mut enigo: Enigo, bot_info: Arc<Mutex<TradeBotInfo>>) {
     println!("Hello from bot function!");
     tokio::time::sleep(tokio::time::Duration::from_secs(10000)).await;
-
-    let mut enigo = Enigo::new();
-
     // Minimizes all tabs so that only the game is opened. To avoid clicking on other tabs
     //enigo.key_sequence_parse("{+META}m{-META}");
 
@@ -80,10 +77,12 @@ async fn open_game_go_to_lobby(bot_info: Arc<Mutex<TradeBotInfo>>) {
     }
 
     // Now the bot is in the lobby "play" tab
-    // It waits untill a trade request is sent by the discord bot
     let mut info = bot_info.lock().unwrap();
     info.ready = true;
+}
 
+// It waits untill a trade request is sent by the discord bot
+fn trade(enigo: &mut Enigo, bot_info: Arc<Mutex<TradeBotInfo>>) {
     // Listen to "localhost::"
     // **After waiting..
     // Goes into the trading tab and connects to bards trade post.
@@ -95,7 +94,7 @@ async fn open_game_go_to_lobby(bot_info: Arc<Mutex<TradeBotInfo>>) {
         .output()
         .expect("Failed to execute command");
 
-    match click_buton(&mut enigo, output, true) {
+    match click_buton(enigo, output, true) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
@@ -108,7 +107,7 @@ async fn open_game_go_to_lobby(bot_info: Arc<Mutex<TradeBotInfo>>) {
         .output()
         .expect("Failed to execute command");
 
-    match click_buton(&mut enigo, output, true) {
+    match click_buton(enigo, output, true) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
@@ -227,6 +226,8 @@ fn trade_request(
 }
 
 fn rocket() -> rocket::Rocket<rocket::Build> {
+    let enigo = Enigo::new();
+
     let bot_info = Arc::new(Mutex::new(TradeBotInfo {
         ready: false,
         id: "".to_string(),
@@ -237,7 +238,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
 
     // Spawn the main_func as a separate task
     tokio::spawn(async move {
-        main_func(bot_info_clone).await;
+        open_game_go_to_lobby(enigo, bot_info_clone).await;
     });
 
     rocket::build()
