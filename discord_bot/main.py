@@ -71,6 +71,26 @@ async def custom_help(ctx, *, command_name=None):
         )
 
         embed.add_field(
+            name="!items-add [link 1] [link 2] [link 3]...",
+            value="Add the items that you want to trade for something else.",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!trade-complete [In-game player-id]",
+            value="TO DO!",
+            #value="Complete the trade by trading your items to the middleman bot in the game using this command. Once both players have traded their items to the middleman, the players can do !collect in order to collect the items they traded for.",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="!collect",
+            value="TO DO!",
+            #value="Collect the items that you traded for.",
+            inline=False,
+        )
+
+        embed.add_field(
             name="!help [command]",
             value="Get detailed help on a specific command.",
             inline=False,
@@ -101,6 +121,45 @@ async def custom_help(ctx, *, command_name=None):
                 value="You can only accept trade requests from users who have sent you a trade invitation.",
             )
             await ctx.send(embed=embed)
+        elif command_name.lower() in ["items-add", "!items-add"]:
+            embed = discord.Embed(
+                title="!items-add [link 1] [link 2] [link 3]...",
+                description="Add the items that you want to trade for something else.",
+                color=0x55A7F7,
+            )
+            embed.add_field(name="Usage", value="!items-add [link 1] [link 2] [link 3]...")
+            embed.add_field(
+                name="Notes",
+                value="This command allows you to add multiple item links that you are willing to trade. Ensure that the links provided are valid."
+            )
+            await ctx.send(embed=embed)
+
+        elif command_name.lower() in ["trade-complete", "!trade-complete"]:
+            embed = discord.Embed(
+                title="!trade-complete [In-game player-id]",
+                description="Trade your items to the middleman bot in the game.",
+                color=0x55A7F7,
+            )
+            embed.add_field(name="Usage", value="!trade-complete [In-game player-id]")
+            embed.add_field(
+                name="Notes",
+                value="Once both players have traded their items to the middleman bot, you and the other player can use the !collect command to retrieve the items you traded for."
+            )
+            await ctx.send(embed=embed)
+
+        elif command_name.lower() in ["collect", "!collect"]:
+            embed = discord.Embed(
+                title="!collect",
+                description="Collect the items that you traded for.",
+                color=0x55A7F7,
+            )
+            embed.add_field(name="Usage", value="!collect")
+            embed.add_field(
+                name="Notes",
+                value="This command allows you to collect the items you've acquired after completing a trade. Both parties are required to trade their items with the middleman bot before being able to collect the items."
+            )
+            await ctx.send(embed=embed)
+
         else:
             await ctx.send(f"I couldn't find any help related to `{command_name}`.")
 
@@ -300,7 +359,7 @@ async def stitch_images(user1_urls, user2_urls):
     user2_images = [Image.open(BytesIO(requests.get(url).content)) for url in user2_urls]
 
     # Padding values (change these to adjust the space)
-    arrow_padding = 30  # Added space on each side of the arrow
+    arrow_padding = 50  # Added space on each side of the arrow
     side_padding = 20  # Added space on each side of the items
 
     # Determine max width and total height for each user's images
@@ -314,8 +373,8 @@ async def stitch_images(user1_urls, user2_urls):
     arrow_image_width = 50 + 2 * arrow_padding
     arrow_image = Image.new('RGB', (arrow_image_width, max_height), color='white')
     draw = ImageDraw.Draw(arrow_image)
-    font = ImageFont.truetype("arial.ttf", 35)
-    draw.text((arrow_padding, (max_height - 35) // 2), "<->", font=font, fill="black")
+    font = ImageFont.truetype("arial.ttf", 50)
+    draw.text((arrow_padding, (max_height - 35) // 2), "<--->", font=font, fill="black")
 
     # Create the final stitched image
     total_width = max_width_user1 + arrow_image.width + max_width_user2
@@ -349,23 +408,30 @@ async def stitch_images(user1_urls, user2_urls):
 @bot.command(name="complete-trade")
 async def complete_trade(ctx, in_game_id: str):
     try:
+        print(f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.author.id}")
         # Construct the API endpoint URL
-        api_endpoint = f"http://localhost:8051/trade_request/{in_game_id}/{ctx.author.id}"
+        api_endpoint = f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.author.id}"
 
         # Make the API request
-        response = requests.post(api_endpoint)
+        response = requests.get(api_endpoint)
+        print("response:", response.status_code)
+        print(response.status_code == 200)
+        print("response:", response.text)
 
         # Check if the request was successful
         if response.status_code == 200:
-            data = response.json()
-            if 'message' in data:
-                await ctx.send(data['message'])  # Send the message from the API response, if provided
+            data = response.text
+            if 'TradeBot ready' == data:
+                await ctx.send('Going into "The Bard' + "'s" + 'Theater #1"')  # Send the message from the API response, if provided
             else:
-                await ctx.send("Trade completed successfully!")
+                await ctx.send("TradeBot is not ready. Wait 3 minutes and try again. Message @asdgew if this problem persists.")
         else:
+            await ctx.send(f"Failed to complete the trade. Trading bot is not online. Please message @asdgew.")
             await ctx.send(f"Failed to complete the trade. Error {response.status_code}: {response.text}")
 
     except Exception as e:
+        print(e)
+        await ctx.send(f"Unexpected error occurred. Please message @asdgew")
         await ctx.send(f"Unexpected error occurred: {str(e)}")
 
 
