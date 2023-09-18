@@ -1,7 +1,7 @@
 use std::process::{Command, Output};
+use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
-use std::sync::{Arc, Mutex};
 
 use enigo::*;
 use rand::Rng;
@@ -10,7 +10,6 @@ use rand::Rng;
 #[macro_use]
 extern crate rocket;
 use rocket::State;
-
 
 #[derive(Debug)]
 enum CommandError {
@@ -23,16 +22,17 @@ struct TradeBotInfo {
 }
 
 struct Trader {
-
     id: String,
     discord_id: String,
 }
 
-async fn main_func(bot_info: Arc<Mutex<TradeBotInfo>>) {
-
+// This function does the following:
+// 1. Opens the blacksmith launcher and presses play
+// 2. Goes into the lobby.
+// 3. Changes the TradeBotInfo ready variable to true when ready.
+async fn open_game_go_to_lobby(bot_info: Arc<Mutex<TradeBotInfo>>) {
     println!("Hello from bot function!");
     tokio::time::sleep(tokio::time::Duration::from_secs(10000)).await;
-
 
     let mut enigo = Enigo::new();
 
@@ -40,7 +40,7 @@ async fn main_func(bot_info: Arc<Mutex<TradeBotInfo>>) {
     //enigo.key_sequence_parse("{+META}m{-META}");
 
     // Start the launcher
-    //start_game(&mut enigo, "blacksmith");
+    start_game(&mut enigo, "blacksmith");
 
     // Run the launcher play button detector
     let output = Command::new("python")
@@ -83,9 +83,7 @@ async fn main_func(bot_info: Arc<Mutex<TradeBotInfo>>) {
     // It waits untill a trade request is sent by the discord bot
     let mut info = bot_info.lock().unwrap();
     info.ready = true;
-    
 
-    
     // Listen to "localhost::"
     // **After waiting..
     // Goes into the trading tab and connects to bards trade post.
@@ -160,7 +158,7 @@ fn click_buton(enigo: &mut Enigo, output: Output, smooth: bool) -> Result<(), Co
         println!("x1: {}, y1: {}, x2: {}, y2: {}", x1, y1, x2, y2);
     } else {
         eprintln!("Command executed with errors.\nOutput:\n{}", output_str);
-        return Err(CommandError::ExecutionFailed(output_str))
+        return Err(CommandError::ExecutionFailed(output_str));
     }
 
     // Gets the middle of the detected play button and clicks it
@@ -214,7 +212,11 @@ fn bezier_move(
 }
 
 #[get("/trade_request/<in_game_id>/<discord_id>")]
-fn trade_request(in_game_id: String, discord_id: String, bot_info: &State<Arc<Mutex<TradeBotInfo>>>) -> String {
+fn trade_request(
+    in_game_id: String,
+    discord_id: String,
+    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
+) -> String {
     let info = bot_info.lock().unwrap();
 
     if info.ready {
@@ -224,9 +226,7 @@ fn trade_request(in_game_id: String, discord_id: String, bot_info: &State<Arc<Mu
     }
 }
 
-
-
-fn rocket() -> rocket::Rocket<rocket::Build>{
+fn rocket() -> rocket::Rocket<rocket::Build> {
     let bot_info = Arc::new(Mutex::new(TradeBotInfo {
         ready: false,
         id: "".to_string(),
@@ -234,7 +234,7 @@ fn rocket() -> rocket::Rocket<rocket::Build>{
 
     // Clone the Arc for use in main_func
     let bot_info_clone = bot_info.clone();
-    
+
     // Spawn the main_func as a separate task
     tokio::spawn(async move {
         main_func(bot_info_clone).await;
@@ -245,10 +245,8 @@ fn rocket() -> rocket::Rocket<rocket::Build>{
         .mount("/", routes![trade_request])
 }
 
-
-
 #[rocket::main]
-async fn main(){
+async fn main() {
     // Simply launch Rocket in the main function
     let rocket_instance = rocket();
     if let Err(err) = rocket_instance.launch().await {
