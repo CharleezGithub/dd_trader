@@ -15,6 +15,7 @@ else:
 
 max_val = 0.00
 
+# Make a timeout
 while max_val < 0.90:
     # Capture a screenshot using ImageGrab
     screenshot = ImageGrab.grab()

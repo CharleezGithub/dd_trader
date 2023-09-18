@@ -2,15 +2,22 @@ use std::process::Output;
 use std::thread::sleep;
 use std::time::Duration;
 
-use rand::Rng;
 use enigo::*;
+use rand::Rng;
+use rocket::time::macros::offset;
 
 #[derive(Debug)]
 pub enum CommandError {
     ExecutionFailed(String), // This contains the error message.
 }
 
-pub fn click_buton(enigo: &mut Enigo, output: Output, smooth: bool) -> Result<(), CommandError> {
+pub fn click_buton(
+    enigo: &mut Enigo,
+    output: Output,
+    smooth: bool,
+    offset_x: i32,
+    offset_y: i32,
+) -> Result<(), CommandError> {
     let output_str = String::from_utf8(output.stdout).unwrap();
     println!("{}", output_str);
 
@@ -42,8 +49,8 @@ pub fn click_buton(enigo: &mut Enigo, output: Output, smooth: bool) -> Result<()
     }
 
     // Gets the middle of the detected play button and clicks it
-    let middle_point_x = ((x2 - x1) / 2) + x1;
-    let middle_point_y = ((y2 - y1) / 2) + y1;
+    let middle_point_x = ((x2 - x1) / 2) + x1 + offset_x;
+    let middle_point_y = ((y2 - y1) / 2) + y1 + offset_y;
 
     if smooth {
         // Minize game
@@ -63,6 +70,150 @@ pub fn click_buton(enigo: &mut Enigo, output: Output, smooth: bool) -> Result<()
     } else {
         enigo.mouse_move_to(middle_point_x, middle_point_y);
         enigo.mouse_click(MouseButton::Left);
+        Ok(())
+    }
+}
+
+pub fn click_buton_right(
+    enigo: &mut Enigo,
+    output: Output,
+    smooth: bool,
+    offset_x: i32,
+    offset_y: i32,
+) -> Result<(), CommandError> {
+    let output_str = String::from_utf8(output.stdout).unwrap();
+    println!("{}", output_str);
+
+    let (mut x1, mut y1, mut x2, mut y2) = (0, 0, 0, 0);
+
+    if output.status.success() {
+        let mut splits = output_str.trim().split_whitespace();
+        x1 = splits
+            .next()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or_default();
+        y1 = splits
+            .next()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or_default();
+        x2 = splits
+            .next()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or_default();
+        y2 = splits
+            .next()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or_default();
+
+        println!("x1: {}, y1: {}, x2: {}, y2: {}", x1, y1, x2, y2);
+    } else {
+        eprintln!("Command executed with errors.\nOutput:\n{}", output_str);
+        return Err(CommandError::ExecutionFailed(output_str));
+    }
+
+    // Gets the middle of the detected play button and clicks it
+    let middle_point_x = ((x2 - x1) / 2) + x1 + offset_x;
+    let middle_point_y = ((y2 - y1) / 2) + y1 + offset_y;
+
+    if smooth {
+        // Minize game
+        enigo.key_sequence_parse("{+META}m{-META}");
+        let mut rng = rand::thread_rng();
+        // Randomize steps (Amount of times it moves the cursor to get to destination)
+        let steps = rng.gen_range(50..100);
+        // Randomize control points for bezier curve. Goes from mouse location to the end of the screen.
+        let cx = rng.gen_range(enigo.mouse_location().0..enigo.main_display_size().0);
+        let cy = rng.gen_range(enigo.mouse_location().1..enigo.main_display_size().1);
+        // Move the cursor with the bezier function
+        bezier_move(enigo, x1, y1, x2, y2, cx, cy, steps);
+        // Go back into game and click the button
+        enigo.key_sequence_parse("{+ALT}{+TAB}{-TAB}{-ALT}");
+        enigo.mouse_click(MouseButton::Right);
+        Ok(())
+    } else {
+        enigo.mouse_move_to(middle_point_x, middle_point_y);
+        enigo.mouse_click(MouseButton::Right);
+        Ok(())
+    }
+}
+
+pub fn click_buton_direct(
+    enigo: &mut Enigo,
+    x: i32,
+    y: i32,
+    smooth: bool,
+    offset_x: i32,
+    offset_y: i32,
+) -> Result<(), CommandError> {
+    println!("{}, {}", x, y);
+
+    if smooth {
+        // Minize game
+        enigo.key_sequence_parse("{+META}m{-META}");
+        let mut rng = rand::thread_rng();
+        // Randomize steps (Amount of times it moves the cursor to get to destination)
+        let steps = rng.gen_range(50..100);
+        // Randomize control points for bezier curve. Goes from mouse location to the end of the screen.
+        let cx = rng.gen_range(enigo.mouse_location().0..enigo.main_display_size().0);
+        let cy = rng.gen_range(enigo.mouse_location().1..enigo.main_display_size().1);
+        // Move the cursor with the bezier function
+        bezier_move(
+            enigo,
+            enigo.mouse_location().0,
+            enigo.mouse_location().1,
+            x + offset_x,
+            y + offset_y,
+            cx,
+            cy,
+            steps,
+        );
+        // Go back into game and click the button
+        enigo.key_sequence_parse("{+ALT}{+TAB}{-TAB}{-ALT}");
+        enigo.mouse_click(MouseButton::Left);
+        Ok(())
+    } else {
+        enigo.mouse_move_to(x, y);
+        enigo.mouse_click(MouseButton::Left);
+        Ok(())
+    }
+}
+pub fn click_buton_right_direct(
+    enigo: &mut Enigo,
+    x: i32,
+    y: i32,
+    smooth: bool,
+    offset_x: i32,
+    offset_y: i32,
+) -> Result<(), CommandError> {
+    println!("{}, {}", x, y);
+
+    if smooth {
+        // Minize game
+        enigo.key_sequence_parse("{+META}m{-META}");
+        let mut rng = rand::thread_rng();
+        // Randomize steps (Amount of times it moves the cursor to get to destination)
+        let steps = rng.gen_range(50..100);
+        // Randomize control points for bezier curve. Goes from mouse location to the end of the screen.
+        let cx = rng.gen_range(enigo.mouse_location().0..enigo.main_display_size().0);
+        let cy = rng.gen_range(enigo.mouse_location().1..enigo.main_display_size().1);
+        // Move the cursor with the bezier function
+        bezier_move(
+            enigo,
+            enigo.mouse_location().0,
+            enigo.mouse_location().1,
+            x + offset_x,
+            y + offset_y,
+            cx,
+            cy,
+            steps,
+        );
+        // Go back into game and click the button
+        enigo.key_sequence_parse("{+ALT}{+TAB}{-TAB}{-ALT}");
+        enigo.mouse_click(MouseButton::Right);
+        Ok(())
+    } else {
+        enigo.mouse_move_to(x, y);
+        enigo.mouse_click(MouseButton::Right);
         Ok(())
     }
 }
