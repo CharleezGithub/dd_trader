@@ -9,26 +9,6 @@ from io import BytesIO
 
 TOKEN = "MTE1MTQ0MTUwMjk1NDg0ODMwNw.GtRAIh.YBUChh8QJi3Cs8jeFbuE18kRJYrAwiCpcxcnz8"
 
-
-# SQLite setup
-conn = sqlite3.connect("database/discord_messages.db")
-cursor = conn.cursor()
-
-
-def create_table():
-    cursor.execute(
-        """
-    CREATE TABLE IF NOT EXISTS messages (
-        user_id INTEGER NOT NULL,
-        content TEXT NOT NULL
-    )
-    """
-    )
-    conn.commit()
-
-
-create_table()
-
 bot = commands.Bot(command_prefix="!")
 
 # Dictionary to store trade requests. Format: {requester_id: requestee_id}
