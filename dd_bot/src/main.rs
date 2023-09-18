@@ -10,8 +10,8 @@ use enigo::*;
 extern crate rocket;
 use rocket::State;
 
-mod enigo_functions;
 mod database_functions;
+mod enigo_functions;
 
 struct TradeBotInfo {
     ready: bool,
@@ -42,11 +42,17 @@ impl TradersContainer {
 // 1. Opens the blacksmith launcher and presses play
 // 2. Goes into the lobby.
 // 3. Changes the TradeBotInfo ready variable to true when ready.
-async fn open_game_go_to_lobby(mut enigo: Enigo, bot_info: Arc<Mutex<TradeBotInfo>>) {
+async fn open_game_go_to_lobby(
+    enigo: Arc<Mutex<Enigo>>,
+    bot_info: Arc<Mutex<TradeBotInfo>>,
+) {
     println!("Hello from bot function!");
     tokio::time::sleep(tokio::time::Duration::from_secs(10000)).await;
+
+    let mut enigo = enigo.lock().unwrap();
+
     // Minimizes all tabs so that only the game is opened. To avoid clicking on other tabs
-    //enigo.key_sequence_parse("{+META}m{-META}");
+    enigo.key_sequence_parse("{+META}m{-META}");
 
     // Start the launcher
     start_game(&mut enigo, "blacksmith");
@@ -95,7 +101,9 @@ async fn open_game_go_to_lobby(mut enigo: Enigo, bot_info: Arc<Mutex<TradeBotInf
 }
 
 // It waits untill a trade request is sent by the discord bot
-fn trade(enigo: &mut Enigo, bot_info: Arc<Mutex<TradeBotInfo>>) {
+fn trade(enigo: &State<Arc<Mutex<Enigo>>>,  bot_info: &State<Arc<Mutex<TradeBotInfo>>>, trader_id: &str) {
+    let mut enigo = enigo.lock().unwrap();
+
     let info = bot_info.lock().unwrap();
     if info.ready != true {
         return;
@@ -109,7 +117,7 @@ fn trade(enigo: &mut Enigo, bot_info: Arc<Mutex<TradeBotInfo>>) {
         .output()
         .expect("Failed to execute command");
 
-    match enigo_functions::click_buton(enigo, output, true) {
+    match enigo_functions::click_buton(&mut enigo, output, true) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
@@ -122,18 +130,34 @@ fn trade(enigo: &mut Enigo, bot_info: Arc<Mutex<TradeBotInfo>>) {
         .output()
         .expect("Failed to execute command");
 
-    match enigo_functions::click_buton(enigo, output, true) {
+    match enigo_functions::click_buton(&mut enigo, output, true) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
 
-    // Now wait for a trading request
-
-    /*
-    enigo.key_click(Key::Meta);
-
-    enigo.mouse_click(MouseButton::Left)
-    */
+    //It now sends a trade to the player
+    let output = Command::new("python")
+        .arg("obj_detection.py")
+        .arg("images/find_id.png")
+        .output()
+        .expect("Failed to execute command");
+    
+    // Search after the trader in the trade tab
+    match enigo_functions::click_buton(&mut enigo, output, true) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+    
+    let enter_key = "{+ENTER}{-ENTER}";
+    let key_sequence = &format!("{}{}", trader_id, enter_key);
+    
+    enigo.key_sequence_parse(key_sequence);
+    
+    let output = Command::new("python")
+        .arg("obj_detection.py")
+        .arg("images/middleman2_trade_icon.png")
+        .output()
+        .expect("Failed to execute command");
 }
 
 fn start_game(enigo: &mut Enigo, launcher_name: &str) {
@@ -146,9 +170,10 @@ fn start_game(enigo: &mut Enigo, launcher_name: &str) {
 
 #[get("/trade_request/<in_game_id>/<discord_channel_id>/<discord_id>")]
 fn trade_request(
-    in_game_id: String,
+    in_game_id: &str,
     discord_channel_id: &str,
     discord_id: &str,
+    enigo: &State<Arc<Mutex<Enigo>>>,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) -> String {
@@ -156,48 +181,51 @@ fn trade_request(
     if info.ready != true {
         return String::from("TradeBot not ready");
     }
-    
+
     let mut traders = traders_container.lock().unwrap();
 
     // Write the database part in python first and then come back and retrive it here.
-    //let trader_items = 
-    let item_links = database_functions::get_links_for_user(discord_channel_id, discord_id).unwrap();
+    //let trader_items =
+    let item_links =
+        database_functions::get_links_for_user(discord_channel_id, discord_id).unwrap();
 
     let trader = Trader {
-        id: in_game_id,
+        id: String::from(in_game_id),
         discord_id: String::from(discord_id),
-        items: item_links
+        items: item_links,
     };
 
     traders.append(trader);
 
-    if info.ready {
-        format!("TradeBot ready\n{}", info.id)
-    } else {
-        "TradeBot not ready".into()
-    }
+    trade(enigo, bot_info, in_game_id);
+
+    format!("TradeBot ready\n{}", info.id)
 }
 
 fn rocket() -> rocket::Rocket<rocket::Build> {
-    let enigo = Enigo::new();
+    // Create 2 instances of enigo because Enigo does not implement Copy.
+    let enigo = Arc::new(Mutex::new(Enigo::new()));
+    let enigo2 = Arc::new(Mutex::new(Enigo::new()));
 
     let bot_info = Arc::new(Mutex::new(TradeBotInfo {
         ready: false,
         id: "".to_string(),
     }));
 
-    let mut traders_container = Arc::new(Mutex::new(TradersContainer::ActiveTraders(Vec::new())));
+    let traders_container = Arc::new(Mutex::new(TradersContainer::ActiveTraders(Vec::new())));
 
     // Clone the Arc for use in main_func
     let bot_info_clone = bot_info.clone();
 
     // Spawn the main_func as a separate task
     tokio::spawn(async move {
-        open_game_go_to_lobby(enigo, bot_info_clone).await;
+        open_game_go_to_lobby(enigo2, bot_info_clone).await;
     });
 
     rocket::build()
+        .manage(enigo) // Add the enigo as managed state
         .manage(bot_info) // Add the bot_info as managed state
+        .manage(traders_container) // Add the traders_container as managed state
         .mount("/", routes![trade_request])
 }
 
