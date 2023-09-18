@@ -11,6 +11,7 @@ extern crate rocket;
 use rocket::State;
 
 mod enigo_functions;
+mod database_functions;
 
 struct TradeBotInfo {
     ready: bool,
@@ -24,13 +25,13 @@ struct Trader {
 }
 
 enum TradersContainer {
-    active_traders(Vec<Trader>),
+    ActiveTraders(Vec<Trader>),
 }
 
 impl TradersContainer {
     fn append(&mut self, trader: Trader) {
         match self {
-            TradersContainer::active_traders(traders) => {
+            TradersContainer::ActiveTraders(traders) => {
                 traders.push(trader);
             }
         }
@@ -95,8 +96,10 @@ async fn open_game_go_to_lobby(mut enigo: Enigo, bot_info: Arc<Mutex<TradeBotInf
 
 // It waits untill a trade request is sent by the discord bot
 fn trade(enigo: &mut Enigo, bot_info: Arc<Mutex<TradeBotInfo>>) {
-    // Listen to "localhost::"
-    // **After waiting..
+    let info = bot_info.lock().unwrap();
+    if info.ready != true {
+        return;
+    }
     // Goes into the trading tab and connects to bards trade post.
     // Why bard? Because it has the least amount of active traders and therefore not as demanding to be in.
     // Run the "Trade" tab detector
@@ -141,24 +144,32 @@ fn start_game(enigo: &mut Enigo, launcher_name: &str) {
     enigo.key_click(Key::Return);
 }
 
-#[get("/trade_request/<in_game_id>/<discord_id>")]
+#[get("/trade_request/<in_game_id>/<discord_channel_id>/<discord_id>")]
 fn trade_request(
     in_game_id: String,
-    discord_id: String,
+    discord_channel_id: &str,
+    discord_id: &str,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) -> String {
     let info = bot_info.lock().unwrap();
-    let traders = traders_container.lock().unwrap();
+    if info.ready != true {
+        return String::from("TradeBot not ready");
+    }
+    
+    let mut traders = traders_container.lock().unwrap();
 
     // Write the database part in python first and then come back and retrive it here.
     //let trader_items = 
+    let item_links = database_functions::get_links_for_user(discord_channel_id, discord_id).unwrap();
 
     let trader = Trader {
         id: in_game_id,
-        discord_id: discord_id,
-        items
+        discord_id: String::from(discord_id),
+        items: item_links
     };
+
+    traders.append(trader);
 
     if info.ready {
         format!("TradeBot ready\n{}", info.id)
@@ -175,7 +186,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
         id: "".to_string(),
     }));
 
-    let mut traders_container = Arc::new(Mutex::new(TradersContainer::active_traders(Vec::new())));
+    let mut traders_container = Arc::new(Mutex::new(TradersContainer::ActiveTraders(Vec::new())));
 
     // Clone the Arc for use in main_func
     let bot_info_clone = bot_info.clone();

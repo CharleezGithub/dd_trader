@@ -396,11 +396,16 @@ async def stitch_images(user1_urls, user2_urls):
 
 @bot.command(name="complete-trade")
 async def complete_trade(ctx, in_game_id: str):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
     try:
-        print(f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.author.id}")
+        print(f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.channel.id}/{ctx.author.id}")
         # Construct the API endpoint URL
         api_endpoint = (
-            f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.author.id}"
+            f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
         )
 
         # Make the API request
