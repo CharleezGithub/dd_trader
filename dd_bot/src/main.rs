@@ -1,20 +1,16 @@
-use std::process::{Command, Output};
+use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
 
 use enigo::*;
-use rand::Rng;
 
 // import Rocket
 #[macro_use]
 extern crate rocket;
 use rocket::State;
 
-#[derive(Debug)]
-enum CommandError {
-    ExecutionFailed(String), // This contains the error message.
-}
+mod enigo_functions;
 
 struct TradeBotInfo {
     ready: bool,
@@ -24,6 +20,21 @@ struct TradeBotInfo {
 struct Trader {
     id: String,
     discord_id: String,
+    items: Vec<String>,
+}
+
+enum TradersContainer {
+    active_traders(Vec<Trader>),
+}
+
+impl TradersContainer {
+    fn append(&mut self, trader: Trader) {
+        match self {
+            TradersContainer::active_traders(traders) => {
+                traders.push(trader);
+            }
+        }
+    }
 }
 
 // This function does the following:
@@ -46,7 +57,7 @@ async fn open_game_go_to_lobby(mut enigo: Enigo, bot_info: Arc<Mutex<TradeBotInf
         .output()
         .expect("Failed to execute command");
 
-    match click_buton(&mut enigo, output, false) {
+    match enigo_functions::click_buton(&mut enigo, output, false) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
@@ -59,7 +70,7 @@ async fn open_game_go_to_lobby(mut enigo: Enigo, bot_info: Arc<Mutex<TradeBotInf
         .output()
         .expect("Failed to execute command");
 
-    match click_buton(&mut enigo, output, true) {
+    match enigo_functions::click_buton(&mut enigo, output, true) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
@@ -71,7 +82,7 @@ async fn open_game_go_to_lobby(mut enigo: Enigo, bot_info: Arc<Mutex<TradeBotInf
         .output()
         .expect("Failed to execute command");
 
-    match click_buton(&mut enigo, output, true) {
+    match enigo_functions::click_buton(&mut enigo, output, true) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
@@ -79,6 +90,7 @@ async fn open_game_go_to_lobby(mut enigo: Enigo, bot_info: Arc<Mutex<TradeBotInf
     // Now the bot is in the lobby "play" tab
     let mut info = bot_info.lock().unwrap();
     info.ready = true;
+    info.id = String::from("Middleman2");
 }
 
 // It waits untill a trade request is sent by the discord bot
@@ -94,7 +106,7 @@ fn trade(enigo: &mut Enigo, bot_info: Arc<Mutex<TradeBotInfo>>) {
         .output()
         .expect("Failed to execute command");
 
-    match click_buton(enigo, output, true) {
+    match enigo_functions::click_buton(enigo, output, true) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
@@ -107,7 +119,7 @@ fn trade(enigo: &mut Enigo, bot_info: Arc<Mutex<TradeBotInfo>>) {
         .output()
         .expect("Failed to execute command");
 
-    match click_buton(enigo, output, true) {
+    match enigo_functions::click_buton(enigo, output, true) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
@@ -129,97 +141,27 @@ fn start_game(enigo: &mut Enigo, launcher_name: &str) {
     enigo.key_click(Key::Return);
 }
 
-fn click_buton(enigo: &mut Enigo, output: Output, smooth: bool) -> Result<(), CommandError> {
-    let output_str = String::from_utf8(output.stdout).unwrap();
-    println!("{}", output_str);
-
-    let (mut x1, mut y1, mut x2, mut y2) = (0, 0, 0, 0);
-
-    if output.status.success() {
-        let mut splits = output_str.trim().split_whitespace();
-        x1 = splits
-            .next()
-            .and_then(|s| s.parse().ok())
-            .unwrap_or_default();
-        y1 = splits
-            .next()
-            .and_then(|s| s.parse().ok())
-            .unwrap_or_default();
-        x2 = splits
-            .next()
-            .and_then(|s| s.parse().ok())
-            .unwrap_or_default();
-        y2 = splits
-            .next()
-            .and_then(|s| s.parse().ok())
-            .unwrap_or_default();
-
-        println!("x1: {}, y1: {}, x2: {}, y2: {}", x1, y1, x2, y2);
-    } else {
-        eprintln!("Command executed with errors.\nOutput:\n{}", output_str);
-        return Err(CommandError::ExecutionFailed(output_str));
-    }
-
-    // Gets the middle of the detected play button and clicks it
-    let middle_point_x = ((x2 - x1) / 2) + x1;
-    let middle_point_y = ((y2 - y1) / 2) + y1;
-
-    if smooth {
-        // Minize game
-        enigo.key_sequence_parse("{+META}m{-META}");
-        let mut rng = rand::thread_rng();
-        // Randomize steps (Amount of times it moves the cursor to get to destination)
-        let steps = rng.gen_range(50..100);
-        // Randomize control points for bezier curve. Goes from mouse location to the end of the screen.
-        let cx = rng.gen_range(enigo.mouse_location().0..enigo.main_display_size().0);
-        let cy = rng.gen_range(enigo.mouse_location().1..enigo.main_display_size().1);
-        // Move the cursor with the bezier function
-        bezier_move(enigo, x1, y1, x2, y2, cx, cy, steps);
-        // Go back into game and click the button
-        enigo.key_sequence_parse("{+ALT}{+TAB}{-TAB}{-ALT}");
-        enigo.mouse_click(MouseButton::Left);
-        Ok(())
-    } else {
-        enigo.mouse_move_to(middle_point_x, middle_point_y);
-        enigo.mouse_click(MouseButton::Left);
-        Ok(())
-    }
-}
-
-fn bezier_move(
-    enigo: &mut Enigo,
-    x1: i32,
-    y1: i32,
-    x2: i32,
-    y2: i32,
-    cx: i32,
-    cy: i32,
-    steps: usize,
-) {
-    let mut rng = rand::thread_rng();
-    for i in 1..=steps {
-        let t = i as f32 / steps as f32;
-        let x =
-            (1.0 - t).powi(2) * x1 as f32 + 2.0 * (1.0 - t) * t * cx as f32 + t.powi(2) * x2 as f32;
-        let y =
-            (1.0 - t).powi(2) * y1 as f32 + 2.0 * (1.0 - t) * t * cy as f32 + t.powi(2) * y2 as f32;
-
-        enigo.mouse_move_to(x.round() as i32, y.round() as i32);
-        sleep(Duration::from_millis(rng.gen_range(1..3)));
-        println!("{}", i)
-    }
-}
-
 #[get("/trade_request/<in_game_id>/<discord_id>")]
 fn trade_request(
     in_game_id: String,
     discord_id: String,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
+    traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) -> String {
     let info = bot_info.lock().unwrap();
+    let traders = traders_container.lock().unwrap();
+
+    // Write the database part in python first and then come back and retrive it here.
+    //let trader_items = 
+
+    let trader = Trader {
+        id: in_game_id,
+        discord_id: discord_id,
+        items
+    };
 
     if info.ready {
-        format!("TradeBot ready")
+        format!("TradeBot ready\n{}", info.id)
     } else {
         "TradeBot not ready".into()
     }
@@ -232,6 +174,8 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
         ready: false,
         id: "".to_string(),
     }));
+
+    let mut traders_container = Arc::new(Mutex::new(TradersContainer::active_traders(Vec::new())));
 
     // Clone the Arc for use in main_func
     let bot_info_clone = bot_info.clone();
