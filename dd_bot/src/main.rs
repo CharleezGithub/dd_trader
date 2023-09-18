@@ -1,6 +1,7 @@
 use std::process::{Command, Output};
 use std::thread::sleep;
 use std::time::Duration;
+use std::sync::{Arc, Mutex};
 
 use enigo::*;
 use rand::Rng;
@@ -8,6 +9,7 @@ use rand::Rng;
 // import Rocket
 #[macro_use]
 extern crate rocket;
+use rocket::State;
 
 
 #[derive(Debug)]
@@ -21,16 +23,16 @@ struct TradeBotInfo {
 }
 
 struct Trader {
+
     id: String,
     discord_id: String,
-
 }
 
-fn main() {
-    let mut bot_info = TradeBotInfo {
-        ready: false,
-        id: String::new(),
-    };
+async fn main_func(bot_info: Arc<Mutex<TradeBotInfo>>) {
+
+    println!("Hello from bot function!");
+    tokio::time::sleep(tokio::time::Duration::from_secs(10000)).await;
+
 
     let mut enigo = Enigo::new();
 
@@ -79,19 +81,10 @@ fn main() {
 
     // Now the bot is in the lobby "play" tab
     // It waits untill a trade request is sent by the discord bot
-    bot_info.ready = true;
+    let mut info = bot_info.lock().unwrap();
+    info.ready = true;
     
-    #[get("/trade_request/<in_game_id>/<discord_id>")]
-    fn trade_request(in_game_id: String, discord_id: String) -> String {
-        // TODO: Handle the trade request logic here.
-    
-        format!("In game id: {}, Discord id {}", in_game_id, discord_id)
-    }
-    
-    #[launch]
-    fn rocket() -> _ {
-        rocket::build().mount("/", routes![trade_request])
-    }
+
     
     // Listen to "localhost::"
     // **After waiting..
@@ -217,5 +210,48 @@ fn bezier_move(
         enigo.mouse_move_to(x.round() as i32, y.round() as i32);
         sleep(Duration::from_millis(rng.gen_range(1..3)));
         println!("{}", i)
+    }
+}
+
+#[get("/trade_request/<in_game_id>/<discord_id>")]
+fn trade_request(in_game_id: String, discord_id: String, bot_info: &State<Arc<Mutex<TradeBotInfo>>>) -> String {
+    let info = bot_info.lock().unwrap();
+
+    if info.ready {
+        format!("TradeBot ready")
+    } else {
+        "TradeBot not ready".into()
+    }
+}
+
+
+
+fn rocket() -> rocket::Rocket<rocket::Build>{
+    let bot_info = Arc::new(Mutex::new(TradeBotInfo {
+        ready: false,
+        id: "".to_string(),
+    }));
+
+    // Clone the Arc for use in main_func
+    let bot_info_clone = bot_info.clone();
+    
+    // Spawn the main_func as a separate task
+    tokio::spawn(async move {
+        main_func(bot_info_clone).await;
+    });
+
+    rocket::build()
+        .manage(bot_info) // Add the bot_info as managed state
+        .mount("/", routes![trade_request])
+}
+
+
+
+#[rocket::main]
+async fn main(){
+    // Simply launch Rocket in the main function
+    let rocket_instance = rocket();
+    if let Err(err) = rocket_instance.launch().await {
+        eprintln!("Rocket server error: {}", err);
     }
 }
