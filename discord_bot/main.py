@@ -57,16 +57,21 @@ async def custom_help(ctx, *, command_name=None):
         )
 
         embed.add_field(
+            name="!show-trade",
+            value="Shows a visualization of what the trade looks like",
+            inline=False,
+        )
+        embed.add_field(
             name="!trade-complete [In-game player-id]",
             value="TO DO!",
-            #value="Complete the trade by trading your items to the middleman bot in the game using this command. Once both players have traded their items to the middleman, the players can do !collect in order to collect the items they traded for.",
+            # value="Complete the trade by trading your items to the middleman bot in the game using this command. Once both players have traded their items to the middleman, the players can do !collect in order to collect the items they traded for.",
             inline=False,
         )
 
         embed.add_field(
             name="!collect",
             value="TO DO!",
-            #value="Collect the items that you traded for.",
+            # value="Collect the items that you traded for.",
             inline=False,
         )
 
@@ -107,10 +112,12 @@ async def custom_help(ctx, *, command_name=None):
                 description="Add the items that you want to trade for something else.",
                 color=0x55A7F7,
             )
-            embed.add_field(name="Usage", value="!items-add [link 1] [link 2] [link 3]...")
+            embed.add_field(
+                name="Usage", value="!items-add [link 1] [link 2] [link 3]..."
+            )
             embed.add_field(
                 name="Notes",
-                value="This command allows you to add multiple item links that you are willing to trade. Ensure that the links provided are valid."
+                value="This command allows you to add multiple item links that you are willing to trade. Ensure that the links provided are valid.",
             )
             await ctx.send(embed=embed)
 
@@ -123,7 +130,7 @@ async def custom_help(ctx, *, command_name=None):
             embed.add_field(name="Usage", value="!trade-complete [In-game player-id]")
             embed.add_field(
                 name="Notes",
-                value="Once both players have traded their items to the middleman bot, you and the other player can use the !collect command to retrieve the items you traded for."
+                value="Once both players have traded their items to the middleman bot, you and the other player can use the !collect command to retrieve the items you traded for.",
             )
             await ctx.send(embed=embed)
 
@@ -136,7 +143,7 @@ async def custom_help(ctx, *, command_name=None):
             embed.add_field(name="Usage", value="!collect")
             embed.add_field(
                 name="Notes",
-                value="This command allows you to collect the items you've acquired after completing a trade. Both parties are required to trade their items with the middleman bot before being able to collect the items."
+                value="This command allows you to collect the items you've acquired after completing a trade. Both parties are required to trade their items with the middleman bot before being able to collect the items.",
             )
             await ctx.send(embed=embed)
 
@@ -223,12 +230,6 @@ async def trade_accept(ctx, user: discord.Member):
             f"{ctx.author.mention}, you don't have a pending trade request from {user.mention}!"
         )
 
-
-# This dictionary will hold the items for each trade.
-# Format: {channel_id: {user_id: [link1, link2, ...]}}
-trade_items = {}
-
-
 @bot.command(name="add-items")
 async def add_items(ctx, *links: str):
     """Add item image links to a specific trade."""
@@ -248,24 +249,23 @@ async def add_items(ctx, *links: str):
             )
             return
 
-    # Use the channel ID to identify the trade
-    channel_id = ctx.channel.id
+    conn = sqlite3.connect("trades.db")
+    cursor = conn.cursor()
 
-    # Check if the trade already has items stored
-    if channel_id not in trade_items:
-        trade_items[channel_id] = {}
+    for link in links:
+        cursor.execute(
+            "INSERT OR IGNORE INTO trade_items (channel_id, user_id, item_link) VALUES (?, ?, ?)",
+            (ctx.channel.id, ctx.author.id, link),
+        )
 
-    # Add items to the user's collection within that trade
-    if ctx.author.id in trade_items[channel_id]:
-        trade_items[channel_id][ctx.author.id].extend(links)
-    else:
-        trade_items[channel_id][ctx.author.id] = list(links)
+    conn.commit()
+    conn.close()
 
     await ctx.send(f"Added {len(links)} item(s) to this trade!")
 
 
-@bot.command(name="show-items")
-async def show_items(ctx):
+@bot.command(name="show-trade")
+async def show_trade(ctx):
     """Display the items for both users in a specific trade."""
 
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
@@ -274,20 +274,26 @@ async def show_items(ctx):
         )
         return
 
-    channel_id = ctx.channel.id
+    conn = sqlite3.connect('trades.db')
+    cursor = conn.cursor()
 
-    # If no items at all for this trade
-    if channel_id not in trade_items:
-        await ctx.send("No items have been added to this trade yet!")
-        return
+    # Fetch the items associated with the channel
+    cursor.execute("SELECT user_id, item_link FROM trade_items WHERE channel_id = ?", (ctx.channel.id,))
+    rows = cursor.fetchall()
 
-    # Fetch the items for the command issuer
-    user_items = trade_items[channel_id].get(ctx.author.id, [])
+    conn.close()
 
-    # Try to determine the other user in the trade (assuming there are only two users)
-    other_users = [
-        uid for uid in trade_items[channel_id].keys() if uid != ctx.author.id
-    ]
+    # Organize items by user
+    trade_data = {}
+    for user_id, item_link in rows:
+        if user_id not in trade_data:
+            trade_data[user_id] = []
+        trade_data[user_id].append(item_link)
+
+    user_items = trade_data.get(ctx.author.id, [])
+
+    # Try to determine the other user in the trade
+    other_users = [uid for uid in trade_data.keys() if uid != ctx.author.id]
 
     if not other_users:
         other_user_name = "Other User"
@@ -296,7 +302,7 @@ async def show_items(ctx):
         other_user_id = other_users[0]
         other_user = await bot.fetch_user(other_user_id)  # Fetching the user
         other_user_name = other_user.name if other_user else "Failed to Retrieve User"
-        other_user_items = trade_items[channel_id].get(other_user_id, [])
+        other_user_items = trade_data.get(other_user_id, [])
 
     # Display the items
     embed = discord.Embed(
@@ -335,8 +341,12 @@ async def show_items(ctx):
 
 async def stitch_images(user1_urls, user2_urls):
     """Stitch together images from the provided URLs for both users."""
-    user1_images = [Image.open(BytesIO(requests.get(url).content)) for url in user1_urls]
-    user2_images = [Image.open(BytesIO(requests.get(url).content)) for url in user2_urls]
+    user1_images = [
+        Image.open(BytesIO(requests.get(url).content)) for url in user1_urls
+    ]
+    user2_images = [
+        Image.open(BytesIO(requests.get(url).content)) for url in user2_urls
+    ]
 
     # Padding values (change these to adjust the space)
     arrow_padding = 50  # Added space on each side of the arrow
@@ -351,14 +361,14 @@ async def stitch_images(user1_urls, user2_urls):
     # Create an arrow image with added padding and the same height as the tallest column
     max_height = max(total_height_user1, total_height_user2)
     arrow_image_width = 50 + 2 * arrow_padding
-    arrow_image = Image.new('RGB', (arrow_image_width, max_height), color='white')
+    arrow_image = Image.new("RGB", (arrow_image_width, max_height), color="white")
     draw = ImageDraw.Draw(arrow_image)
     font = ImageFont.truetype("arial.ttf", 50)
     draw.text((arrow_padding, (max_height - 35) // 2), "<--->", font=font, fill="black")
 
     # Create the final stitched image
     total_width = max_width_user1 + arrow_image.width + max_width_user2
-    new_image = Image.new('RGB', (total_width, max_height), color='white')
+    new_image = Image.new("RGB", (total_width, max_height), color="white")
 
     # Paste user1 images with side padding
     y_offset = (max_height - total_height_user1) // 2
@@ -384,13 +394,14 @@ async def stitch_images(user1_urls, user2_urls):
     return buffer
 
 
-
 @bot.command(name="complete-trade")
 async def complete_trade(ctx, in_game_id: str):
     try:
         print(f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.author.id}")
         # Construct the API endpoint URL
-        api_endpoint = f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.author.id}"
+        api_endpoint = (
+            f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.author.id}"
+        )
 
         # Make the API request
         response = requests.get(api_endpoint)
@@ -401,13 +412,21 @@ async def complete_trade(ctx, in_game_id: str):
         # Check if the request was successful
         if response.status_code == 200:
             data = response.text
-            if 'TradeBot ready' == data:
-                await ctx.send('Going into "The Bard' + "'s" + 'Theater #1"')  # Send the message from the API response, if provided
+            if "TradeBot ready" == data:
+                await ctx.send(
+                    'Going into "The Bard' + "'s" + 'Theater #1"'
+                )  # Send the message from the API response, if provided
             else:
-                await ctx.send("TradeBot is not ready. Wait 3 minutes and try again. Message @asdgew if this problem persists.")
+                await ctx.send(
+                    "TradeBot is not ready. Wait 3 minutes and try again. Message @asdgew if this problem persists."
+                )
         else:
-            await ctx.send(f"Failed to complete the trade. Trading bot is not online. Please message @asdgew.")
-            await ctx.send(f"Failed to complete the trade. Error {response.status_code}: {response.text}")
+            await ctx.send(
+                f"Failed to complete the trade. Trading bot is not online. Please message @asdgew."
+            )
+            await ctx.send(
+                f"Failed to complete the trade. Error {response.status_code}: {response.text}"
+            )
 
     except Exception as e:
         print(e)
