@@ -47,7 +47,7 @@ async fn open_game_go_to_lobby(
     bot_info: Arc<Mutex<TradeBotInfo>>,
 ) {
     println!("Hello from bot function!");
-    tokio::time::sleep(tokio::time::Duration::from_secs(10000)).await;
+    //tokio::time::sleep(tokio::time::Duration::from_secs(10000)).await;
 
     let mut enigo = enigo.lock().unwrap();
 
@@ -59,21 +59,23 @@ async fn open_game_go_to_lobby(
 
     // Run the launcher play button detector
     let output = Command::new("python")
-        .arg("obj_detection.py")
-        .arg("images/play.png")
-        .output()
-        .expect("Failed to execute command");
+    .arg("obj_detection.py")
+    .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/src/images/play.png")
+    .output()
+    .expect("Failed to execute command");
+
+    println!("Output: {:?}", output);
 
     match enigo_functions::click_buton(&mut enigo, output, false, 0, 0) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
-
+    
     // Now we are opening the game
     // Run the "Ok" button detector (Will run once we enter the game)
     let output = Command::new("python")
         .arg("obj_detection.py")
-        .arg("images/okay_start.png")
+        .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/src/images/okay_start.png")
         .output()
         .expect("Failed to execute command");
 
@@ -85,9 +87,10 @@ async fn open_game_go_to_lobby(
     // Run the "Enter the lobby" button detector
     let output = Command::new("python")
         .arg("obj_detection.py")
-        .arg("images/enter_lobby.png")
+        .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/src/images/enter_lobby.png")
         .output()
         .expect("Failed to execute command");
+
 
     match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
         Ok(_) => println!("Successfully clicked button!"),
@@ -113,7 +116,7 @@ fn trade(enigo: &State<Arc<Mutex<Enigo>>>,  bot_info: &State<Arc<Mutex<TradeBotI
     // Run the "Trade" tab detector
     let output = Command::new("python")
         .arg("obj_detection.py")
-        .arg("images/trade_tab.png")
+        .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/src/images/trade_tab.png")
         .output()
         .expect("Failed to execute command");
 
@@ -126,7 +129,7 @@ fn trade(enigo: &State<Arc<Mutex<Enigo>>>,  bot_info: &State<Arc<Mutex<TradeBotI
     // Run the "bard_trade" button detector
     let output = Command::new("python")
         .arg("obj_detection.py")
-        .arg("images/bard_trade.png")
+        .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/src/images/bard_trade.png")
         .output()
         .expect("Failed to execute command");
 
@@ -138,7 +141,7 @@ fn trade(enigo: &State<Arc<Mutex<Enigo>>>,  bot_info: &State<Arc<Mutex<TradeBotI
     //It now sends a trade to the player
     let output = Command::new("python")
         .arg("obj_detection.py")
-        .arg("images/find_id.png")
+        .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/src/images/find_id.png")
         .output()
         .expect("Failed to execute command");
     
@@ -161,7 +164,7 @@ fn trade(enigo: &State<Arc<Mutex<Enigo>>>,  bot_info: &State<Arc<Mutex<TradeBotI
     // Send a trade request
     let output = Command::new("python")
         .arg("obj_detection.py")
-        .arg("images/trade_send_request.png")
+        .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/src/images/trade_send_request.png")
         .output()
         .expect("Failed to execute command");
     
@@ -173,21 +176,21 @@ fn trade(enigo: &State<Arc<Mutex<Enigo>>>,  bot_info: &State<Arc<Mutex<TradeBotI
     // Check if trade request was accepted
     let output = Command::new("python")
         .arg("obj_detection.py")
-        .arg("images/trade_send_request.png")
+        .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/src/images/trade_send_request.png")
         .output()
         .expect("Failed to execute command");
 
     // Check if user has put in 50 gold for the trade fee
     let output = Command::new("python")
         .arg("obj_detection.py")
-        .arg("images/gold_fee.png")
+        .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/src/images/gold_fee.png")
         .output()
         .expect("Failed to execute command");
 
     // Click the checkbox
     let output = Command::new("python")
         .arg("obj_detection.py")
-        .arg("images/trade_checkbox.png")
+        .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/src/images/trade_checkbox.png")
         .output()
         .expect("Failed to execute command");
     

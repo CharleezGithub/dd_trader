@@ -4,7 +4,6 @@ use std::time::Duration;
 
 use enigo::*;
 use rand::Rng;
-use rocket::time::macros::offset;
 
 #[derive(Debug)]
 pub enum CommandError {
@@ -49,8 +48,8 @@ pub fn click_buton(
     }
 
     // Gets the middle of the detected play button and clicks it
-    let middle_point_x = ((x2 - x1) / 2) + x1 + offset_x;
-    let middle_point_y = ((y2 - y1) / 2) + y1 + offset_y;
+    let middle_point_x = ((x2 - x1) / 2) + x1;
+    let middle_point_y = ((y2 - y1) / 2) + y1;
 
     if smooth {
         // Minize game
@@ -64,7 +63,10 @@ pub fn click_buton(
         // Move the cursor with the bezier function
         bezier_move(enigo, x1, y1, x2, y2, cx, cy, steps);
         // Go back into game and click the button
-        enigo.key_sequence_parse("{+ALT}{+TAB}{-TAB}{-ALT}");
+        enigo.key_sequence_parse("{+ALT}{+TAB}");
+        sleep(Duration::from_millis(rng.gen_range(50..70)));
+        enigo.key_sequence_parse("{-TAB}{-ALT}");
+        sleep(Duration::from_millis(rng.gen_range(100..300)));
         enigo.mouse_click(MouseButton::Left);
         Ok(())
     } else {
