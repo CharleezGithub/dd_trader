@@ -241,7 +241,7 @@ async def add_items(ctx, *links: str):
         )
         return
 
-    # Ensure the links provided are valid URLs (for simplicity, we check if they start with "http")
+    # Ensure the links provided are valid URLs
     for link in links:
         if not link.startswith("http"):
             await ctx.send(
@@ -252,16 +252,26 @@ async def add_items(ctx, *links: str):
     conn = sqlite3.connect("trades.db")
     cursor = conn.cursor()
 
+    # Check if the table with name `channel_id` exists
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (str(ctx.channel.id),))
+    if not cursor.fetchone():
+        # If not, create a new table named after `channel_id`
+        cursor.execute(
+            f"CREATE TABLE '{ctx.channel.id}' (user_id INTEGER, item_link TEXT)"
+        )
+
+    # Now, insert the data into the table named after `channel_id`
     for link in links:
         cursor.execute(
-            "INSERT OR IGNORE INTO trade_items (channel_id, user_id, item_link) VALUES (?, ?, ?)",
-            (ctx.channel.id, ctx.author.id, link),
+            f"INSERT INTO '{ctx.channel.id}' (user_id, item_link) VALUES (?, ?)",
+            (ctx.author.id, link),
         )
 
     conn.commit()
     conn.close()
 
     await ctx.send(f"Added {len(links)} item(s) to this trade!")
+
 
 
 @bot.command(name="show-trade")
