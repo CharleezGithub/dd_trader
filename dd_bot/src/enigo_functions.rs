@@ -66,7 +66,7 @@ pub fn click_buton(
         enigo.key_sequence_parse("{+ALT}{+TAB}");
         sleep(Duration::from_millis(rng.gen_range(50..70)));
         enigo.key_sequence_parse("{-TAB}{-ALT}");
-        sleep(Duration::from_millis(rng.gen_range(100..300)));
+        sleep(Duration::from_millis(rng.gen_range(500..1000)));
         enigo.mouse_click(MouseButton::Left);
         Ok(())
     } else {
