@@ -230,6 +230,7 @@ async def trade_accept(ctx, user: discord.Member):
             f"{ctx.author.mention}, you don't have a pending trade request from {user.mention}!"
         )
 
+
 @bot.command(name="add-items")
 async def add_items(ctx, *links: str):
     """Add item image links to a specific trade."""
@@ -252,26 +253,36 @@ async def add_items(ctx, *links: str):
     conn = sqlite3.connect("trades.db")
     cursor = conn.cursor()
 
-    # Check if the table with name `channel_id` exists
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (str(ctx.channel.id),))
-    if not cursor.fetchone():
-        # If not, create a new table named after `channel_id`
-        cursor.execute(
-            f"CREATE TABLE '{ctx.channel.id}' (user_id INTEGER, item_link TEXT)"
-        )
+    # Ensure 'trade_items' table exists to list all channels
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS trade_items (channel_id INTEGER PRIMARY KEY)"
+    )
+    # Insert the channel ID into trade_items if it doesn't already exist
+    cursor.execute(
+        "INSERT OR IGNORE INTO trade_items (channel_id) VALUES (?)", (ctx.channel.id,)
+    )
 
-    # Now, insert the data into the table named after `channel_id`
+    # Ensure the 'trade_data' table exists to store the trade data
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS trade_data (
+            id INTEGER PRIMARY KEY,
+            channel_id INTEGER REFERENCES trade_items(channel_id),
+            user_id INTEGER,
+            item_link TEXT
+        )"""
+    )
+
+    # Insert the data into 'trade_data'
     for link in links:
         cursor.execute(
-            f"INSERT INTO '{ctx.channel.id}' (user_id, item_link) VALUES (?, ?)",
-            (ctx.author.id, link),
+            "INSERT OR IGNORE INTO trade_data (channel_id, user_id, item_link) VALUES (?, ?, ?)",
+            (ctx.channel.id, ctx.author.id, link),
         )
 
     conn.commit()
     conn.close()
 
     await ctx.send(f"Added {len(links)} item(s) to this trade!")
-
 
 
 @bot.command(name="show-trade")
@@ -284,11 +295,14 @@ async def show_trade(ctx):
         )
         return
 
-    conn = sqlite3.connect('trades.db')
+    conn = sqlite3.connect("trades.db")
     cursor = conn.cursor()
 
-    # Fetch the items associated with the channel
-    cursor.execute("SELECT user_id, item_link FROM trade_items WHERE channel_id = ?", (ctx.channel.id,))
+    # Fetch the items associated with the channel from the 'trade_data' table
+    cursor.execute(
+        "SELECT user_id, item_link FROM trade_data WHERE channel_id = ?",
+        (ctx.channel.id,),
+    )
     rows = cursor.fetchall()
 
     conn.close()
@@ -346,7 +360,6 @@ async def show_trade(ctx):
 
     # Send the embed and the attached image in the same message
     await ctx.send(embed=embed, file=discord.File(buffer, filename="items.png"))
-
 
 
 async def stitch_images(user1_urls, user2_urls):
@@ -412,11 +425,11 @@ async def complete_trade(ctx, in_game_id: str):
         )
         return
     try:
-        print(f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.channel.id}/{ctx.author.id}")
-        # Construct the API endpoint URL
-        api_endpoint = (
+        print(
             f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
         )
+        # Construct the API endpoint URL
+        api_endpoint = f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
 
         # Make the API request
         response = requests.get(api_endpoint)

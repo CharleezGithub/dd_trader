@@ -22,6 +22,8 @@ struct Trader {
     id: String,
     discord_id: String,
     items: Vec<String>,
+    // gold: i32, // IMPLEMENT THIS LATER FOR GOLD TRADES
+    // has_paid_gold_fee: bool // IMPLEMENT THIS LATER FOR TRADES
 }
 
 enum TradersContainer {
@@ -42,10 +44,7 @@ impl TradersContainer {
 // 1. Opens the blacksmith launcher and presses play
 // 2. Goes into the lobby.
 // 3. Changes the TradeBotInfo ready variable to true when ready.
-async fn open_game_go_to_lobby(
-    enigo: Arc<Mutex<Enigo>>,
-    bot_info: Arc<Mutex<TradeBotInfo>>,
-) {
+async fn open_game_go_to_lobby(enigo: Arc<Mutex<Enigo>>, bot_info: Arc<Mutex<TradeBotInfo>>) {
     println!("Hello from bot function!");
     //tokio::time::sleep(tokio::time::Duration::from_secs(10000)).await;
 
@@ -59,10 +58,10 @@ async fn open_game_go_to_lobby(
 
     // Run the launcher play button detector
     let output = Command::new("python")
-    .arg("obj_detection.py")
-    .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/images/play.png")
-    .output()
-    .expect("Failed to execute command");
+        .arg("obj_detection.py")
+        .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/images/play.png")
+        .output()
+        .expect("Failed to execute command");
 
     println!("Output: {:?}", output);
 
@@ -70,7 +69,7 @@ async fn open_game_go_to_lobby(
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
-    
+
     // Now we are opening the game
     // Run the "Ok" button detector (Will run once we enter the game)
     let output = Command::new("python")
@@ -91,7 +90,6 @@ async fn open_game_go_to_lobby(
         .output()
         .expect("Failed to execute command");
 
-
     match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
@@ -104,7 +102,11 @@ async fn open_game_go_to_lobby(
 }
 
 // It waits untill a trade request is sent by the discord bot
-fn trade(enigo: &State<Arc<Mutex<Enigo>>>,  bot_info: &State<Arc<Mutex<TradeBotInfo>>>, trader_id: &str) {
+fn trade(
+    enigo: &State<Arc<Mutex<Enigo>>>,
+    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
+    trader_id: &str,
+) {
     let mut enigo = enigo.lock().unwrap();
 
     let info = bot_info.lock().unwrap();
@@ -144,30 +146,27 @@ fn trade(enigo: &State<Arc<Mutex<Enigo>>>,  bot_info: &State<Arc<Mutex<TradeBotI
         .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/images/find_id.png")
         .output()
         .expect("Failed to execute command");
-    
+
     // Search after the trader in the trade tab
     match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
-    
-    let enter_key = "{+ENTER}{-ENTER}";
-    let key_sequence = &format!("{}{}", trader_id, enter_key);
-    
-    enigo.key_sequence_parse(key_sequence);
-    
+
+    enigo.key_sequence_parse(trader_id);
+
     match enigo_functions::click_buton_right_direct(&mut enigo, 1824, 312, true, 0, 0) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
-    
+
     // Send a trade request
     let output = Command::new("python")
         .arg("obj_detection.py")
         .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/images/trade_send_request.png")
         .output()
         .expect("Failed to execute command");
-    
+
     match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
@@ -193,12 +192,11 @@ fn trade(enigo: &State<Arc<Mutex<Enigo>>>,  bot_info: &State<Arc<Mutex<TradeBotI
         .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/images/trade_checkbox.png")
         .output()
         .expect("Failed to execute command");
-    
+
     match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
-
 }
 
 fn start_game(enigo: &mut Enigo, launcher_name: &str) {
