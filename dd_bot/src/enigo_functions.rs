@@ -48,8 +48,8 @@ pub fn click_buton(
     }
 
     // Gets the middle of the detected play button and clicks it
-    let middle_point_x = ((x2 - x1) / 2) + x1;
-    let middle_point_y = ((y2 - y1) / 2) + y1;
+    let middle_point_x = ((x2 - x1) / 2) + x1 + offset_x;
+    let middle_point_y = ((y2 - y1) / 2) + y1 + offset_y;
 
     if smooth {
         // Minize game
@@ -61,7 +61,7 @@ pub fn click_buton(
         let cx = rng.gen_range(enigo.mouse_location().0..enigo.main_display_size().0);
         let cy = rng.gen_range(enigo.mouse_location().1..enigo.main_display_size().1);
         // Move the cursor with the bezier function
-        bezier_move(enigo, x1, y1, x2, y2, cx, cy, steps);
+        bezier_move(enigo, x1, y1, middle_point_x, middle_point_y, cx, cy, steps);
         // Go back into game and click the button
         enigo.key_sequence_parse("{+ALT}{+TAB}");
         sleep(Duration::from_millis(rng.gen_range(50..70)));
@@ -127,7 +127,7 @@ pub fn click_buton_right(
         let cx = rng.gen_range(enigo.mouse_location().0..enigo.main_display_size().0);
         let cy = rng.gen_range(enigo.mouse_location().1..enigo.main_display_size().1);
         // Move the cursor with the bezier function
-        bezier_move(enigo, x1, y1, x2, y2, cx, cy, steps);
+        bezier_move(enigo, x1, y1, middle_point_x, middle_point_y, cx, cy, steps);
         // Go back into game and click the button
         enigo.key_sequence_parse("{+ALT}{+TAB}{-TAB}{-ALT}");
         enigo.mouse_click(MouseButton::Right);
@@ -158,6 +158,7 @@ pub fn click_buton_direct(
         // Randomize control points for bezier curve. Goes from mouse location to the end of the screen.
         let cx = rng.gen_range(enigo.mouse_location().0..enigo.main_display_size().0);
         let cy = rng.gen_range(enigo.mouse_location().1..enigo.main_display_size().1);
+        
         // Move the cursor with the bezier function
         bezier_move(
             enigo,
