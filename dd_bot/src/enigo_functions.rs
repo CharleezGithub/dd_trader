@@ -47,14 +47,18 @@ pub fn click_buton(
         return Err(CommandError::ExecutionFailed(output_str));
     }
 
+    let mut rng = rand::thread_rng();
+
+    // Salt the pixels so that it does not click the same pixel every time.
+    let salt = rng.gen_range(1..9);
+
     // Gets the middle of the detected play button and clicks it
-    let middle_point_x = ((x2 - x1) / 2) + x1 + offset_x;
-    let middle_point_y = ((y2 - y1) / 2) + y1 + offset_y;
+    let middle_point_x = ((x2 - x1) / 2) + x1 + offset_x + salt;
+    let middle_point_y = ((y2 - y1) / 2) + y1 + offset_y + salt;
 
     if smooth {
         // Minize game
         enigo.key_sequence_parse("{+META}m{-META}");
-        let mut rng = rand::thread_rng();
         // Randomize steps (Amount of times it moves the cursor to get to destination)
         let steps = rng.gen_range(50..100);
         // Randomize control points for bezier curve. Goes from mouse location to the end of the screen.

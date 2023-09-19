@@ -153,8 +153,16 @@ fn trade(
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
 
+    let mut user_is_in_trade = false;
+
+    // Type in the name of the trader
     enigo.key_sequence_parse(trader_id);
 
+    // This runs the obj_detection script which tries to find the trade button.
+    // If the person is not in the game, then there will be no trade button to press.
+    // The obj_detection script runs for 4 minutes
+
+    // Clicks directly on the first person below the bot, which should be the player to trade with.
     match enigo_functions::click_buton_right_direct(&mut enigo, 1824, 312, true, 0, 0) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
@@ -164,27 +172,38 @@ fn trade(
     let output = Command::new("python")
         .arg("obj_detection.py")
         .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/images/trade_send_request.png")
-        .output()
-        .expect("Failed to execute command");
+        .output();
 
-    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
-        Ok(_) => println!("Successfully clicked button!"),
-        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    user_is_in_trade = match &output {
+        Ok(_) => true,
+        Err(_) => false,
+    };
+    if user_is_in_trade {
+        match enigo_functions::click_buton(&mut enigo, output.unwrap(), true, 0, 0) {
+            Ok(_) => println!("Successfully clicked button!"),
+            Err(err) => println!("Got error while trying to click button: {:?}", err),
+        }
     }
-
-    // Check if trade request was accepted
-    let output = Command::new("python")
-        .arg("obj_detection.py")
-        .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/images/trade_send_request.png")
-        .output()
-        .expect("Failed to execute command");
+    // Else go back to main window and return.
+    else {
+        return_to_lobby();
+        return;
+    }
 
     // Check if user has put in 50 gold for the trade fee
     let output = Command::new("python")
         .arg("obj_detection.py")
         .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/images/gold_fee.png")
-        .output()
-        .expect("Failed to execute command");
+        .output();
+
+    match output {
+        Ok(_) => println!("User put in the gold fee."),
+        Err(_) => {
+            println!("User did not put in gold fee..");
+            return_to_lobby();
+            return;
+        }
+    }
 
     // Click the checkbox
     let output = Command::new("python")
@@ -197,6 +216,23 @@ fn trade(
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
+}
+
+fn return_to_lobby() {
+    let mut enigo = Enigo::new();
+
+
+    let output = Command::new("python")
+    .arg("obj_detection.py")
+    .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/images/play_tab.png")
+    .output()
+    .expect("Failed to execute command");
+
+    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+    return;
 }
 
 fn start_game(enigo: &mut Enigo, launcher_name: &str) {
