@@ -245,6 +245,6 @@ pub fn bezier_move(
 
         enigo.mouse_move_to(x.round() as i32, y.round() as i32);
         sleep(Duration::from_millis(rng.gen_range(1..3)));
-        println!("{}", i)
+        //println!("{}", i)
     }
 }
