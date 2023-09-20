@@ -50,7 +50,7 @@ pub fn click_buton(
     let mut rng = rand::thread_rng();
 
     // Salt the pixels so that it does not click the same pixel every time.
-    let salt = rng.gen_range(1..9);
+    let salt = rng.gen_range(-9..9);
 
     // Gets the middle of the detected play button and clicks it
     let middle_point_x = ((x2 - x1) / 2) + x1 + offset_x + salt;
@@ -117,9 +117,14 @@ pub fn click_buton_right(
         return Err(CommandError::ExecutionFailed(output_str));
     }
 
+    let mut rng = rand::thread_rng();
+
+    // Salt the pixels so that it does not click the same pixel every time.
+    let salt = rng.gen_range(-9..9);
+
     // Gets the middle of the detected play button and clicks it
-    let middle_point_x = ((x2 - x1) / 2) + x1 + offset_x;
-    let middle_point_y = ((y2 - y1) / 2) + y1 + offset_y;
+    let middle_point_x = ((x2 - x1) / 2) + x1 + offset_x + salt;
+    let middle_point_y = ((y2 - y1) / 2) + y1 + offset_y + salt;
 
     if smooth {
         // Minize game
@@ -133,7 +138,10 @@ pub fn click_buton_right(
         // Move the cursor with the bezier function
         bezier_move(enigo, x1, y1, middle_point_x, middle_point_y, cx, cy, steps);
         // Go back into game and click the button
-        enigo.key_sequence_parse("{+ALT}{+TAB}{-TAB}{-ALT}");
+        enigo.key_sequence_parse("{+ALT}{+TAB}");
+        sleep(Duration::from_millis(rng.gen_range(50..70)));
+        enigo.key_sequence_parse("{-TAB}{-ALT}");
+        sleep(Duration::from_millis(rng.gen_range(500..1000)));
         enigo.mouse_click(MouseButton::Right);
         Ok(())
     } else {
@@ -175,7 +183,10 @@ pub fn click_buton_direct(
             steps,
         );
         // Go back into game and click the button
-        enigo.key_sequence_parse("{+ALT}{+TAB}{-TAB}{-ALT}");
+        enigo.key_sequence_parse("{+ALT}{+TAB}");
+        sleep(Duration::from_millis(rng.gen_range(50..70)));
+        enigo.key_sequence_parse("{-TAB}{-ALT}");
+        sleep(Duration::from_millis(rng.gen_range(500..1000)));
         enigo.mouse_click(MouseButton::Left);
         Ok(())
     } else {
@@ -215,7 +226,10 @@ pub fn click_buton_right_direct(
             steps,
         );
         // Go back into game and click the button
-        enigo.key_sequence_parse("{+ALT}{+TAB}{-TAB}{-ALT}");
+        enigo.key_sequence_parse("{+ALT}{+TAB}");
+        sleep(Duration::from_millis(rng.gen_range(50..70)));
+        enigo.key_sequence_parse("{-TAB}{-ALT}");
+        sleep(Duration::from_millis(rng.gen_range(500..1000)));
         enigo.mouse_click(MouseButton::Right);
         Ok(())
     } else {
