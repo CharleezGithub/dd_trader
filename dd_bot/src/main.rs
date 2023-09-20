@@ -231,6 +231,15 @@ fn trade(
             return;
         }
     }
+
+    // Click the magnifying glasses on top of the items
+    let output = Command::new("python")
+        .arg("python_helpers/inspect_items.py")
+        .arg("images/gold_fee_double_check.png")
+        .output()
+        .expect("Failed to execute command");
+
+
 }
 
 fn return_to_lobby() {

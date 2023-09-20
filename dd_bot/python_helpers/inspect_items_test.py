@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import sys
 
 
 def extract_goldish_color(img):
@@ -59,30 +60,45 @@ def template_matching(image_path, template_path, threshold=0.90):
     res = cv2.matchTemplate(emphasized_img, emphasized_template, cv2.TM_CCOEFF_NORMED)
     loc = np.where(res >= threshold)
 
-    detected_instances = 0
-
     # Show the emphasized image
     cv2.imshow("Emphasized Image", emphasized_img)
     cv2.waitKey(0)
+
+    detected_instances = 0
+    coords = []
 
     # Iterate through the detected locations and draw rectangles
     for pt in zip(*loc[::-1]):
         confidence = res[pt[1]][pt[0]]
         cv2.rectangle(img_display, pt, (pt[0] + w, pt[1] + h), (0, 255, 0), 2)
+
+        # Append the top-left and bottom-right corners
+        coords.append([f"{pt[0]} {pt[1]} {pt[0] + w} {pt[1] + h}"])
+
         detected_instances += 1
-        print(f"Confidence: {confidence:.2f}")
+        # print(f"Confidence: {confidence:.2f}")
 
     # Display the result with detections
     cv2.imshow("Detected Icons", img_display)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-    print(f"Detected {detected_instances} instances of the icon.")
+    print(detected_instances)
+    for i in range(detected_instances):
+        print(coords[i][0])
 
     return detected_instances
 
 
-# Test the function
-image_path = "test2.png"
-template_path = "inspect_items.png"
-template_matching(image_path, template_path)
+# sys.argv[0] is the script name itself.
+# sys.argv[1] will be "my_argument_value" if provided.
+
+if len(sys.argv) > 1:
+    image_name = sys.argv[1]
+else:
+    image_name = "images/play.png"
+
+# Run the function
+image_name = "images/test2.png"
+template_path = "images/inspect_items.png"
+template_matching(image_name, template_path)
