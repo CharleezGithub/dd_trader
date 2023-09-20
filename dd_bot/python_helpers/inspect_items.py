@@ -62,7 +62,7 @@ def template_matching(image_path, template_path, threshold=0.90):
 
     # Show the emphasized image
     cv2.imshow("Emphasized Image", emphasized_img)
-    cv2.waitKey(0)
+    # cv2.waitKey(0)
 
     detected_instances = 0
     coords = []
@@ -80,12 +80,11 @@ def template_matching(image_path, template_path, threshold=0.90):
 
     # Display the result with detections
     cv2.imshow("Detected Icons", img_display)
-    cv2.waitKey(0)
+    # cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-    print(detected_instances)
-    for i in range(detected_instances):
-        print(coords[i][0])
+    # Create a comma-separated string of coordinates and print it
+    print(",".join([coord[0] for coord in coords]))
 
     return detected_instances
 

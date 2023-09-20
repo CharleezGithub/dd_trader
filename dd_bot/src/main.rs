@@ -2,6 +2,7 @@ use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
+use std::str;
 
 use enigo::*;
 
@@ -238,6 +239,17 @@ fn trade(
         .arg("images/gold_fee_double_check.png")
         .output()
         .expect("Failed to execute command");
+
+    // Convert the output bytes to a string
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    // Split the string on commas to get the list of coordinates
+    let coords: Vec<&str> = output_str.split(',').collect();
+
+    // Now, coords contains each of the coordinates
+    for coord in coords.iter() {
+        println!("{}", coord);
+    }
 
 
 }
