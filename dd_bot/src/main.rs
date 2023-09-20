@@ -5,6 +5,7 @@ use std::time::Duration;
 use std::str;
 
 use enigo::*;
+use rand::Rng;
 
 // import Rocket
 #[macro_use]
@@ -243,15 +244,33 @@ fn trade(
     // Convert the output bytes to a string
     let output_str = str::from_utf8(&output.stdout).unwrap().trim();
 
-    // Split the string on commas to get the list of coordinates
-    let coords: Vec<&str> = output_str.split(',').collect();
+    // Split the string on newlines to get the list of coordinates
+    let coords: Vec<&str> = output_str.split('\n').collect();
 
     // Now, coords contains each of the coordinates
-    for coord in coords.iter() {
-        println!("{}", coord);
+    for coord_str in coords.iter() {
+        let coord: Vec<i32> = coord_str.split_whitespace()
+                                    .map(|s| s.parse().expect("Failed to parse coordinate"))
+                                    .collect();
+
+        if coord.len() == 4 {
+            let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
+
+            let mut rng = rand::thread_rng();
+
+            // Salt the pixels so that it does not click the same pixel every time.
+            let salt = rng.gen_range(-9..9);
+
+            // Gets the middle of the detected play button and clicks it
+            let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
+            let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
+
+            match enigo_functions::click_buton_right_direct(&mut enigo, middle_point_x, middle_point_y, true, true, 0, 0) {
+                Ok(_) => println!("Successfully clicked button!"),
+                Err(err) => println!("Got error while trying to click button: {:?}", err),
+            }
+        }
     }
-
-
 }
 
 fn return_to_lobby() {
