@@ -1,8 +1,8 @@
 use std::process::Command;
+use std::str;
 use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
-use std::str;
 
 use enigo::*;
 use rand::Rng;
@@ -25,7 +25,7 @@ struct Trader {
     discord_id: String,
     items: Vec<String>,
     // gold: i32, // IMPLEMENT THIS LATER FOR GOLD TRADES
-    // has_paid_gold_fee: bool // IMPLEMENT THIS LATER FOR TRADES
+    has_paid_gold_fee: bool, // IMPLEMENT THIS LATER FOR TRADES
 }
 
 enum TradersContainer {
@@ -37,6 +37,24 @@ impl TradersContainer {
         match self {
             TradersContainer::ActiveTraders(traders) => {
                 traders.push(trader);
+            }
+        }
+    }
+
+    fn get_trader_by_id(&self, trader_id: &str) -> Option<&Trader> {
+        match self {
+            TradersContainer::ActiveTraders(traders) => {
+                traders.iter().find(|&trader| trader.id == trader_id)
+            }
+        }
+    }
+
+    fn update_gold_fee_status(&mut self, trader_id: &str, new_status: bool) {
+        match self {
+            TradersContainer::ActiveTraders(traders) => {
+                if let Some(trader) = traders.iter_mut().find(|&trader| trader.id == trader_id) {
+                    trader.has_paid_gold_fee = new_status;
+                }
             }
         }
     }
@@ -108,6 +126,7 @@ fn trade(
     enigo: &State<Arc<Mutex<Enigo>>>,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     trader_id: &str,
+    traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) {
     let mut enigo = enigo.lock().unwrap();
 
@@ -249,9 +268,10 @@ fn trade(
 
     // Now, coords contains each of the coordinates
     for coord_str in coords.iter() {
-        let coord: Vec<i32> = coord_str.split_whitespace()
-                                    .map(|s| s.parse().expect("Failed to parse coordinate"))
-                                    .collect();
+        let coord: Vec<i32> = coord_str
+            .split_whitespace()
+            .map(|s| s.parse().expect("Failed to parse coordinate"))
+            .collect();
 
         if coord.len() == 4 {
             let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
@@ -265,7 +285,15 @@ fn trade(
             let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
             let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
 
-            match enigo_functions::click_buton_right_direct(&mut enigo, middle_point_x, middle_point_y, true, true, 0, 0) {
+            match enigo_functions::click_buton_right_direct(
+                &mut enigo,
+                middle_point_x,
+                middle_point_y,
+                true,
+                true,
+                0,
+                0,
+            ) {
                 Ok(_) => println!("Successfully clicked button!"),
                 Err(err) => println!("Got error while trying to click button: {:?}", err),
             }
@@ -273,6 +301,20 @@ fn trade(
     }
 
     // Click the final checkpoint to get the 50 gold fee
+
+    // When paid, set has_paid_gold_fee to true
+    let mut traders = traders_container.lock().unwrap();
+    let trader = traders.get_trader_by_id(trader_id);
+
+    // Check if trader exists
+    match trader {
+        Some(_) => println!(""),
+        None => println!("Trader not found"),
+    }
+
+    traders.update_gold_fee_status(trader_id, true);
+
+
 }
 
 fn return_to_lobby() {
@@ -324,11 +366,12 @@ fn trade_request(
         id: String::from(in_game_id),
         discord_id: String::from(discord_id),
         items: item_links,
+        has_paid_gold_fee: false,
     };
 
     traders.append(trader);
 
-    trade(enigo, bot_info, in_game_id);
+    trade(enigo, bot_info, in_game_id, traders_container);
 
     format!("TradeBot ready\n{}", info.id)
 }
