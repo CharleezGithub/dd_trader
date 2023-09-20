@@ -11,7 +11,8 @@ import sys
 if len(sys.argv) > 1:
     image_name = sys.argv[1]
 else:
-    image_name = "C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/src/images/play.png"
+    image_name = "images/play.png"
+    image_name = "python_helpers/images/gold_fee_double_check.png"
 
 max_val = 0.00
 
@@ -41,7 +42,7 @@ while max_val < 0.90:
 
     tries += 1
     time.sleep(1)
-    #print(f"Certainty Score: {max_val:.2f}")
+    print(f"Certainty Score: {max_val:.2f}")
 
 
 if tries < 240:
@@ -50,10 +51,12 @@ if tries < 240:
     bottom_right = (top_left[0] + template.shape[1], top_left[1] + template.shape[0])
 
     # Draw a rectangle around the matched object
-    cv2.rectangle(main_image, top_left, bottom_right, (0, 255, 0), 2)  # Change rectangle color to green for visibility
+    cv2.rectangle(
+        main_image, top_left, bottom_right, (0, 255, 0), 2
+    )  # Change rectangle color to green for visibility
 
     # Display the result in a named window
-    window_name = 'Detected Object'
+    window_name = "Detected Object"
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
     # Set the window to fullscreen
     cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
@@ -68,10 +71,15 @@ if tries < 240:
     screen_bottom_right = (x + bottom_right[0], y + bottom_right[1])
 
     # Top left coords, Bottom right coords. x1 y1 x2 y2
-    print(screen_top_left[0], screen_top_left[1], screen_bottom_right[0], screen_bottom_right[1])
+    print(
+        screen_top_left[0],
+        screen_top_left[1],
+        screen_bottom_right[0],
+        screen_bottom_right[1],
+    )
 
     # Print the certainty score (i.e., the maximum correlation coefficient)
-    #print(f"Certainty Score: {max_val:.2f}")
+    # print(f"Certainty Score: {max_val:.2f}")
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()

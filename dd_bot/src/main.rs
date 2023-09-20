@@ -193,7 +193,7 @@ fn trade(
     // Check if user has put in 50 gold for the trade fee
     let output = Command::new("python")
         .arg("obj_detection.py")
-        .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/images/gold_fee.png")
+        .arg("images/gold_fee.png")
         .output();
 
     match output {
@@ -216,17 +216,31 @@ fn trade(
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
+
+    // Double check that the total gold is still the same in the trade confirmation window
+    let output = Command::new("python")
+        .arg("obj_detection.py")
+        .arg("images/gold_fee_double_check.png")
+        .output();
+
+    match output {
+        Ok(_) => println!("User put in the gold fee."),
+        Err(_) => {
+            println!("User did not put in gold fee..");
+            return_to_lobby();
+            return;
+        }
+    }
 }
 
 fn return_to_lobby() {
     let mut enigo = Enigo::new();
 
-
     let output = Command::new("python")
-    .arg("obj_detection.py")
-    .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/images/play_tab.png")
-    .output()
-    .expect("Failed to execute command");
+        .arg("obj_detection.py")
+        .arg("C:/Users/Alex/Desktop/VSCode/dd_trader/dd_bot/images/play_tab.png")
+        .output()
+        .expect("Failed to execute command");
 
     match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
         Ok(_) => println!("Successfully clicked button!"),
