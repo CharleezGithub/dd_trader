@@ -45,10 +45,56 @@ def extract_goldish_color(img):
     return emphasized
 
 
-def template_matching(image_path, template_path, threshold=0.90):
+def apply_gaussian_blur(img, kernel_size=(1, 1)):
+    """
+    Apply Gaussian blur to the image.
+    """
+    return cv2.GaussianBlur(img, kernel_size, 0)
+
+
+def non_max_suppression(boxes, overlapThresh):
+    """
+    Non-max suppression to remove overlapping bounding boxes.
+    """
+    if len(boxes) == 0:
+        return []
+
+    if boxes.dtype.kind == "i":
+        boxes = boxes.astype("float")
+
+    pick = []
+    x1 = boxes[:, 0]
+    y1 = boxes[:, 1]
+    x2 = boxes[:, 2]
+    y2 = boxes[:, 3]
+    area = (x2 - x1 + 1) * (y2 - y1 + 1)
+    idxs = np.argsort(y2)
+
+    while len(idxs) > 0:
+        last = len(idxs) - 1
+        i = idxs[last]
+        pick.append(i)
+        suppress = [last]
+        for pos in range(0, last):
+            j = idxs[pos]
+            xx1 = max(x1[i], x1[j])
+            yy1 = max(y1[i], y1[j])
+            xx2 = min(x2[i], x2[j])
+            yy2 = min(y2[i], y1[j])
+            w = max(0, xx2 - xx1 + 1)
+            h = max(0, yy2 - yy1 + 1)
+            overlap = float(w * h) / area[j]
+            if overlap > overlapThresh:
+                suppress.append(pos)
+        idxs = np.delete(idxs, suppress)
+
+    return boxes[pick].astype("int")
+
+
+def template_matching(image_path, template_path, threshold=0.70):
     # Load the template and image
-    template = cv2.imread(template_path)
-    img = cv2.imread(image_path)
+    img = apply_gaussian_blur(cv2.imread(image_path))
+    template = apply_gaussian_blur(cv2.imread(template_path))
     img_display = img.copy()  # For displaying the result
 
     emphasized_img = extract_goldish_color(img)
@@ -62,25 +108,34 @@ def template_matching(image_path, template_path, threshold=0.90):
 
     # Show the emphasized image
     cv2.imshow("Emphasized Image", emphasized_img)
-    # cv2.waitKey(0)
+    cv2.waitKey(0)
 
     detected_instances = 0
     coords = []
 
+    boxes = []
+
     # Iterate through the detected locations and draw rectangles
     for pt in zip(*loc[::-1]):
         confidence = res[pt[1]][pt[0]]
-        cv2.rectangle(img_display, pt, (pt[0] + w, pt[1] + h), (0, 255, 0), 2)
+        boxes.append([pt[0], pt[1], pt[0] + w, pt[1] + h])
 
-        # Append the top-left and bottom-right corners
-        coords.append([f"{pt[0]} {pt[1]} {pt[0] + w} {pt[1] + h}"])
+    boxes = np.array(boxes)
+    boxes = non_max_suppression(
+        boxes, 0.5
+    )  # 0.5 is the overlap threshold, you can adjust this value
+
+    for box in boxes:
+        cv2.rectangle(img_display, (box[0], box[1]), (box[2], box[3]), (0, 255, 0), 2)
 
         detected_instances += 1
-        # print(f"Confidence: {confidence:.2f}")
+        print(f"Confidence: {confidence:.2f}")
+
+    print("Detected:", detected_instances)
 
     # Display the result with detections
     cv2.imshow("Detected Icons", img_display)
-    # cv2.waitKey(0)
+    cv2.waitKey(0)
     cv2.destroyAllWindows()
 
     # Create a comma-separated string of coordinates and print it
@@ -98,6 +153,6 @@ else:
     image_name = "images/play.png"
 
 # Run the function
-image_name = "images/test2.png"
+image_name = "images/test3.png"
 template_path = "images/inspect_items.png"
 template_matching(image_name, template_path)
