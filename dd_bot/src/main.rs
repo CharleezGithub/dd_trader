@@ -271,6 +271,8 @@ fn trade(
             }
         }
     }
+
+    // Click the final checkpoint to get the 50 gold fee
 }
 
 fn return_to_lobby() {
