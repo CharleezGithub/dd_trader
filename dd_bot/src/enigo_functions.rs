@@ -156,21 +156,44 @@ pub fn click_buton_direct(
     x: i32,
     y: i32,
     smooth: bool,
+    minimize: bool,
     offset_x: i32,
     offset_y: i32,
 ) -> Result<(), CommandError> {
     println!("{}, {}", x, y);
 
     if smooth {
-        // Minize game
-        enigo.key_sequence_parse("{+META}m{-META}");
+        if minimize {
+            // Minize game
+            enigo.key_sequence_parse("{+META}m{-META}");
+        } else {
+            // At least go out of the game while moving the mouse
+            enigo.key_sequence_parse("{+META}{-META}");
+        }
+
         let mut rng = rand::thread_rng();
+        let mut rng2 = rand::thread_rng();
         // Randomize steps (Amount of times it moves the cursor to get to destination)
-        let steps = rng.gen_range(50..100);
+        let steps: usize;
         // Randomize control points for bezier curve. Goes from mouse location to the end of the screen.
-        let cx = rng.gen_range(enigo.mouse_location().0..enigo.main_display_size().0);
-        let cy = rng.gen_range(enigo.mouse_location().1..enigo.main_display_size().1);
-        
+        let cx: i32;
+        let cy: i32;
+
+        // If we dont minize then we dont want to spend too much time moving the cursor.
+        if minimize {
+            steps = rng.gen_range(50..100);
+            cx = rng.gen_range(enigo.mouse_location().0..enigo.main_display_size().0);
+            cy = rng.gen_range(enigo.mouse_location().1..enigo.main_display_size().1);
+        } else {
+            steps = rng.gen_range(20..30);
+            cx = rng.gen_range(
+                enigo.mouse_location().0..enigo.mouse_location().0 + rng2.gen_range(-50..50),
+            );
+            cy = rng.gen_range(
+                enigo.mouse_location().1..enigo.mouse_location().1 + rng2.gen_range(-50..50),
+            );
+        }
+
         // Move the cursor with the bezier function
         bezier_move(
             enigo,
@@ -182,12 +205,18 @@ pub fn click_buton_direct(
             cy,
             steps,
         );
-        // Go back into game and click the button
-        enigo.key_sequence_parse("{+ALT}{+TAB}");
-        sleep(Duration::from_millis(rng.gen_range(50..70)));
-        enigo.key_sequence_parse("{-TAB}{-ALT}");
-        sleep(Duration::from_millis(rng.gen_range(500..1000)));
-        enigo.mouse_click(MouseButton::Left);
+        if minimize {
+            // Go back into game and click the button
+            enigo.key_sequence_parse("{+ALT}{+TAB}");
+            sleep(Duration::from_millis(rng.gen_range(50..70)));
+            enigo.key_sequence_parse("{-TAB}{-ALT}");
+            sleep(Duration::from_millis(rng.gen_range(500..1000)));
+        }
+        else {
+            enigo.key_sequence_parse("{+META}{-Meta}");
+            sleep(Duration::from_millis(rng.gen_range(100..200)));
+            enigo.mouse_click(MouseButton::Right);
+        }
         Ok(())
     } else {
         enigo.mouse_move_to(x, y);
@@ -200,20 +229,44 @@ pub fn click_buton_right_direct(
     x: i32,
     y: i32,
     smooth: bool,
+    minimize: bool,
     offset_x: i32,
     offset_y: i32,
 ) -> Result<(), CommandError> {
     println!("{}, {}", x, y);
 
     if smooth {
-        // Minize game
-        enigo.key_sequence_parse("{+META}m{-META}");
+        if minimize {
+            // Minize game
+            enigo.key_sequence_parse("{+META}m{-META}");
+        } else {
+            // At least go out of the game while moving the mouse
+            enigo.key_sequence_parse("{+META}{-META}");
+        }
+
         let mut rng = rand::thread_rng();
+        let mut rng2 = rand::thread_rng();
         // Randomize steps (Amount of times it moves the cursor to get to destination)
-        let steps = rng.gen_range(50..100);
+        let steps: usize;
         // Randomize control points for bezier curve. Goes from mouse location to the end of the screen.
-        let cx = rng.gen_range(enigo.mouse_location().0..enigo.main_display_size().0);
-        let cy = rng.gen_range(enigo.mouse_location().1..enigo.main_display_size().1);
+        let cx: i32;
+        let cy: i32;
+
+        // If we dont minize then we dont want to spend too much time moving the cursor.
+        if minimize {
+            steps = rng.gen_range(50..100);
+            cx = rng.gen_range(enigo.mouse_location().0..enigo.main_display_size().0);
+            cy = rng.gen_range(enigo.mouse_location().1..enigo.main_display_size().1);
+        } else {
+            steps = rng.gen_range(20..30);
+            cx = rng.gen_range(
+                enigo.mouse_location().0..enigo.mouse_location().0 + rng2.gen_range(-50..50),
+            );
+            cy = rng.gen_range(
+                enigo.mouse_location().1..enigo.mouse_location().1 + rng2.gen_range(-50..50),
+            );
+        }
+
         // Move the cursor with the bezier function
         bezier_move(
             enigo,
@@ -225,12 +278,18 @@ pub fn click_buton_right_direct(
             cy,
             steps,
         );
-        // Go back into game and click the button
-        enigo.key_sequence_parse("{+ALT}{+TAB}");
-        sleep(Duration::from_millis(rng.gen_range(50..70)));
-        enigo.key_sequence_parse("{-TAB}{-ALT}");
-        sleep(Duration::from_millis(rng.gen_range(500..1000)));
-        enigo.mouse_click(MouseButton::Right);
+        if minimize {
+            // Go back into game and click the button
+            enigo.key_sequence_parse("{+ALT}{+TAB}");
+            sleep(Duration::from_millis(rng.gen_range(50..70)));
+            enigo.key_sequence_parse("{-TAB}{-ALT}");
+            sleep(Duration::from_millis(rng.gen_range(500..1000)));
+        }
+        else {
+            enigo.key_sequence_parse("{+META}{-Meta}");
+            sleep(Duration::from_millis(rng.gen_range(100..200)));
+            enigo.mouse_click(MouseButton::Right);
+        }
         Ok(())
     } else {
         enigo.mouse_move_to(x, y);
