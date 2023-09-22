@@ -44,7 +44,7 @@ impl TradersContainer {
     fn get_trader_by_id(&self, trader_id: &str) -> Option<&Trader> {
         match self {
             TradersContainer::ActiveTraders(traders) => {
-                traders.iter().find(|&trader| trader.id == trader_id)
+                traders.iter().find(|trader| trader.id == trader_id)
             }
         }
     }
@@ -52,13 +52,14 @@ impl TradersContainer {
     fn update_gold_fee_status(&mut self, trader_id: &str, new_status: bool) {
         match self {
             TradersContainer::ActiveTraders(traders) => {
-                if let Some(trader) = traders.iter_mut().find(|&trader| trader.id == trader_id) {
+                if let Some(trader) = traders.iter_mut().find(|trader| trader.id == trader_id) {
                     trader.has_paid_gold_fee = new_status;
                 }
             }
         }
     }
 }
+
 
 // This function does the following:
 // 1. Opens the blacksmith launcher and presses play
