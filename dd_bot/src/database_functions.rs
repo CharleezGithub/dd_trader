@@ -1,7 +1,7 @@
 use rusqlite::{params, Connection, Result};
 
 pub fn get_links_for_user(channel_id: &str, user_id: &str) -> Result<Vec<String>> {
-    let conn = Connection::open("D:/VSCode/dd_trader/trades.db")?;
+    let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
     // Modify the table name to "trade_data"
     let mut stmt = conn.prepare("SELECT item_link FROM trade_data WHERE channel_id = ? AND user_id = ?")?;
