@@ -302,6 +302,17 @@ fn trade(
     }
 
     // Click the final checkpoint to get the 50 gold fee
+    let output = Command::new("python")
+        .arg("python_helpers/python_helpers/obj_detection.py")
+        .arg("images/trade_checkbox.png")
+        .output()
+        .expect("Failed to execute command");
+
+    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
 
     // When paid, set has_paid_gold_fee to true
     let mut traders = traders_container.lock().unwrap();
@@ -314,8 +325,6 @@ fn trade(
     }
 
     traders.update_gold_fee_status(trader_id, true);
-
-
 }
 
 fn return_to_lobby() {

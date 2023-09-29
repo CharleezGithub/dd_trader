@@ -80,7 +80,7 @@ def non_max_suppression(boxes, overlapThresh):
             xx1 = max(x1[i], x1[j])
             yy1 = max(y1[i], y1[j])
             xx2 = min(x2[i], x2[j])
-            yy2 = min(y2[i], y1[j])
+            yy2 = min(y2[i], y2[j])
             w = max(0, xx2 - xx1 + 1)
             h = max(0, yy2 - yy1 + 1)
             overlap = float(w * h) / area[j]
@@ -127,11 +127,14 @@ def template_matching(image_path, template_path, threshold=0.70):
 
     for box in boxes:
         cv2.rectangle(img_display, (box[0], box[1]), (box[2], box[3]), (0, 255, 0), 2)
+        print(
+            f"{box[0]} {box[1]} {box[2]} {box[3]}"
+        )  # Print coordinates in the format Rust script expects
 
         detected_instances += 1
-        print(f"Confidence: {confidence:.2f}")
+        #print(f"Confidence: {confidence:.2f}")
 
-    print("Detected:", detected_instances)
+    #print("Detected:", detected_instances)
 
     # Display the result with detections
     cv2.imshow("Detected Icons", img_display)
@@ -139,7 +142,7 @@ def template_matching(image_path, template_path, threshold=0.70):
     cv2.destroyAllWindows()
 
     # Create a comma-separated string of coordinates and print it
-    print(",".join([coord[0] for coord in coords]))
+    #print(",".join([coord[0] for coord in coords]))
 
     return detected_instances
 
@@ -150,9 +153,8 @@ def template_matching(image_path, template_path, threshold=0.70):
 if len(sys.argv) > 1:
     image_name = sys.argv[1]
 else:
-    image_name = "images/play.png"
+    image_name = "images/test4.png"
 
 # Run the function
-image_name = "images/test3.png"
 template_path = "images/inspect_items.png"
 template_matching(image_name, template_path)

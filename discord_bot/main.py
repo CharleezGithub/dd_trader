@@ -230,6 +230,57 @@ async def trade_accept(ctx, user: discord.Member):
             f"{ctx.author.mention}, you don't have a pending trade request from {user.mention}!"
         )
 
+@bot.command(name="add-gold")
+async def add_gold(ctx, gold: int):
+    """Add gold to a specific trade."""
+    
+    # Ensure the command is used in the "Middleman Trades" category
+    if ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+    
+    discord_id = str(ctx.author.id)  # Get user ID from context
+    channel_id = str(ctx.channel.id)  # Get channel ID from context
+    
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+    
+    try:
+        # Fetch the trader's ID from the database using the Discord ID
+        cursor.execute("SELECT id FROM traders WHERE discord_id = ?", (discord_id,))
+        trader = cursor.fetchone()
+        
+        if not trader:
+            await ctx.send("You are not registered as a trader.")
+            return
+        
+        trader_id = trader[0]
+        
+        # Fetch the trade from the database using the channel ID and trader ID
+        cursor.execute("SELECT id, trader1_id, trader2_id FROM trades WHERE (channel_id = ?) AND (trader1_id = ? OR trader2_id = ?) AND status = 'ongoing'", (channel_id, trader_id, trader_id))
+        trade = cursor.fetchone()
+        
+        if not trade:
+            await ctx.send("No ongoing trade found in this channel for you.")
+            return
+        
+        # Update the appropriate gold amount
+        if trade[1] == trader_id:  # If the trader is trader1
+            cursor.execute("UPDATE trades SET trader1_gold = trader1_gold + ? WHERE id = ?", (gold, trade[0]))
+        elif trade[2] == trader_id:  # If the trader is trader2
+            cursor.execute("UPDATE trades SET trader2_gold = trader2_gold + ? WHERE id = ?", (gold, trade[0]))
+        
+        conn.commit()
+        await ctx.send(f"Successfully added {gold} gold to the trade in this channel.")
+        
+    except sqlite3.Error as e:
+        await ctx.send(f"An error occurred: {e}")
+    finally:
+        conn.close()
+
+
 
 @bot.command(name="add-items")
 async def add_items(ctx, *links: str):
