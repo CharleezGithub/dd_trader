@@ -208,15 +208,6 @@ async def trade_accept(ctx, user: discord.Member):
         cursor.execute("SELECT id FROM traders WHERE discord_id=?", (str(user.id),))
         trader2_id = cursor.fetchone()[0]
         
-        # Register the trade in the trades table with the obtained IDs of the traders
-        cursor.execute("INSERT INTO trades (trader1_id, trader2_id, channel_id) VALUES (?, ?, ?)", (trader1_id, trader2_id, str(ctx.channel.id)))
-        
-        # Commit the transaction and close the connection to the database
-        conn.commit()
-        conn.close()
-        
-        await ctx.send(f"{ctx.author.mention} has accepted the trade request from {user.mention}!")
-        
         # Fetch or create the "Middleman Trades" category
         category_name = "Middleman Trades"
         category = discord.utils.get(ctx.guild.categories, name=category_name)
@@ -233,6 +224,15 @@ async def trade_accept(ctx, user: discord.Member):
         
         channel_name = f"trade-{ctx.author.name}-and-{user.name}"
         trade_channel = await ctx.guild.create_text_channel(channel_name, overwrites=overwrites, category=category)
+        
+        # Register the trade in the trades table with the obtained IDs of the traders and the ID of the newly created channel
+        cursor.execute("INSERT INTO trades (trader1_id, trader2_id, channel_id) VALUES (?, ?, ?)", (trader1_id, trader2_id, str(trade_channel.id)))
+        
+        # Commit the transaction and close the connection to the database
+        conn.commit()
+        conn.close()
+        
+        await ctx.send(f"{ctx.author.mention} has accepted the trade request from {user.mention}!")
         
         await trade_channel.send(
             f"This channel has been created for {ctx.author.mention} and {user.mention} to discuss their trade. Please keep all trade discussions in this channel.\nThe processing fee is 50 gold."
