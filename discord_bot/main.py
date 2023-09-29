@@ -230,6 +230,7 @@ async def trade_accept(ctx, user: discord.Member):
             f"{ctx.author.mention}, you don't have a pending trade request from {user.mention}!"
         )
 
+
 @bot.command(name="add-gold")
 async def add_gold(ctx, gold: int):
     """Add gold to a specific trade."""
@@ -258,12 +259,12 @@ async def add_gold(ctx, gold: int):
         
         trader_id = trader[0]
         
-        # Fetch the trade from the database using the channel ID and trader ID
-        cursor.execute("SELECT id, trader1_id, trader2_id FROM trades WHERE (channel_id = ?) AND (trader1_id = ? OR trader2_id = ?) AND status = 'ongoing'", (channel_id, trader_id, trader_id))
+        # Fetch the ongoing trade from the database using the unique channel ID
+        cursor.execute("SELECT id, trader1_id, trader2_id FROM trades WHERE channel_id = ? AND status = 'ongoing'", (channel_id,))
         trade = cursor.fetchone()
         
         if not trade:
-            await ctx.send("No ongoing trade found in this channel for you.")
+            await ctx.send("No ongoing trade found in this channel.")
             return
         
         # Update the appropriate gold amount
@@ -271,6 +272,9 @@ async def add_gold(ctx, gold: int):
             cursor.execute("UPDATE trades SET trader1_gold = trader1_gold + ? WHERE id = ?", (gold, trade[0]))
         elif trade[2] == trader_id:  # If the trader is trader2
             cursor.execute("UPDATE trades SET trader2_gold = trader2_gold + ? WHERE id = ?", (gold, trade[0]))
+        else:
+            await ctx.send("You are not part of the trade in this channel.")
+            return
         
         conn.commit()
         await ctx.send(f"Successfully added {gold} gold to the trade in this channel.")
@@ -338,79 +342,81 @@ async def add_items(ctx, *links: str):
 
 @bot.command(name="show-trade")
 async def show_trade(ctx):
-    """Display the items for both users in a specific trade."""
-
+    """Display the items and gold for both users in a specific trade."""
+    
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
-
-    conn = sqlite3.connect("trades.db")
+    
+    conn = sqlite3.connect("trading_bot.db")
     cursor = conn.cursor()
 
-    # Fetch the items associated with the channel from the 'trade_data' table
-    cursor.execute(
-        "SELECT user_id, item_link FROM trade_data WHERE channel_id = ?",
-        (ctx.channel.id,),
-    )
-    rows = cursor.fetchall()
+    try:
+        channel_id = str(ctx.channel.id)
+        
+        # Fetch the trade and traders' info associated with the channel from the 'trades' table
+        cursor.execute("""
+            SELECT id, trader1_id, trader2_id, trader1_gold, trader2_gold 
+            FROM trades 
+            WHERE channel_id = ? AND status = 'ongoing'
+        """, (channel_id,))
+        trade = cursor.fetchone()
 
-    conn.close()
+        if not trade:
+            await ctx.send("No ongoing trade found in this channel.")
+            return
 
-    # Organize items by user
-    trade_data = {}
-    for user_id, item_link in rows:
-        if user_id not in trade_data:
-            trade_data[user_id] = []
-        trade_data[user_id].append(item_link)
+        # Fetch the items associated with the trade from the 'items' table
+        cursor.execute("SELECT trader_id, item_image_url FROM items WHERE trade_id = ?", (trade[0],))
+        rows = cursor.fetchall()
 
-    user_items = trade_data.get(ctx.author.id, [])
+        # Organize items by trader
+        trade_data = {}
+        for trader_id, item_link in rows:
+            if trader_id not in trade_data:
+                trade_data[trader_id] = []
+            trade_data[trader_id].append(item_link)
 
-    # Try to determine the other user in the trade
-    other_users = [uid for uid in trade_data.keys() if uid != ctx.author.id]
-
-    if not other_users:
-        other_user_name = "Other User"
-        other_user_items = []
-    else:
-        other_user_id = other_users[0]
-        other_user = await bot.fetch_user(other_user_id)  # Fetching the user
+        user_items = trade_data.get(trade[1], [])
+        if trade[3] != None:
+            user_gold = trade[3]  # trader1_gold
+        else:
+            user_gold = "No gold"  # trader1_gold
+        
+        # Determine the other user in the trade
+        other_user_id = trade[2]
+        other_user = await bot.fetch_user(other_user_id)
         other_user_name = other_user.name if other_user else "Failed to Retrieve User"
         other_user_items = trade_data.get(other_user_id, [])
-
-    # Display the items
-    embed = discord.Embed(
-        title="Items for Trade",
-        description=f"Trade between {ctx.author.name} and {other_user_name}",
-        color=0x55A7F7,
-    )
-
-    user_items_value = (
-        "\n".join([f"[Item {i+1}]({link})" for i, link in enumerate(user_items)])
-        if user_items
-        else "No items added."
-    )
-    other_user_items_value = (
-        "\n".join([f"[Item {i+1}]({link})" for i, link in enumerate(other_user_items)])
-        if other_user_items
-        else "No items added."
-    )
-
-    embed.add_field(
-        name=f"{ctx.author.name}'s Items", value=user_items_value, inline=True
-    )
-    embed.add_field(
-        name=f"{other_user_name}'s Items", value=other_user_items_value, inline=True
-    )
-
-    buffer = await stitch_images(user_items, other_user_items)
-
-    # Set the image URL in the embed to reference the attachment directly
-    embed.set_image(url="attachment://items.png")
-
-    # Send the embed and the attached image in the same message
-    await ctx.send(embed=embed, file=discord.File(buffer, filename="items.png"))
+        if trade[4] != None:
+            other_user_gold = trade[4]  # trader2_gold
+        else:
+            other_user_gold = "No gold"  # trader2_gold
+        
+        # Display the items and gold
+        embed = discord.Embed(
+            title="Items and Gold for Trade",
+            description=f"Trade between {ctx.author.name} and {other_user_name}",
+            color=0x55A7F7,
+        )
+        
+        user_items_value = "\n".join([f"[Item {i+1}]({link})" for i, link in enumerate(user_items)]) if user_items else "No items added."
+        other_user_items_value = "\n".join([f"[Item {i+1}]({link})" for i, link in enumerate(other_user_items)]) if other_user_items else "No items added."
+        
+        embed.add_field(name=f"{ctx.author.name}'s Items and Gold", value=f"{user_items_value}\nGold: {user_gold}", inline=True)
+        embed.add_field(name=f"{other_user_name}'s Items and Gold", value=f"{other_user_items_value}\nGold: {other_user_gold}", inline=True)
+        
+        buffer = await stitch_images(user_items, other_user_items)
+        embed.set_image(url="attachment://items.png")
+        
+        await ctx.send(embed=embed, file=discord.File(buffer, filename="items.png"))
+        
+    except sqlite3.Error as e:
+        await ctx.send(f"An error occurred: {e}")
+    finally:
+        conn.close()
 
 
 async def stitch_images(user1_urls, user2_urls):
