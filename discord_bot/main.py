@@ -299,57 +299,60 @@ async def add_gold(ctx, gold: int):
 
 
 @bot.command(name="add-items")
-async def add_items(ctx, *links: str):
+async def add_items(ctx, *args: str):
     """Add item image links to a specific trade."""
-
+    
     # Ensure the command is used in the "Middleman Trades" category
     if ctx.channel.category.name != "Middleman Trades":
-        await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
-        )
+        await ctx.send("This command can only be used within the 'Middleman Trades' category!")
         return
 
-    # Ensure the links provided are valid URLs
-    for link in links:
+    # Ensure the user provided pairs of links
+    if len(args) % 2 != 0:
+        await ctx.send("Please provide pairs of item_image_url and info_image_url!")
+        return
+
+    # Validate links
+    for link in args:
         if not link.startswith("http"):
-            await ctx.send(
-                f"The link `{link}` seems invalid. Make sure to provide valid URLs!"
-            )
+            await ctx.send(f"The link `{link}` seems invalid. Make sure to provide valid URLs!")
             return
 
     conn = sqlite3.connect("trading_bot.db")
     cursor = conn.cursor()
 
-    # Ensure 'trade_items' table exists to list all channels
-    cursor.execute(
-        "CREATE TABLE IF NOT EXISTS trade_items (channel_id INTEGER PRIMARY KEY)"
-    )
-    # Insert the channel ID into trade_items if it doesn't already exist
-    cursor.execute(
-        "INSERT OR IGNORE INTO trade_items (channel_id) VALUES (?)", (ctx.channel.id,)
-    )
+    # Fetch the trade_id for the current channel from the trades table
+    cursor.execute("SELECT id FROM trades WHERE channel_id=?", (str(ctx.channel.id),))
+    trade_id = cursor.fetchone()
+    if not trade_id:
+        await ctx.send("No trade associated with this channel!")
+        conn.close()
+        return
+    trade_id = trade_id[0]
 
-    # Ensure the 'trade_data' table exists to store the trade data
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS trade_data (
-            id INTEGER PRIMARY KEY,
-            channel_id INTEGER REFERENCES trade_items(channel_id),
-            user_id INTEGER,
-            item_link TEXT
-        )"""
-    )
+    # Fetch the trader_id from the traders table
+    cursor.execute("SELECT id FROM traders WHERE discord_id=?", (str(ctx.author.id),))
+    trader_id = cursor.fetchone()
+    if not trader_id:
+        await ctx.send("No trader associated with this user!")
+        conn.close()
+        return
+    trader_id = trader_id[0]
 
-    # Insert the data into 'trade_data'
-    for link in links:
+    # Inserting the items into the items table
+    for i in range(0, len(args), 2):
+        item_image_url = args[i]
+        info_image_url = args[i+1]
         cursor.execute(
-            "INSERT OR IGNORE INTO trade_data (channel_id, user_id, item_link) VALUES (?, ?, ?)",
-            (ctx.channel.id, ctx.author.id, link),
+            "INSERT INTO items (trade_id, trader_id, item_image_url, info_image_url) VALUES (?, ?, ?, ?)",
+            (trade_id, trader_id, item_image_url, info_image_url),
         )
 
     conn.commit()
     conn.close()
 
-    await ctx.send(f"Added {len(links)} item(s) to this trade!")
+    await ctx.send(f"Added {len(args)//2} item(s) to this trade!")
+
 
 
 @bot.command(name="show-trade")
