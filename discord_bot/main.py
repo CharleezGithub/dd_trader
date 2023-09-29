@@ -193,42 +193,54 @@ async def trade_accept(ctx, user: discord.Member):
     """Accept a trade request."""
     # Check if there's a pending trade from the mentioned user to the command user
     if user.id in trade_requests and trade_requests[user.id] == ctx.author.id:
-        await ctx.send(
-            f"{ctx.author.mention} has accepted the trade request from {user.mention}!"
-        )
-
+        
+        conn = sqlite3.connect("trading_bot.db")
+        cursor = conn.cursor()
+        
+        # Register the traders if they don't exist in the traders table
+        cursor.execute("INSERT OR IGNORE INTO traders (discord_id) VALUES (?)", (str(ctx.author.id),))
+        cursor.execute("INSERT OR IGNORE INTO traders (discord_id) VALUES (?)", (str(user.id),))
+        
+        # Fetching the IDs of traders from the traders table
+        cursor.execute("SELECT id FROM traders WHERE discord_id=?", (str(ctx.author.id),))
+        trader1_id = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT id FROM traders WHERE discord_id=?", (str(user.id),))
+        trader2_id = cursor.fetchone()[0]
+        
+        # Register the trade in the trades table with the obtained IDs of the traders
+        cursor.execute("INSERT INTO trades (trader1_id, trader2_id, channel_id) VALUES (?, ?, ?)", (trader1_id, trader2_id, str(ctx.channel.id)))
+        
+        # Commit the transaction and close the connection to the database
+        conn.commit()
+        conn.close()
+        
+        await ctx.send(f"{ctx.author.mention} has accepted the trade request from {user.mention}!")
+        
         # Fetch or create the "Middleman Trades" category
         category_name = "Middleman Trades"
         category = discord.utils.get(ctx.guild.categories, name=category_name)
         if category is None:
             category = await ctx.guild.create_category(category_name)
-
+        
         # Create a private channel with permissions for only the two trading users and the bot
         overwrites = {
             ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            ctx.author: discord.PermissionOverwrite(
-                read_messages=True, send_messages=True
-            ),
+            ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
             user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-            ctx.guild.me: discord.PermissionOverwrite(
-                read_messages=True, send_messages=True
-            ),
+            ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
         }
-
+        
         channel_name = f"trade-{ctx.author.name}-and-{user.name}"
-        trade_channel = await ctx.guild.create_text_channel(
-            channel_name, overwrites=overwrites, category=category
-        )
-
+        trade_channel = await ctx.guild.create_text_channel(channel_name, overwrites=overwrites, category=category)
+        
         await trade_channel.send(
             f"This channel has been created for {ctx.author.mention} and {user.mention} to discuss their trade. Please keep all trade discussions in this channel.\nThe processing fee is 50 gold."
         )
-
+        
         del trade_requests[user.id]
     else:
-        await ctx.send(
-            f"{ctx.author.mention}, you don't have a pending trade request from {user.mention}!"
-        )
+        await ctx.send(f"{ctx.author.mention}, you don't have a pending trade request from {user.mention}!")
 
 
 @bot.command(name="add-gold")
