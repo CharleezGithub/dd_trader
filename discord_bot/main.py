@@ -317,7 +317,7 @@ async def add_items(ctx, *links: str):
             )
             return
 
-    conn = sqlite3.connect("trades.db")
+    conn = sqlite3.connect("trading_bot.db")
     cursor = conn.cursor()
 
     # Ensure 'trade_items' table exists to list all channels
