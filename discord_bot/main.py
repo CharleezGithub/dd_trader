@@ -9,7 +9,11 @@ from io import BytesIO
 
 TOKEN = "MTE1MTQ0MTUwMjk1NDg0ODMwNw.GtRAIh.YBUChh8QJi3Cs8jeFbuE18kRJYrAwiCpcxcnz8"
 
-bot = commands.Bot(command_prefix="!")
+intents = discord.Intents.default()
+intents.members = True
+intents.messages = True
+
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Dictionary to store trade requests. Format: {requester_id: requestee_id}
 trade_requests = {}
@@ -370,7 +374,7 @@ async def show_trade(ctx):
 
     try:
         channel_id = str(ctx.channel.id)
-        
+
         cursor.execute("""
             SELECT id, trader1_id, trader2_id, trader1_gold, trader2_gold 
             FROM trades 
@@ -382,51 +386,47 @@ async def show_trade(ctx):
             await ctx.send("No ongoing trade found in this channel.")
             return
 
-        cursor.execute("SELECT trader_id, item_image_url FROM items WHERE trade_id = ?", (trade[0],))
+        cursor.execute("SELECT trader_id, info_image_url FROM items WHERE trade_id = ?", (trade[0],))
         rows = cursor.fetchall()
 
         trade_data = {}
-        for trader_id, item_link in rows:
+        for trader_id, info_image_url in rows:
             if trader_id not in trade_data:
                 trade_data[trader_id] = []
-            trade_data[trader_id].append(item_link)
+            trade_data[trader_id].append(info_image_url)
 
         user_items = trade_data.get(trade[1], [])
         user_gold = trade[3] or "No gold"
 
         other_user_id = trade[2]
-
-        try:
-            other_user = await bot.fetch_user(other_user_id)
-            other_user_name = other_user.name
-        except discord.NotFound:
-            other_user_name = "Unknown User"
-
+        other_user = await bot.fetch_user(other_user_id)
+        other_user_name = other_user.name if other_user else "Unknown User"
         other_user_items = trade_data.get(other_user_id, [])
         other_user_gold = trade[4] or "No gold"
-        
-        # Display the items and gold
+
         embed = discord.Embed(
             title="Items and Gold for Trade",
             description=f"Trade between {ctx.author.name} and {other_user_name}",
             color=0x55A7F7,
         )
-        
-        user_items_value = "\n".join([f"[Item {i+1}]({link})" for i, link in enumerate(user_items)]) if user_items else "No items added."
-        other_user_items_value = "\n".join([f"[Item {i+1}]({link})" for i, link in enumerate(other_user_items)]) if other_user_items else "No items added."
-        
+
+        user_items_value = "\n".join([f"[Item {i + 1}]({link})" for i, link in enumerate(user_items)]) if user_items else "No items added."
+        other_user_items_value = "\n".join([f"[Item {i + 1}]({link})" for i, link in enumerate(other_user_items)]) if other_user_items else "No items added."
+
         embed.add_field(name=f"{ctx.author.name}'s Items and Gold", value=f"{user_items_value}\nGold: {user_gold}", inline=True)
         embed.add_field(name=f"{other_user_name}'s Items and Gold", value=f"{other_user_items_value}\nGold: {other_user_gold}", inline=True)
-        
+
         buffer = await stitch_images(user_items, other_user_items)
         embed.set_image(url="attachment://items.png")
-        
+
         await ctx.send(embed=embed, file=discord.File(buffer, filename="items.png"))
-        
+
     except sqlite3.Error as e:
         await ctx.send(f"An error occurred: {e}")
     finally:
         conn.close()
+
+
 
 
 async def stitch_images(user1_urls, user2_urls):
