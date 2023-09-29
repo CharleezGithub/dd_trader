@@ -358,20 +358,19 @@ async def add_items(ctx, *args: str):
 @bot.command(name="show-trade")
 async def show_trade(ctx):
     """Display the items and gold for both users in a specific trade."""
-    
+
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
-    
+
     conn = sqlite3.connect("trading_bot.db")
     cursor = conn.cursor()
 
     try:
         channel_id = str(ctx.channel.id)
         
-        # Fetch the trade and traders' info associated with the channel from the 'trades' table
         cursor.execute("""
             SELECT id, trader1_id, trader2_id, trader1_gold, trader2_gold 
             FROM trades 
@@ -383,11 +382,9 @@ async def show_trade(ctx):
             await ctx.send("No ongoing trade found in this channel.")
             return
 
-        # Fetch the items associated with the trade from the 'items' table
         cursor.execute("SELECT trader_id, item_image_url FROM items WHERE trade_id = ?", (trade[0],))
         rows = cursor.fetchall()
 
-        # Organize items by trader
         trade_data = {}
         for trader_id, item_link in rows:
             if trader_id not in trade_data:
@@ -395,20 +392,18 @@ async def show_trade(ctx):
             trade_data[trader_id].append(item_link)
 
         user_items = trade_data.get(trade[1], [])
-        if trade[3] != None:
-            user_gold = trade[3]  # trader1_gold
-        else:
-            user_gold = "No gold"  # trader1_gold
-        
-        # Determine the other user in the trade
+        user_gold = trade[3] or "No gold"
+
         other_user_id = trade[2]
-        other_user = await bot.fetch_user(other_user_id)
-        other_user_name = other_user.name if other_user else "Failed to Retrieve User"
+
+        try:
+            other_user = await bot.fetch_user(other_user_id)
+            other_user_name = other_user.name
+        except discord.NotFound:
+            other_user_name = "Unknown User"
+
         other_user_items = trade_data.get(other_user_id, [])
-        if trade[4] != None:
-            other_user_gold = trade[4]  # trader2_gold
-        else:
-            other_user_gold = "No gold"  # trader2_gold
+        other_user_gold = trade[4] or "No gold"
         
         # Display the items and gold
         embed = discord.Embed(
