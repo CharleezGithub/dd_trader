@@ -157,6 +157,9 @@ async def custom_help(ctx, *, command_name=None):
             await ctx.send(f"I couldn't find any help related to `{command_name}`.")
 
 
+import traceback
+
+
 @bot.event
 async def on_command_error(ctx, error):
     """Handle errors triggered by bot commands."""
@@ -174,7 +177,10 @@ async def on_command_error(ctx, error):
         )
     else:
         await ctx.send("An error occurred. Please try again later.")
-        print(f"Unexpected error: {error}")
+        error_traceback = traceback.format_exception(
+            type(error), error, error.__traceback__
+        )
+        print("".join(error_traceback))
 
 
 @bot.command()
@@ -199,118 +205,147 @@ async def trade_accept(ctx, user: discord.Member):
     """Accept a trade request."""
     # Check if there's a pending trade from the mentioned user to the command user
     if user.id in trade_requests and trade_requests[user.id] == ctx.author.id:
-        
         conn = sqlite3.connect("trading_bot.db")
         cursor = conn.cursor()
-        
+
         # Register the traders if they don't exist in the traders table
-        cursor.execute("INSERT OR IGNORE INTO traders (discord_id) VALUES (?)", (str(user.id),))
-        cursor.execute("INSERT OR IGNORE INTO traders (discord_id) VALUES (?)", (str(ctx.author.id),))
-        
+        cursor.execute(
+            "INSERT OR IGNORE INTO traders (discord_id) VALUES (?)",
+            (str(ctx.author.id),),
+        )  # The person who accepts the trade will be id 1
+        cursor.execute(
+            "INSERT OR IGNORE INTO traders (discord_id) VALUES (?)", (str(user.id),)
+        )  # The person who sent the trade will be id 2
+
         # Fetching the IDs of traders from the traders table
-        cursor.execute("SELECT id FROM traders WHERE discord_id=?", (str(ctx.author.id),))
+        cursor.execute(
+            "SELECT id FROM traders WHERE discord_id=?", (str(ctx.author.id),)
+        )
         trader1_id = cursor.fetchone()[0]
-        
+
         cursor.execute("SELECT id FROM traders WHERE discord_id=?", (str(user.id),))
         trader2_id = cursor.fetchone()[0]
-        
+
         # Fetch or create the "Middleman Trades" category
         category_name = "Middleman Trades"
         category = discord.utils.get(ctx.guild.categories, name=category_name)
         if category is None:
             category = await ctx.guild.create_category(category_name)
-        
+
         # Create a private channel with permissions for only the two trading users and the bot
         overwrites = {
             ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+            ctx.author: discord.PermissionOverwrite(
+                read_messages=True, send_messages=True
+            ),
             user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-            ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+            ctx.guild.me: discord.PermissionOverwrite(
+                read_messages=True, send_messages=True
+            ),
         }
-        
+
         channel_name = f"trade-{ctx.author.name}-and-{user.name}"
-        trade_channel = await ctx.guild.create_text_channel(channel_name, overwrites=overwrites, category=category)
-        
+        trade_channel = await ctx.guild.create_text_channel(
+            channel_name, overwrites=overwrites, category=category
+        )
+
         # Register the trade in the trades table with the obtained IDs of the traders and the ID of the newly created channel
-        cursor.execute("INSERT INTO trades (trader1_id, trader2_id, channel_id) VALUES (?, ?, ?)", (trader1_id, trader2_id, str(trade_channel.id)))
-        
+        cursor.execute(
+            "INSERT INTO trades (trader1_id, trader2_id, channel_id) VALUES (?, ?, ?)",
+            (trader1_id, trader2_id, str(trade_channel.id)),
+        )
+
         # Commit the transaction and close the connection to the database
         conn.commit()
         conn.close()
-        
-        await ctx.send(f"{ctx.author.mention} has accepted the trade request from {user.mention}!")
-        
+
+        await ctx.send(
+            f"{ctx.author.mention} has accepted the trade request from {user.mention}!"
+        )
+
         await trade_channel.send(
             f"This channel has been created for {ctx.author.mention} and {user.mention} to discuss their trade. Please keep all trade discussions in this channel.\nThe processing fee is 50 gold."
         )
-        
+
         del trade_requests[user.id]
     else:
-        await ctx.send(f"{ctx.author.mention}, you don't have a pending trade request from {user.mention}!")
+        await ctx.send(
+            f"{ctx.author.mention}, you don't have a pending trade request from {user.mention}!"
+        )
 
 
 @bot.command(name="add-gold")
 async def add_gold(ctx, gold: int):
     """Add gold to a specific trade."""
-    
+
     # Ensure the command is used in the "Middleman Trades" category
     if ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
-    
+
     discord_id = str(ctx.author.id)  # Get user ID from context
     channel_id = str(ctx.channel.id)  # Get channel ID from context
-    
+
     conn = sqlite3.connect("trading_bot.db")
     cursor = conn.cursor()
-    
+
     try:
         # Fetch the trader's ID from the database using the Discord ID
         cursor.execute("SELECT id FROM traders WHERE discord_id = ?", (discord_id,))
         trader = cursor.fetchone()
-        
+
         if not trader:
             await ctx.send("You are not registered as a trader.")
             return
-        
+
         trader_id = trader[0]
-        
+
         # Fetch the ongoing trade from the database using the unique channel ID
-        cursor.execute("SELECT id, trader1_id, trader2_id FROM trades WHERE channel_id = ? AND status = 'ongoing'", (channel_id,))
+        cursor.execute(
+            "SELECT id, trader1_id, trader2_id FROM trades WHERE channel_id = ? AND status = 'ongoing'",
+            (channel_id,),
+        )
         trade = cursor.fetchone()
-        
+
         if not trade:
             await ctx.send("No ongoing trade found in this channel.")
             return
-        
+
         # Update the appropriate gold amount
         if trade[1] == trader_id:  # If the trader is trader1
-            cursor.execute("UPDATE trades SET trader1_gold = trader1_gold + ? WHERE id = ?", (gold, trade[0]))
+            cursor.execute(
+                "UPDATE trades SET trader1_gold = trader1_gold + ? WHERE id = ?",
+                (gold, trade[0]),
+            )
         elif trade[2] == trader_id:  # If the trader is trader2
-            cursor.execute("UPDATE trades SET trader2_gold = trader2_gold + ? WHERE id = ?", (gold, trade[0]))
+            cursor.execute(
+                "UPDATE trades SET trader2_gold = trader2_gold + ? WHERE id = ?",
+                (gold, trade[0]),
+            )
         else:
             await ctx.send("You are not part of the trade in this channel.")
             return
-        
+
         conn.commit()
         await ctx.send(f"Successfully added {gold} gold to the trade in this channel.")
-        
+
     except sqlite3.Error as e:
         await ctx.send(f"An error occurred: {e}")
     finally:
         conn.close()
 
 
-
 @bot.command(name="add-items")
 async def add_items(ctx, *args: str):
     """Add item image links to a specific trade."""
-    
+
     # Ensure the command is used in the "Middleman Trades" category
     if ctx.channel.category.name != "Middleman Trades":
-        await ctx.send("This command can only be used within the 'Middleman Trades' category!")
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
         return
 
     # Ensure the user provided pairs of links
@@ -321,7 +356,9 @@ async def add_items(ctx, *args: str):
     # Validate links
     for link in args:
         if not link.startswith("http"):
-            await ctx.send(f"The link `{link}` seems invalid. Make sure to provide valid URLs!")
+            await ctx.send(
+                f"The link `{link}` seems invalid. Make sure to provide valid URLs!"
+            )
             return
 
     conn = sqlite3.connect("trading_bot.db")
@@ -348,7 +385,7 @@ async def add_items(ctx, *args: str):
     # Inserting the items into the items table
     for i in range(0, len(args), 2):
         item_image_url = args[i]
-        info_image_url = args[i+1]
+        info_image_url = args[i + 1]
         cursor.execute(
             "INSERT INTO items (trade_id, trader_id, item_image_url, info_image_url) VALUES (?, ?, ?, ?)",
             (trade_id, trader_id, item_image_url, info_image_url),
@@ -358,7 +395,6 @@ async def add_items(ctx, *args: str):
     conn.close()
 
     await ctx.send(f"Added {len(args)//2} item(s) to this trade!")
-
 
 
 @bot.command(name="show-trade")
@@ -377,56 +413,94 @@ async def show_trade(ctx):
     try:
         channel_id = str(ctx.channel.id)
 
-        cursor.execute("""
-            SELECT id, trader1_id, trader2_id, trader1_gold, trader2_gold 
+        # Fetch the trade details and traders' Discord IDs
+        cursor.execute(
+            """
+            SELECT trades.id, t1.discord_id, t2.discord_id, trader1_gold, trader2_gold 
             FROM trades 
+            JOIN traders t1 ON trades.trader1_id = t1.id
+            JOIN traders t2 ON trades.trader2_id = t2.id
             WHERE channel_id = ? AND status = 'ongoing'
-        """, (channel_id,))
+        """,
+            (channel_id,),
+        )
         trade = cursor.fetchone()
 
         if not trade:
             await ctx.send("No ongoing trade found in this channel.")
             return
 
-        cursor.execute("SELECT trader_id, info_image_url FROM items WHERE trade_id = ?", (trade[0],))
+        user_discord_id = trade[1] if int(trade[1]) != ctx.author.id else trade[2]
+        other_user_discord_id = trade[2] if int(trade[1]) != ctx.author.id else trade[1]
+
+        user_gold = trade[3] if trade[1] != str(ctx.author.id) else trade[4]
+        other_user_gold = trade[4] if trade[1] != str(ctx.author.id) else trade[3]
+
+        # Use JOIN to get the discord_id along with trader_id and info_image_url.
+        cursor.execute(
+            """
+            SELECT t.discord_id, i.info_image_url 
+            FROM items i
+            JOIN traders t ON i.trader_id = t.id
+            WHERE i.trade_id = ?
+        """,
+            (trade[0],),
+        )
+
         rows = cursor.fetchall()
 
         trade_data = {}
-        for trader_id, info_image_url in rows:
-            if trader_id not in trade_data:
-                trade_data[trader_id] = []
-            trade_data[trader_id].append(info_image_url)
+        for discord_id, info_image_url in rows:
+            if discord_id not in trade_data:
+                trade_data[discord_id] = []
+            trade_data[discord_id].append(info_image_url)
 
-        user_items = trade_data.get(trade[1], [])
-        user_gold = trade[3] or "No gold"
+        # Now, when you access trade_data, use discord_id
+        user_items = trade_data.get(str(user_discord_id), [])
+        other_user_items = trade_data.get(str(other_user_discord_id), [])
 
-        other_user_id = trade[2]
-        
-        # Fetch trader2's discord_id from traders table
-        cursor.execute("SELECT discord_id FROM traders WHERE id = ?", (other_user_id,))
-        other_user_discord_id = cursor.fetchone()[0]
-        print(other_user_discord_id)
+        # Fetch the user
         try:
-            other_user = await bot.fetch_user(int(other_user_discord_id))  # Note that discord_id should be an integer
+            user = await bot.fetch_user(int(user_discord_id))
+            user_name = user.name
+        except discord.NotFound:
+            user_name = "Unknown User"
+        # Fetch the other user
+        try:
+            other_user = await bot.fetch_user(int(other_user_discord_id))
             other_user_name = other_user.name
         except discord.NotFound:
             other_user_name = "Unknown User"
 
-
-        other_user_items = trade_data.get(other_user_id, [])
-        other_user_gold = trade[4] or "No gold"
-
         embed = discord.Embed(
             title="Items and Gold for Trade",
-            description=f"Trade between {ctx.author.name} and {other_user_name}",
+            description=f"Trade between {user_name} and {other_user_name}",
             color=0x55A7F7,
         )
 
-        user_items_value = "\n".join([f"[Item {i + 1}]({link})" for i, link in enumerate(user_items)]) if user_items else "No items added."
-        other_user_items_value = "\n".join([f"[Item {i + 1}]({link})" for i, link in enumerate(other_user_items)]) if other_user_items else "No items added."
+        user_items_value = (
+            "\n".join([f"[Item {i + 1}]({link})" for i, link in enumerate(user_items)])
+            if user_items
+            else "No items added."
+        )
+        other_user_items_value = (
+            "\n".join(
+                [f"[Item {i + 1}]({link})" for i, link in enumerate(other_user_items)]
+            )
+            if other_user_items
+            else "No items added."
+        )
 
-        embed.add_field(name=f"{ctx.author.name}'s Items and Gold", value=f"{user_items_value}\nGold: {user_gold}", inline=True)
-        embed.add_field(name=f"{other_user_name}'s Items and Gold", value=f"{other_user_items_value}\nGold: {other_user_gold}", inline=True)
+        embed.add_field(
+            name=f"{user_name}'s Items and Gold",
+            value=f"{user_items_value}\nGold: {user_gold}",
+            inline=True,
+        )
+        embed.add_field(
+            name=f"{other_user_name}'s Items and Gold",
+            value=f"{other_user_items_value}\nGold: {other_user_gold}",
+            inline=True,
+        )
 
         buffer = await stitch_images(user_items, other_user_items)
         embed.set_image(url="attachment://items.png")
@@ -481,7 +555,7 @@ async def complete_trade(ctx, in_game_id: str):
     except Exception as e:
         print(e)
         await ctx.send(f"Unexpected error occurred. Please message @asdgew")
-        await ctx.send(f"Unexpected error occurred: {str(e)}")
+        # await ctx.send(f"Unexpected error occurred: {str(e)}")
 
 
 bot.run(TOKEN)
