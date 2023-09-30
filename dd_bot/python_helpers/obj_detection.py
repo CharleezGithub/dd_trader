@@ -42,7 +42,7 @@ while max_val < 0.90:
 
     tries += 1
     time.sleep(1)
-    print(f"Certainty Score: {max_val:.2f}")
+    #print(f"Certainty Score: {max_val:.2f}")
 
 
 if tries < 240:
@@ -81,7 +81,7 @@ if tries < 240:
     # Print the certainty score (i.e., the maximum correlation coefficient)
     # print(f"Certainty Score: {max_val:.2f}")
 
-    cv2.waitKey(0)
+    #cv2.waitKey(0)
     cv2.destroyAllWindows()
 else:
     print("Could not detect")
