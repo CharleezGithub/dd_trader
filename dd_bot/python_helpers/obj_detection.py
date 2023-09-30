@@ -81,6 +81,7 @@ if tries < 240:
     # Print the certainty score (i.e., the maximum correlation coefficient)
     # print(f"Certainty Score: {max_val:.2f}")
 
+
     #cv2.waitKey(0)
     cv2.destroyAllWindows()
 else:
