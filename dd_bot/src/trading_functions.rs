@@ -40,7 +40,7 @@ pub async fn open_game_go_to_lobby(enigo: Arc<Mutex<Enigo>>, bot_info: Arc<Mutex
 
     // Run the launcher play button detector
     let output = Command::new("python")
-        .arg("python_helpers/python_helpers/obj_detection.py")
+        .arg("python_helpers/obj_detection.py")
         .arg("images/play.png")
         .output()
         .expect("Failed to execute command");
@@ -55,7 +55,7 @@ pub async fn open_game_go_to_lobby(enigo: Arc<Mutex<Enigo>>, bot_info: Arc<Mutex
     // Now we are opening the game
     // Run the "Ok" button detector (Will run once we enter the game)
     let output = Command::new("python")
-        .arg("python_helpers/python_helpers/obj_detection.py")
+        .arg("python_helpers/obj_detection.py")
         .arg("images/okay_start.png")
         .output()
         .expect("Failed to execute command");
@@ -67,7 +67,7 @@ pub async fn open_game_go_to_lobby(enigo: Arc<Mutex<Enigo>>, bot_info: Arc<Mutex
 
     // Run the "Enter the lobby" button detector
     let output = Command::new("python")
-        .arg("python_helpers/python_helpers/obj_detection.py")
+        .arg("python_helpers/obj_detection.py")
         .arg("images/enter_lobby.png")
         .output()
         .expect("Failed to execute command");
@@ -100,7 +100,7 @@ pub fn trade(
     // Why bard? Because it has the least amount of active traders and therefore not as demanding to be in.
     // Run the "Trade" tab detector
     let output = Command::new("python")
-        .arg("python_helpers/python_helpers/obj_detection.py")
+        .arg("python_helpers/obj_detection.py")
         .arg("images/trade_tab.png")
         .output()
         .expect("Failed to execute command");
@@ -113,7 +113,7 @@ pub fn trade(
     // Now enter bards trading post
     // Run the "bard_trade" button detector
     let output = Command::new("python")
-        .arg("python_helpers/python_helpers/obj_detection.py")
+        .arg("python_helpers/obj_detection.py")
         .arg("images/bard_trade.png")
         .output()
         .expect("Failed to execute command");
@@ -125,7 +125,7 @@ pub fn trade(
 
     //It now sends a trade to the player
     let output = Command::new("python")
-        .arg("python_helpers/python_helpers/obj_detection.py")
+        .arg("python_helpers/obj_detection.py")
         .arg("images/find_id.png")
         .output()
         .expect("Failed to execute command");
@@ -153,7 +153,7 @@ pub fn trade(
 
     // Send a trade request
     let output = Command::new("python")
-        .arg("python_helpers/python_helpers/obj_detection.py")
+        .arg("python_helpers/obj_detection.py")
         .arg("images/trade_send_request.png")
         .output();
 
@@ -175,7 +175,7 @@ pub fn trade(
 
     // Check if user has put in 50 gold for the trade fee
     let output = Command::new("python")
-        .arg("python_helpers/python_helpers/obj_detection.py")
+        .arg("python_helpers/obj_detection.py")
         .arg("images/gold_fee.png")
         .output();
 
@@ -190,7 +190,7 @@ pub fn trade(
 
     // Click the checkbox
     let output = Command::new("python")
-        .arg("python_helpers/python_helpers/obj_detection.py")
+        .arg("python_helpers/obj_detection.py")
         .arg("images/trade_checkbox.png")
         .output()
         .expect("Failed to execute command");
@@ -202,7 +202,7 @@ pub fn trade(
 
     // Double check that the total gold is still the same in the trade confirmation window
     let output = Command::new("python")
-        .arg("python_helpers/python_helpers/obj_detection.py")
+        .arg("python_helpers/obj_detection.py")
         .arg("images/gold_fee_double_check.png")
         .output();
 
@@ -264,7 +264,7 @@ pub fn trade(
 
     // Click the final checkpoint to get the 50 gold fee
     let output = Command::new("python")
-        .arg("python_helpers/python_helpers/obj_detection.py")
+        .arg("python_helpers/obj_detection.py")
         .arg("images/trade_checkbox.png")
         .output()
         .expect("Failed to execute command");
@@ -291,7 +291,7 @@ fn return_to_lobby() {
     let mut enigo = Enigo::new();
 
     let output = Command::new("python")
-        .arg("python_helpers/python_helpers/obj_detection.py")
+        .arg("python_helpers/obj_detection.py")
         .arg("images/play_tab.png")
         .output()
         .expect("Failed to execute command");
