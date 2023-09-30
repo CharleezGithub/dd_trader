@@ -204,8 +204,8 @@ async def trade_accept(ctx, user: discord.Member):
         cursor = conn.cursor()
         
         # Register the traders if they don't exist in the traders table
-        cursor.execute("INSERT OR IGNORE INTO traders (discord_id) VALUES (?)", (str(ctx.author.id),))
         cursor.execute("INSERT OR IGNORE INTO traders (discord_id) VALUES (?)", (str(user.id),))
+        cursor.execute("INSERT OR IGNORE INTO traders (discord_id) VALUES (?)", (str(ctx.author.id),))
         
         # Fetching the IDs of traders from the traders table
         cursor.execute("SELECT id FROM traders WHERE discord_id=?", (str(ctx.author.id),))
@@ -401,8 +401,18 @@ async def show_trade(ctx):
         user_gold = trade[3] or "No gold"
 
         other_user_id = trade[2]
-        other_user = await bot.fetch_user(other_user_id)
-        other_user_name = other_user.name if other_user else "Unknown User"
+        
+        # Fetch trader2's discord_id from traders table
+        cursor.execute("SELECT discord_id FROM traders WHERE id = ?", (other_user_id,))
+        other_user_discord_id = cursor.fetchone()[0]
+        print(other_user_discord_id)
+        try:
+            other_user = await bot.fetch_user(int(other_user_discord_id))  # Note that discord_id should be an integer
+            other_user_name = other_user.name
+        except discord.NotFound:
+            other_user_name = "Unknown User"
+
+
         other_user_items = trade_data.get(other_user_id, [])
         other_user_gold = trade[4] or "No gold"
 
