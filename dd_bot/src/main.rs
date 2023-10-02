@@ -68,10 +68,12 @@ fn trade_request(
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) -> String {
-    let info = bot_info.lock().unwrap();
-    if info.ready != true {
-        return String::from("TradeBot not ready");
-    }
+    {
+        let info = bot_info.lock().unwrap();
+        if info.ready != true {
+            return String::from("TradeBot not ready");
+        }
+    } // Lock is released here as the MutexGuard goes out of scope
 
     let mut traders = traders_container.lock().unwrap();
 
@@ -91,7 +93,7 @@ fn trade_request(
 
     trading_functions::trade(enigo, bot_info, in_game_id, traders_container);
 
-    format!("TradeBot ready\n{}", info.id)
+    format!("TradeBot ready\n{}", bot_info.lock().unwrap().id)
 }
 
 fn rocket() -> rocket::Rocket<rocket::Build> {

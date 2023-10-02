@@ -146,7 +146,7 @@ pub fn trade(
     // The obj_detection script runs for 4 minutes
 
     // Clicks directly on the first person below the bot, which should be the player to trade with.
-    match enigo_functions::click_buton_right_direct(&mut enigo, 1824, 312, true, true, 0, 0) {
+    match enigo_functions::click_buton_right_direct(&mut enigo, 1824, 312, true, false, 0, 0) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
