@@ -89,7 +89,7 @@ fn trade_request(
 
     traders.append(trader);
 
-    trading_functions::trade(enigo, bot_info, in_game_id, traders_container);
+    trading_functions::collect_gold_fee(enigo, bot_info, in_game_id, traders_container);
 
     format!("TradeBot ready\n{}", bot_info.lock().unwrap().id)
 }
@@ -110,11 +110,9 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
     let bot_info_clone = bot_info.clone();
 
     // Spawn the main_func as a separate task
-    /*
     tokio::spawn(async move {
         trading_functions::open_game_go_to_lobby(enigo2, bot_info_clone).await;
     });
-    */
 
     rocket::build()
         .manage(enigo) // Add the enigo as managed state

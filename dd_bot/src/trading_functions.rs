@@ -84,7 +84,7 @@ pub async fn open_game_go_to_lobby(enigo: Arc<Mutex<Enigo>>, bot_info: Arc<Mutex
 }
 
 // It waits untill a trade request is sent by the discord bot
-pub fn trade(
+pub fn collect_gold_fee(
     enigo: &State<Arc<Mutex<Enigo>>>,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     trader_id: &str,
