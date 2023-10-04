@@ -502,6 +502,9 @@ async def show_trade(ctx):
             inline=True,
         )
 
+
+        print(user_items)
+        print(other_user_items)
         buffer = await stitch_images(user_items, other_user_items)
         embed.set_image(url="attachment://items.png")
 
