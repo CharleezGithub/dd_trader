@@ -84,7 +84,7 @@ if tries < 240:
     print(f"Certainty Score: {max_val:.2f}")
 
 
-    #cv2.waitKey(0)
+    cv2.waitKey(0)
     cv2.destroyAllWindows()
 else:
     print("Could not detect")
