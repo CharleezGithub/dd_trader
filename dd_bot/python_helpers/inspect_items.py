@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import sys
+from PIL import ImageGrab
 
 
 def extract_goldish_color(img):
@@ -150,10 +151,11 @@ def template_matching(image_path, template_path, threshold=0.70):
 # sys.argv[0] is the script name itself.
 # sys.argv[1] will be "my_argument_value" if provided.
 
-if len(sys.argv) > 1:
-    image_name = sys.argv[1]
-else:
+if __name__ == "__main__":
     image_name = "images/test4.png"
+else:
+    # Capture a screenshot using ImageGrab
+    screenshot = ImageGrab.grab()
 
 # Run the function
 template_path = "images/inspect_items.png"
