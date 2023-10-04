@@ -12,7 +12,6 @@ mod database_functions;
 mod enigo_functions;
 mod trading_functions;
 
-
 pub struct TradeBotInfo {
     ready: bool,
     id: String,
@@ -58,7 +57,6 @@ impl TradersContainer {
     }
 }
 
-
 #[get("/trade_request/<in_game_id>/<discord_channel_id>/<discord_id>")]
 fn trade_request(
     in_game_id: &str,
@@ -102,7 +100,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
     let enigo2 = Arc::new(Mutex::new(Enigo::new()));
 
     let bot_info = Arc::new(Mutex::new(TradeBotInfo {
-        ready: false,
+        ready: true,
         id: "".to_string(),
     }));
 
@@ -112,9 +110,11 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
     let bot_info_clone = bot_info.clone();
 
     // Spawn the main_func as a separate task
+    /*
     tokio::spawn(async move {
         trading_functions::open_game_go_to_lobby(enigo2, bot_info_clone).await;
     });
+    */
 
     rocket::build()
         .manage(enigo) // Add the enigo as managed state
