@@ -139,7 +139,9 @@ pub fn trade(
     let user_is_in_trade: bool;
 
     // Type in the name of the trader
-    enigo.key_sequence_parse(trader_id);
+    let trader_id_lower = trader_id.to_lowercase();
+    let trader_id_lower_str_red: &str = &trader_id_lower;
+    enigo.key_sequence_parse(trader_id_lower_str_red);
 
     // This runs the obj_detection script which tries to find the trade button.
     // If the person is not in the game, then there will be no trade button to press.

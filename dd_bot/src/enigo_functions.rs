@@ -213,7 +213,7 @@ pub fn click_buton_direct(
             sleep(Duration::from_millis(rng.gen_range(500..1000)));
         }
         else {
-            enigo.key_sequence_parse("{+META}{-Meta}");
+            enigo.key_sequence_parse("{+META}{-META}");
             sleep(Duration::from_millis(rng.gen_range(100..200)));
             enigo.mouse_click(MouseButton::Right);
         }
@@ -286,7 +286,7 @@ pub fn click_buton_right_direct(
             sleep(Duration::from_millis(rng.gen_range(500..1000)));
         }
         else {
-            enigo.key_sequence_parse("{+META}{-Meta}");
+            enigo.key_sequence_parse("{+META}{-META}");
             sleep(Duration::from_millis(rng.gen_range(100..200)));
             enigo.mouse_click(MouseButton::Right);
         }
