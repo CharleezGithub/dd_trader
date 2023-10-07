@@ -22,7 +22,7 @@ pub struct Trader {
     discord_id: String,
     item_images: Vec<String>,
     info_images: Vec<String>,
-    // gold: i32, // IMPLEMENT THIS LATER FOR GOLD TRADES
+    gold: i32,
     has_paid_gold_fee: bool, // IMPLEMENT THIS LATER FOR TRADES
 }
 
@@ -85,6 +85,7 @@ fn trade_request(
         discord_id: String::from(discord_id),
         item_images: item_links.0,
         info_images: item_links.1,
+        gold: 0,
         has_paid_gold_fee: false,
     };
 
