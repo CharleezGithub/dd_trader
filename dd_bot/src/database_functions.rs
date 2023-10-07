@@ -136,3 +136,27 @@ pub fn get_gold_for_user(channel_id: &str, user_id: &str) -> Result<i32> {
 
     Err(rusqlite::Error::QueryReturnedNoRows)
 }
+
+pub fn set_item_status_by_urls(
+    item_image_url: &str,
+    info_image_url: &str,
+    new_status: &str,
+) -> Result<()> {
+    let conn = Connection::open("C:/path_to_your_db/trading_bot.db")?;
+
+    let mut stmt = conn.prepare(
+        "
+        UPDATE items 
+        SET status = ?3 
+        WHERE item_image_url = ?1 AND info_image_url = ?2
+    ",
+    )?;
+
+    let rows_affected = stmt.execute(params![item_image_url, info_image_url, new_status])?;
+
+    if rows_affected == 0 {
+        Err(rusqlite::Error::QueryReturnedNoRows)
+    } else {
+        Ok(())
+    }
+}
