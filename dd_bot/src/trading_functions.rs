@@ -8,7 +8,7 @@ use enigo::*;
 use rand::Rng;
 use rocket::State;
 
-use crate::{TradeBotInfo, database_functions};
+use crate::{TradeBotInfo, database_functions, ReadyState};
 use crate::TradersContainer;
 
 use crate::enigo_functions;
@@ -27,7 +27,11 @@ fn start_game(enigo: &mut Enigo, launcher_name: &str) {
 // 2. Goes into the lobby.
 // 3. Changes the TradeBotInfo ready variable to true when ready.
 pub async fn open_game_go_to_lobby(enigo: Arc<Mutex<Enigo>>, bot_info: Arc<Mutex<TradeBotInfo>>) {
-    println!("Hello from bot function!");
+    println!("Opening game!");
+    {
+        let mut bot_info = bot_info.lock().unwrap();
+        bot_info.ready = ReadyState::Starting;
+    }
     //tokio::time::sleep(tokio::time::Duration::from_secs(10000)).await;
 
     let mut enigo = enigo.lock().unwrap();
@@ -79,22 +83,38 @@ pub async fn open_game_go_to_lobby(enigo: Arc<Mutex<Enigo>>, bot_info: Arc<Mutex
 
     // Now the bot is in the lobby "play" tab
     let mut info = bot_info.lock().unwrap();
-    info.ready = true;
+    info.ready = ReadyState::True;
     info.id = String::from("Middleman2");
 }
 
 // It waits untill a trade request is sent by the discord bot
 pub fn collect_gold_fee(
     enigo: &State<Arc<Mutex<Enigo>>>,
-    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
+    bot_info: Arc<Mutex<TradeBotInfo>>,
     in_game_id: &str,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) {
     let mut enigo = enigo.lock().unwrap();
+    let enigo2 = Arc::new(Mutex::new(Enigo::new()));
 
     let info = bot_info.lock().unwrap();
-    if info.ready != true {
-        return;
+
+    // Clone the Arc for use in main_func
+    let bot_info_clone = bot_info.clone();
+
+    // If the bot is not ready then it will run the open game function
+    // If the bot is starting then it will wait for the bot to be ready
+    // If the bot is ready then it will continue as normal
+    'wait_loop: loop{
+        match info.ready {
+            ReadyState::False => {
+                tokio::spawn(async move {
+                    open_game_go_to_lobby(enigo2, bot_info_clone).await;
+                });
+            },
+            ReadyState::Starting => sleep(Duration::from_secs(2)),
+            ReadyState::True => break 'wait_loop,
+        }
     }
     // Goes into the trading tab and connects to bards trade post.
     // Why bard? Because it has the least amount of active traders and therefore not as demanding to be in.
@@ -301,14 +321,44 @@ pub fn collect_gold_fee(
 
 pub fn collect_items( 
     enigo: &State<Arc<Mutex<Enigo>>>,
-    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
-    trader_id: &str,
+    bot_info: Arc<Mutex<TradeBotInfo>>,
+    in_game_id: &str,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) {
-    let mut _enigo = enigo.lock().unwrap();
+    let mut enigo = enigo.lock().unwrap();
+    let enigo2 = Arc::new(Mutex::new(Enigo::new()));
 
     let info = bot_info.lock().unwrap();
-    if info.ready != true {
+
+    // Clone the Arc for use in main_func
+    let bot_info_clone = bot_info.clone();
+
+    // If the bot is not ready then it will run the open game function
+    // If the bot is starting then it will wait for the bot to be ready
+    // If the bot is ready then it will continue as normal
+    'wait_loop: loop{
+        match info.ready {
+            ReadyState::False => {
+                tokio::spawn(async move {
+                    open_game_go_to_lobby(enigo2, bot_info_clone).await;
+                });
+            },
+            ReadyState::Starting => sleep(Duration::from_secs(2)),
+            ReadyState::True => break 'wait_loop,
+        }
+    }
+        
+        // Get the trader with that in-game name
+    let traders = traders_container.lock().unwrap();
+    let trader = traders.get_trader_by_in_game_id(in_game_id);
+
+    // Get channel and discord id
+    let channel_id = trader.unwrap().discord_channel_id.as_str();
+    let discord_id = trader.unwrap().discord_id.as_str();
+
+    let has_paid_fee = database_functions::has_paid_fee(channel_id, discord_id).unwrap();
+
+    if !has_paid_fee {
         return;
     }
 }

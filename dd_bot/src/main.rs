@@ -12,8 +12,14 @@ mod database_functions;
 mod enigo_functions;
 mod trading_functions;
 
+pub enum ReadyState {
+    False,
+    True,
+    Starting,
+}
+
 pub struct TradeBotInfo {
-    ready: bool,
+    ready: ReadyState,
     id: String,
 }
 
@@ -71,8 +77,11 @@ fn trade_request(
 ) -> String {
     {
         let info = bot_info.lock().unwrap();
-        if info.ready != true {
-            return String::from("TradeBot not ready");
+        match info.ready{
+            ReadyState::False => return String::from("TradeBot not ready"),
+            ReadyState::Starting => return String::from("TradeBot is starting. Please wait 2 minutes and try again."),
+            ReadyState::True => println!("Going into trade!"),
+            
         }
     } // Lock is released here as the MutexGuard goes out of scope
 
@@ -105,7 +114,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
     let enigo2 = Arc::new(Mutex::new(Enigo::new()));
 
     let bot_info = Arc::new(Mutex::new(TradeBotInfo {
-        ready: true,
+        ready: ReadyState::False,
         id: "".to_string(),
     }));
 
@@ -114,7 +123,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
     // Clone the Arc for use in main_func
     let bot_info_clone = bot_info.clone();
 
-    // Spawn the main_func as a separate task
+    // Spawn the open game function as a separate task
     tokio::spawn(async move {
         trading_functions::open_game_go_to_lobby(enigo2, bot_info_clone).await;
     });
