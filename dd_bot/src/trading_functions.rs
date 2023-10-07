@@ -4,6 +4,12 @@ use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
 
+use std::fs::File;
+use std::io;
+use std::path::Path;
+
+use reqwest;
+
 use enigo::*;
 use rand::Rng;
 use rocket::State;
@@ -285,14 +291,78 @@ pub fn collect_items(
     }
 
     // Go into the trading tab and send a trade to the trader. Exact same as before with the gold fee.
-    send_trade_request(trader.unwrap().in_game_id.as_str())
+    send_trade_request(trader.unwrap().in_game_id.as_str());
 
 
     // Now we are in the trading window with the trader
 
     // Loop through the items in the trader struct for this trader and use obj detection to check if the item is present
     // If item is present then add it to list. Once it cannot find any more items in the trading window (Wait at least 30 seconds after detection an item so that the trader has time to put in the stuff) it should accept the items
-    
+
+    // Download 1 image set into temp_images folder at a time and check for a match
+    let info_vec = &trader.unwrap().info_images;
+    let item_vec = &trader.unwrap().item_images;
+
+    // For each image pair. Download the pair and if there is a matching pair in the trading window, add it to list in memory.
+    // After trading successfully and double checking in inspect window, change status to "in escrow" for the traded items in the database.
+    for (info, item) in info_vec.iter().zip(item_vec.iter()) {
+        match download_image(&info, "temp_images/info/image.png") {
+            Ok(_) => println!("Successfully downloaded info image"),
+            Err(err) => {
+                println!("Could not download image. Error \n{}", err);
+                return;
+            }
+        }
+        match download_image(&item, "temp_images/item/image.png") {
+            Ok(_) => println!("Successfully downloaded item image"),
+            Err(err) => {
+                println!("Could not download image. Error \n{}", err);
+                return;
+            }
+        }
+
+        let output = Command::new("python")
+            .arg("python_helpers/multi_obj_detection.py")
+            .arg("temp_images/item/image.png")
+            .output()
+            .expect("Failed to execute command");
+
+        // Convert the output bytes to a string
+        let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+        // Split the string on newlines to get the list of coordinates
+        let coords: Vec<&str> = output_str.split('\n').collect();
+
+        // Now, coords contains each of the coordinates
+        for coord_str in coords.iter() {
+            let coord: Vec<i32> = coord_str
+                .split_whitespace()
+                .map(|s| s.parse().expect("Failed to parse coordinate"))
+                .collect();
+
+            if coord.len() == 4 {
+                let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
+
+                let mut rng = rand::thread_rng();
+
+                // Salt the pixels so that it does not click the same pixel every time.
+                let salt = rng.gen_range(-9..9);
+
+                // Gets the middle of the detected play button and clicks it
+                let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
+                let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
+
+                match enigo_functions::move_to_location_fast(
+                    &mut enigo,
+                    middle_point_x,
+                    middle_point_y,
+                ) {
+                    Ok(_) => println!("Successfully moved to this location!"),
+                    Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+                }
+            }
+        }
+    }
 }
 
 
@@ -395,4 +465,31 @@ fn return_to_lobby() {
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
     return;
+}
+
+
+fn download_image(url: &str, save_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    // Ensure the 'temp_images' directory exists
+    if !Path::new("temp_images").exists() {
+        std::fs::create_dir("temp_images")?;
+    }
+
+    // Perform a blocking HTTP GET request
+    let response = reqwest::blocking::get(url)?;
+    
+    // Ensure the request was successful
+    if response.status().is_success() {
+        // Open a file to write the image data
+        let mut file = File::create(save_path)?;
+
+        // Copy the response data to the file
+        let response_body = response.bytes()?;
+        io::copy(&mut response_body.as_ref(), &mut file)?;
+
+        println!("Image downloaded to '{}'", save_path);
+    } else {
+        return Err(Box::new(io::Error::new(io::ErrorKind::Other, "Failed to download image")));
+    }
+
+    Ok(())
 }

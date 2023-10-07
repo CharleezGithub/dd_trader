@@ -211,8 +211,7 @@ pub fn click_buton_direct(
             sleep(Duration::from_millis(rng.gen_range(50..70)));
             enigo.key_sequence_parse("{-TAB}{-ALT}");
             sleep(Duration::from_millis(rng.gen_range(500..1000)));
-        }
-        else {
+        } else {
             enigo.key_sequence_parse("{+META}{-META}");
             sleep(Duration::from_millis(rng.gen_range(100..200)));
             enigo.mouse_click(MouseButton::Right);
@@ -284,8 +283,7 @@ pub fn click_buton_right_direct(
             sleep(Duration::from_millis(rng.gen_range(50..70)));
             enigo.key_sequence_parse("{-TAB}{-ALT}");
             sleep(Duration::from_millis(rng.gen_range(500..1000)));
-        }
-        else {
+        } else {
             enigo.key_sequence_parse("{+META}{-META}");
             sleep(Duration::from_millis(rng.gen_range(100..200)));
             enigo.mouse_click(MouseButton::Right);
@@ -296,6 +294,42 @@ pub fn click_buton_right_direct(
         enigo.mouse_click(MouseButton::Right);
         Ok(())
     }
+}
+
+pub fn move_to_location_fast(
+    enigo: &mut Enigo,
+    x: i32,
+    y: i32,
+) -> Result<(), CommandError> {
+    let mut rng = rand::thread_rng();
+    let mut rng2 = rand::thread_rng();
+
+    let steps = rng.gen_range(10..20);
+
+    let cx =
+        rng.gen_range(enigo.mouse_location().0..enigo.mouse_location().0 + rng2.gen_range(1..50));
+    let cy =
+        rng.gen_range(enigo.mouse_location().1..enigo.mouse_location().1 + rng2.gen_range(1..50));
+
+    // At least go out of the game while moving the mouse
+    enigo.key_sequence_parse("{+META}{-META}");
+    
+    
+    // Move the cursor with the bezier function
+    bezier_move(
+        enigo,
+        enigo.mouse_location().0,
+        enigo.mouse_location().1,
+        x,
+        y,
+        cx,
+        cy,
+        steps,
+    );
+
+    // Go back into game
+    enigo.key_sequence_parse("{+META}{-META}");
+    Ok(())
 }
 
 pub fn bezier_move(
