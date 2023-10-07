@@ -8,7 +8,7 @@ use enigo::*;
 use rand::Rng;
 use rocket::State;
 
-use crate::TradeBotInfo;
+use crate::{TradeBotInfo, database_functions};
 use crate::TradersContainer;
 
 use crate::enigo_functions;
@@ -287,12 +287,23 @@ pub fn collect_gold_fee(
         None => println!("Trader not found"),
     }
 
+    database_functions::
     traders.update_gold_fee_status(trader_id, true);
 }
 
 
-pub fn collect_items() {
+pub fn collect_items( 
+    enigo: &State<Arc<Mutex<Enigo>>>,
+    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
+    trader_id: &str,
+    traders_container: &State<Arc<Mutex<TradersContainer>>>,
+) {
+    let mut enigo = enigo.lock().unwrap();
 
+    let info = bot_info.lock().unwrap();
+    if info.ready != true {
+        return;
+    }
 }
 
 
