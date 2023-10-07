@@ -290,6 +290,13 @@ pub fn collect_gold_fee(
     traders.update_gold_fee_status(trader_id, true);
 }
 
+
+pub fn collect_items() {
+
+}
+
+
+
 fn return_to_lobby() {
     let mut enigo = Enigo::new();
 

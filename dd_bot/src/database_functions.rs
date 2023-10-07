@@ -22,3 +22,7 @@ pub fn get_links_for_user(channel_id: &str, user_id: &str) -> Result<Vec<String>
 
     Ok(links)
 }
+
+fn check_gold_fee() {
+    todo!();
+}
