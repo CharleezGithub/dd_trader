@@ -305,14 +305,9 @@ pub fn collect_items(
 
     // For each image pair. Download the pair and if there is a matching pair in the trading window, add it to list in memory.
     // After trading successfully and double checking in inspect window, change status to "in escrow" for the traded items in the database.
-    for (info, item) in info_vec.iter().zip(item_vec.iter()) {
-        match download_image(&info, "temp_images/info/image.png") {
-            Ok(_) => println!("Successfully downloaded info image"),
-            Err(err) => {
-                println!("Could not download image. Error \n{}", err);
-                return;
-            }
-        }
+    let mut trading_window_items = Vec::new();
+
+    for item in item_vec.iter(){
         match download_image(&item, "temp_images/item/image.png") {
             Ok(_) => println!("Successfully downloaded item image"),
             Err(err) => {
@@ -360,9 +355,35 @@ pub fn collect_items(
                     Ok(_) => println!("Successfully moved to this location!"),
                     Err(err) => println!("Got error while trying to move cursor: {:?}", err),
                 }
+
+                // Tries to match every info image with the item and if there is a match then it will add it to the temporary vector variable.
+                for info_image in info_vec.iter() {
+                    match download_image(info_image, "temp_images/info/image.png") {
+                        Ok(_) => println!("Successfully downloaded info image"),
+                        Err(err) => {
+                            println!("Could not download image. Error \n{}", err);
+                            return;
+                        }
+                    }
+
+                    // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it wont wait for 4 minutes of there is no match
+                    let output = Command::new("python")
+                        .arg("python_helpers/obj_detection.py")
+                        .arg("temp_images/info/item.png")
+                        .output();
+    
+                    match output {
+                        Ok(_) => {
+                            println!("Found match!");
+                            trading_window_items.push((info_image, item));
+                        },
+                        Err(_) => println!("No match. Checking next..."),
+                    }
+                } 
             }
         }
     }
+    // Accept trade
 }
 
 
