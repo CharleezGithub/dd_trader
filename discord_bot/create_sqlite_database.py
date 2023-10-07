@@ -1,7 +1,7 @@
 import sqlite3
 
 # Create a connection to the database (This will create the file if it doesn't exist)
-conn = sqlite3.connect("trading_bot.db")
+conn = sqlite3.connect("trading_bot_test.db")
 cursor = conn.cursor()
 
 # Create traders table
@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS items (
     trader_id INTEGER,
     item_image_url TEXT NOT NULL,
     info_image_url TEXT NOT NULL,
+    status TEXT DEFAULT 'not traded',
     FOREIGN KEY (trade_id) REFERENCES trades(id),
     FOREIGN KEY (trader_id) REFERENCES traders(id)
 );
