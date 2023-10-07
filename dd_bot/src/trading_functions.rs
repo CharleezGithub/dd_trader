@@ -549,7 +549,7 @@ pub fn collect_items(
         todo!();
     }
     for pair in trading_window_items_clone.iter() {
-        match database_functions::set_item_status_by_urls(pair.1, pair.0, "new_status") {
+        match database_functions::set_item_status_by_urls(pair.1, pair.0, "in escrow") {
             Ok(_) => println!("Updated item status!"),
             Err(err) => println!("Error updating item status. Error: \n{}", err),
         }
