@@ -8,10 +8,15 @@ import sys
 # sys.argv[0] is the script name itself.
 # sys.argv[1] will be "my_argument_value" if provided.
 
-if len(sys.argv) > 1:
+sensitive = False
+
+if len(sys.argv) > 1 and not len(sys.argv) > 2:
     image_name = sys.argv[1]
+elif len(sys.argv) > 2:
+    image_name = sys.argv[1]
+    if sys.argv[2].strip() == "S":
+        sensitive = True
 else:
-    image_name = "images/play.png"
     image_name = "python_helpers/images/gold_fee_double_check.png"
 
 max_val = 0.00
@@ -20,7 +25,12 @@ max_val = 0.00
 
 tries = 0
 
-while max_val < 0.90:
+if sensitive:
+    limit = 0.98
+else:
+    limit = 0.90
+
+while max_val < limit:
     # If it has tried for 4 minutes then break
     if tries > 240:
         break

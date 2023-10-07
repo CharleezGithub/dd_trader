@@ -178,7 +178,8 @@ pub fn collect_gold_fee(
     // Check if user has put in 50 gold for the trade fee
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
-        .arg("images/gold_fee.png")
+        .arg("images/gold_fee2.png")
+        .arg("S")
         .output();
 
     match output {
@@ -206,6 +207,7 @@ pub fn collect_gold_fee(
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/gold_fee_double_check.png")
+        .arg("S")
         .output();
 
     match output {
