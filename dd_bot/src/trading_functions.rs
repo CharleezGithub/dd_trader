@@ -87,7 +87,7 @@ pub async fn open_game_go_to_lobby(enigo: Arc<Mutex<Enigo>>, bot_info: Arc<Mutex
 pub fn collect_gold_fee(
     enigo: &State<Arc<Mutex<Enigo>>>,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
-    trader_id: &str,
+    in_game_id: &str,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) {
     let mut enigo = enigo.lock().unwrap();
@@ -139,9 +139,9 @@ pub fn collect_gold_fee(
     let user_is_in_trade: bool;
 
     // Type in the name of the trader
-    let trader_id_lower = trader_id.to_lowercase();
-    let trader_id_lower_str_red: &str = &trader_id_lower;
-    enigo.key_sequence_parse(trader_id_lower_str_red);
+    let in_game_id_lower = in_game_id.to_lowercase();
+    let in_game_id_lower_str_red: &str = &in_game_id_lower;
+    enigo.key_sequence_parse(in_game_id_lower_str_red);
 
     // This runs the obj_detection script which tries to find the trade button.
     // If the person is not in the game, then there will be no trade button to press.
@@ -279,7 +279,7 @@ pub fn collect_gold_fee(
 
     // When paid, set has_paid_gold_fee to true
     let mut traders = traders_container.lock().unwrap();
-    let trader = traders.get_trader_by_id(trader_id);
+    let trader = traders.get_trader_by_in_game_id(in_game_id);
 
     // Check if trader exists
     match trader {
@@ -305,7 +305,7 @@ pub fn collect_items(
     trader_id: &str,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) {
-    let mut enigo = enigo.lock().unwrap();
+    let mut _enigo = enigo.lock().unwrap();
 
     let info = bot_info.lock().unwrap();
     if info.ready != true {

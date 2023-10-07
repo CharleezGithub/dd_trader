@@ -19,7 +19,7 @@ pub struct TradeBotInfo {
 
 #[derive(Clone)]
 pub struct Trader {
-    id: String,
+    in_game_id: String,
     discord_channel_id: String,
     discord_id: String,
     item_images: Vec<String>,
@@ -41,18 +41,18 @@ impl TradersContainer {
         }
     }
 
-    fn get_trader_by_id(&self, trader_id: &str) -> Option<&Trader> {
+    fn get_trader_by_in_game_id(&self, in_game_id: &str) -> Option<&Trader> {
         match self {
             TradersContainer::ActiveTraders(traders) => {
-                traders.iter().find(|trader| trader.id == trader_id)
+                traders.iter().find(|trader| trader.in_game_id == in_game_id)
             }
         }
     }
 
-    fn update_gold_fee_status(&mut self, trader_id: &str, new_status: bool) {
+    fn update_gold_fee_status(&mut self, in_game_id: &str, new_status: bool) {
         match self {
             TradersContainer::ActiveTraders(traders) => {
-                if let Some(trader) = traders.iter_mut().find(|trader| trader.id == trader_id) {
+                if let Some(trader) = traders.iter_mut().find(|trader| trader.in_game_id == in_game_id) {
                     trader.has_paid_gold_fee = new_status;
                 }
             }
@@ -83,7 +83,7 @@ fn trade_request(
         database_functions::get_links_for_user(discord_channel_id, discord_id).unwrap();
 
     let trader = Trader {
-        id: String::from(in_game_id),
+        in_game_id: String::from(in_game_id),
         discord_channel_id: String::from(discord_channel_id),
         discord_id: String::from(discord_id),
         item_images: item_links.0,
