@@ -118,81 +118,7 @@ pub fn collect_gold_fee(
     // Goes into the trading tab and connects to bards trade post.
     // Why bard? Because it has the least amount of active traders and therefore not as demanding to be in.
     // Run the "Trade" tab detector
-    let output = Command::new("python")
-        .arg("python_helpers/obj_detection.py")
-        .arg("images/trade_tab.png")
-        .output()
-        .expect("Failed to execute command");
-
-    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
-        Ok(_) => println!("Successfully clicked button!"),
-        Err(err) => println!("Got error while trying to click button: {:?}", err),
-    }
-
-    // Now enter bards trading post
-    // Run the "bard_trade" button detector
-    let output = Command::new("python")
-        .arg("python_helpers/obj_detection.py")
-        .arg("images/bard_trade.png")
-        .output()
-        .expect("Failed to execute command");
-
-    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
-        Ok(_) => println!("Successfully clicked button!"),
-        Err(err) => println!("Got error while trying to click button: {:?}", err),
-    }
-
-    //It now sends a trade to the player
-    let output = Command::new("python")
-        .arg("python_helpers/obj_detection.py")
-        .arg("images/find_id.png")
-        .output()
-        .expect("Failed to execute command");
-
-    // Search after the trader in the trade tab
-    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
-        Ok(_) => println!("Successfully clicked button!"),
-        Err(err) => println!("Got error while trying to click button: {:?}", err),
-    }
-
-    let user_is_in_trade: bool;
-
-    // Type in the name of the trader
-    let in_game_id_lower = in_game_id.to_lowercase();
-    let in_game_id_lower_str_red: &str = &in_game_id_lower;
-    enigo.key_sequence_parse(in_game_id_lower_str_red);
-
-    // This runs the obj_detection script which tries to find the trade button.
-    // If the person is not in the game, then there will be no trade button to press.
-    // The obj_detection script runs for 4 minutes
-
-    // Clicks directly on the first person below the bot, which should be the player to trade with.
-    match enigo_functions::click_buton_right_direct(&mut enigo, 1824, 312, true, false, 0, 0) {
-        Ok(_) => println!("Successfully clicked button!"),
-        Err(err) => println!("Got error while trying to click button: {:?}", err),
-    }
-
-    // Send a trade request
-    let output = Command::new("python")
-        .arg("python_helpers/obj_detection.py")
-        .arg("images/trade_send_request.png")
-        .output();
-
-    user_is_in_trade = match &output {
-        Ok(_) => true,
-        Err(_) => false,
-    };
-    if user_is_in_trade {
-        match enigo_functions::click_buton(&mut enigo, output.unwrap(), true, 0, 0) {
-            Ok(_) => println!("Successfully clicked button!"),
-            Err(err) => println!("Got error while trying to click button: {:?}", err),
-        }
-    }
-    // Else go back to main window and return.
-    else {
-        return_to_lobby();
-        return;
-    }
+    send_trade_request(in_game_id);
 
     // Check if user has put in 50 gold for the trade fee
     let output = Command::new("python")
@@ -357,9 +283,103 @@ pub fn collect_items(
     if !has_paid_fee {
         return;
     }
+
+    // Go into the trading tab and send a trade to the trader. Exact same as before with the gold fee.
+    send_trade_request(trader.unwrap().in_game_id.as_str())
+
+
+    // Now we are in the trading window with the trader
+
+    // Loop through the items in the trader struct for this trader and use obj detection to check if the item is present
+    // If item is present then add it to list. Once it cannot find any more items in the trading window (Wait at least 30 seconds after detection an item so that the trader has time to put in the stuff) it should accept the items
+    
 }
 
 
+
+fn send_trade_request(in_game_id: &str) {
+    let mut enigo = Enigo::new();
+
+
+    // Goes into the trading tab and connects to bards trade post.
+    // Why bard? Because it has the least amount of active traders and therefore not as demanding to be in.
+    // Run the "Trade" tab detector
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/trade_tab.png")
+        .output()
+        .expect("Failed to execute command");
+
+    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    // Now enter bards trading post
+    // Run the "bard_trade" button detector
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/bard_trade.png")
+        .output()
+        .expect("Failed to execute command");
+
+    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    //It now sends a trade to the player
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/find_id.png")
+        .output()
+        .expect("Failed to execute command");
+
+    // Search after the trader in the trade tab
+    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    let user_is_in_trade: bool;
+
+    // Type in the name of the trader
+    let in_game_id_lower = in_game_id.to_lowercase();
+    let in_game_id_lower_str_red: &str = &in_game_id_lower;
+    enigo.key_sequence_parse(in_game_id_lower_str_red);
+
+    // This runs the obj_detection script which tries to find the trade button.
+    // If the person is not in the game, then there will be no trade button to press.
+    // The obj_detection script runs for 4 minutes
+
+    // Clicks directly on the first person below the bot, which should be the player to trade with.
+    match enigo_functions::click_buton_right_direct(&mut enigo, 1824, 312, true, false, 0, 0) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    // Send a trade request
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/trade_send_request.png")
+        .output();
+
+    user_is_in_trade = match &output {
+        Ok(_) => true,
+        Err(_) => false,
+    };
+    if user_is_in_trade {
+        match enigo_functions::click_buton(&mut enigo, output.unwrap(), true, 0, 0) {
+            Ok(_) => println!("Successfully clicked button!"),
+            Err(err) => println!("Got error while trying to click button: {:?}", err),
+        }
+    }
+    // Else go back to main window and return.
+    else {
+        return_to_lobby();
+        return;
+    }
+}
 
 fn return_to_lobby() {
     let mut enigo = Enigo::new();
