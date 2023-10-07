@@ -283,12 +283,19 @@ pub fn collect_gold_fee(
 
     // Check if trader exists
     match trader {
-        Some(_) => println!(""),
+        Some(trader) => {
+            match database_functions::set_gold_fee_status(trader.discord_channel_id.as_str(), trader.discord_id.as_str(), true) {
+                Ok(_) => println!("Succesfully updated gold fee status!"),
+                Err(err) => println!("Could not update gold status: Error \n{}", err),
+            }
+        },
         None => println!("Trader not found"),
     }
 
-    database_functions::
-    traders.update_gold_fee_status(trader_id, true);
+    // Make a copy of trader discord id. Else it would use traders as both mutable and imutable.
+    let trader_discord_id = trader.unwrap().discord_id.as_str();
+    let trader_discord_id_copy: String = String::from(trader_discord_id);
+    traders.update_gold_fee_status(trader_discord_id_copy.as_str(), true);
 }
 
 

@@ -17,8 +17,10 @@ pub struct TradeBotInfo {
     id: String,
 }
 
+#[derive(Clone)]
 pub struct Trader {
     id: String,
+    discord_channel_id: String,
     discord_id: String,
     item_images: Vec<String>,
     info_images: Vec<String>,
@@ -82,6 +84,7 @@ fn trade_request(
 
     let trader = Trader {
         id: String::from(in_game_id),
+        discord_channel_id: String::from(discord_channel_id),
         discord_id: String::from(discord_id),
         item_images: item_links.0,
         info_images: item_links.1,
