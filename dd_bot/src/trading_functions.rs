@@ -26,7 +26,9 @@ fn start_game(enigo: &mut Enigo, launcher_name: &str) {
 // 1. Opens the blacksmith launcher and presses play
 // 2. Goes into the lobby.
 // 3. Changes the TradeBotInfo ready variable to true when ready.
-pub async fn open_game_go_to_lobby(enigo: Arc<Mutex<Enigo>>, bot_info: Arc<Mutex<TradeBotInfo>>) {
+pub async fn open_game_go_to_lobby(bot_info: Arc<Mutex<TradeBotInfo>>) {
+    let enigo = Arc::new(Mutex::new(Enigo::new()));
+
     println!("Opening game!");
     {
         let mut bot_info = bot_info.lock().unwrap();
@@ -90,26 +92,23 @@ pub async fn open_game_go_to_lobby(enigo: Arc<Mutex<Enigo>>, bot_info: Arc<Mutex
 // It waits untill a trade request is sent by the discord bot
 pub fn collect_gold_fee(
     enigo: &State<Arc<Mutex<Enigo>>>,
-    bot_info: Arc<Mutex<TradeBotInfo>>,
+    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     in_game_id: &str,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) {
     let mut enigo = enigo.lock().unwrap();
-    let enigo2 = Arc::new(Mutex::new(Enigo::new()));
 
     let info = bot_info.lock().unwrap();
-
-    // Clone the Arc for use in main_func
-    let bot_info_clone = bot_info.clone();
 
     // If the bot is not ready then it will run the open game function
     // If the bot is starting then it will wait for the bot to be ready
     // If the bot is ready then it will continue as normal
     'wait_loop: loop{
+        let bot_info_clone = bot_info.inner().clone();
         match info.ready {
             ReadyState::False => {
                 tokio::spawn(async move {
-                    open_game_go_to_lobby(enigo2, bot_info_clone).await;
+                    open_game_go_to_lobby(bot_info_clone).await;
                 });
             },
             ReadyState::Starting => sleep(Duration::from_secs(2)),
@@ -321,26 +320,23 @@ pub fn collect_gold_fee(
 
 pub fn collect_items( 
     enigo: &State<Arc<Mutex<Enigo>>>,
-    bot_info: Arc<Mutex<TradeBotInfo>>,
+    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     in_game_id: &str,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) {
     let mut enigo = enigo.lock().unwrap();
-    let enigo2 = Arc::new(Mutex::new(Enigo::new()));
 
     let info = bot_info.lock().unwrap();
-
-    // Clone the Arc for use in main_func
-    let bot_info_clone = bot_info.clone();
 
     // If the bot is not ready then it will run the open game function
     // If the bot is starting then it will wait for the bot to be ready
     // If the bot is ready then it will continue as normal
     'wait_loop: loop{
+        let bot_info_clone = bot_info.inner().clone();
         match info.ready {
             ReadyState::False => {
                 tokio::spawn(async move {
-                    open_game_go_to_lobby(enigo2, bot_info_clone).await;
+                    open_game_go_to_lobby(bot_info_clone).await;
                 });
             },
             ReadyState::Starting => sleep(Duration::from_secs(2)),

@@ -103,6 +103,7 @@ fn trade_request(
 
     traders.append(trader);
 
+
     trading_functions::collect_gold_fee(enigo, bot_info, in_game_id, traders_container);
 
     format!("TradeBot ready\n{}", bot_info.lock().unwrap().id)
@@ -111,7 +112,6 @@ fn trade_request(
 fn rocket() -> rocket::Rocket<rocket::Build> {
     // Create 2 instances of enigo because Enigo does not implement Copy.
     let enigo = Arc::new(Mutex::new(Enigo::new()));
-    let enigo2 = Arc::new(Mutex::new(Enigo::new()));
 
     let bot_info = Arc::new(Mutex::new(TradeBotInfo {
         ready: ReadyState::False,
@@ -125,7 +125,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
 
     // Spawn the open game function as a separate task
     tokio::spawn(async move {
-        trading_functions::open_game_go_to_lobby(enigo2, bot_info_clone).await;
+        trading_functions::open_game_go_to_lobby(bot_info_clone).await;
     });
 
     rocket::build()
