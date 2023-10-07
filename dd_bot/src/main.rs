@@ -20,7 +20,8 @@ pub struct TradeBotInfo {
 pub struct Trader {
     id: String,
     discord_id: String,
-    items: Vec<String>,
+    item_images: Vec<String>,
+    info_images: Vec<String>,
     // gold: i32, // IMPLEMENT THIS LATER FOR GOLD TRADES
     has_paid_gold_fee: bool, // IMPLEMENT THIS LATER FOR TRADES
 }
@@ -82,7 +83,8 @@ fn trade_request(
     let trader = Trader {
         id: String::from(in_game_id),
         discord_id: String::from(discord_id),
-        items: item_links,
+        item_images: item_links.0,
+        info_images: item_links.1,
         has_paid_gold_fee: false,
     };
 
