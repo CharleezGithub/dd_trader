@@ -12,7 +12,7 @@ if len(sys.argv) > 1:
     image_name = sys.argv[1]
 else:
     image_name = "images/play.png"
-    image_name = "python_helpers/images/gold_fee_double_check.png"
+    image_name = "python_helpers/images/gold_fee4.png"
 
 max_val = 0.00
 
