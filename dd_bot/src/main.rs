@@ -76,7 +76,6 @@ fn trade_request(
     let mut traders = traders_container.lock().unwrap();
 
     // Write the database part in python first and then come back and retrive it here.
-    //let trader_items =
     let item_links =
         database_functions::get_links_for_user(discord_channel_id, discord_id).unwrap();
 
