@@ -31,7 +31,7 @@ pub struct Trader {
     item_images: Vec<String>,
     info_images: Vec<String>,
     gold: i32,
-    has_paid_gold_fee: bool, // IMPLEMENT THIS LATER FOR TRADES
+    has_paid_gold_fee: bool,
 }
 
 pub enum TradersContainer {
@@ -66,8 +66,8 @@ impl TradersContainer {
     }
 }
 
-#[get("/trade_request/<in_game_id>/<discord_channel_id>/<discord_id>")]
-fn trade_request(
+#[get("/gold_fee/<in_game_id>/<discord_channel_id>/<discord_id>")]
+fn gold_fee(
     in_game_id: &str,
     discord_channel_id: &str,
     discord_id: &str,
@@ -109,6 +109,28 @@ fn trade_request(
     format!("TradeBot ready\n{}", bot_info.lock().unwrap().id)
 }
 
+#[get("/trade_request/<in_game_id>")]
+fn trade_request(
+    in_game_id: &str,
+    enigo: &State<Arc<Mutex<Enigo>>>,
+    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
+    traders_container: &State<Arc<Mutex<TradersContainer>>>,
+) -> String {
+    {
+        let info = bot_info.lock().unwrap();
+        match info.ready{
+            ReadyState::False => return String::from("TradeBot not ready"),
+            ReadyState::Starting => return String::from("TradeBot is starting. Please wait 2 minutes and try again."),
+            ReadyState::True => println!("Going into trade!"),
+            
+        }
+    } // Lock is released here as the MutexGuard goes out of scope
+
+    trading_functions::complete_trade(enigo, bot_info, in_game_id, traders_container);
+
+    format!("TradeBot ready\n{}", bot_info.lock().unwrap().id)
+}
+
 fn rocket() -> rocket::Rocket<rocket::Build> {
     // Create 2 instances of enigo because Enigo does not implement Copy.
     let enigo = Arc::new(Mutex::new(Enigo::new()));
@@ -132,7 +154,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
         .manage(enigo) // Add the enigo as managed state
         .manage(bot_info) // Add the bot_info as managed state
         .manage(traders_container) // Add the traders_container as managed state
-        .mount("/", routes![trade_request])
+        .mount("/", routes![gold_fee, trade_request])
 }
 
 #[rocket::main]
