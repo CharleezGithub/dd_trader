@@ -591,19 +591,19 @@ pub fn collect_trade(
     let traders = traders_container.lock().unwrap();
     let trader = traders.get_trader_by_in_game_id(in_game_id).unwrap();
 
-    let trader_discord_id = trader.discord_id;
-    let trader_channel_id = trader.discord_channel_id;
+    let trader_discord_id = &trader.discord_id;
+    let trader_channel_id = &trader.discord_channel_id;
     
     // Find the other trader in the same trade as the trader.
     // This is done so that we can search for the items that the other person has traded to the bot so that the trader can get the other traders items and not their own back.
-    let mut other_trader: Option<&Trader> = None;
+    let other_trader: Option<&Trader> = None;
     
-    if let Some(other_trader) = traders.get_other_trader_in_channel(&trader_discord_id, &trader_channel_id) {
+    if let Some(mut other_trader) = traders.get_other_trader_in_channel(&trader_discord_id, &trader_channel_id) {
         other_trader = &other_trader.clone();
     }
 
-    let other_trader_discord_id = other_trader.unwrap().discord_id;
-    let other_trader_channel_id = other_trader.unwrap().discord_channel_id;
+    let other_trader_discord_id = &other_trader.unwrap().discord_id;
+    let other_trader_channel_id = &other_trader.unwrap().discord_channel_id;
 
     match send_trade_request(in_game_id) {
         Ok(_) => println!("Player accepted trade request"),
@@ -620,7 +620,11 @@ pub fn collect_trade(
     let item_vec = &other_trader.unwrap().item_images;
 
     // For each image pair. Download the pair and if there is a matching pair in the stash or inventory, add it to the trading window.
+    let mut item_limit = 10;
     for item in item_vec.iter() {
+        if item_limit <= 0 {
+            break;
+        }
         match download_image(&item, "temp_images/item/image.png") {
             Ok(_) => println!("Successfully downloaded item image"),
             Err(err) => {
@@ -629,14 +633,47 @@ pub fn collect_trade(
             }
         }
 
-        let output = Command::new("python")
-            .arg("python_helpers/multi_obj_detection.py")
-            .arg("temp_images/item/image.png")
-            .output()
-            .expect("Failed to execute command");
-
         // Convert the output bytes to a string
-        let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+        let output_str = {
+            let output = Command::new("python")
+                .arg("python_helpers/multi_obj_detection.py")
+                .arg("temp_images/item/image.png")
+                .output()
+                .expect("Failed to execute command");
+
+            str::from_utf8(&output.stdout).unwrap().trim().to_string()
+        };
+
+        // If it could not detect any items in the inventory then go to stash and try again
+        let output_str = if output_str == "Could not detect" {
+            let output_stash = Command::new("python")
+                .arg("python_helpers/obj_detection.py")
+                .arg("images/stash.png")
+                .output()
+                .expect("Failed to execute command");
+
+            match enigo_functions::click_buton(&mut enigo, output_stash, true, 0, 0) {
+                Ok(_) => println!("Successfully clicked button!"),
+                Err(err) => println!("Got error while trying to click button: {:?}", err),
+            }
+
+            let output_retry = Command::new("python")
+                .arg("python_helpers/multi_obj_detection.py")
+                .arg("temp_images/item/image.png")
+                .output()
+                .expect("Failed to execute command");
+
+            // Convert the output bytes to a string
+            str::from_utf8(&output_retry.stdout).unwrap().trim().to_string()
+        }
+        else {
+            output_str
+        };
+
+        if output_str == "Could not detect" {
+            return_to_lobby();
+            return;
+        }
 
         // Split the string on newlines to get the list of coordinates
         let coords: Vec<&str> = output_str.split('\n').collect();
@@ -684,18 +721,25 @@ pub fn collect_trade(
                         .arg("python_helpers/obj_detection.py")
                         .arg("temp_images/info/item.png")
                         .output();
-
-                    match output {
-                        Ok(_) => {
-                            println!("Found match!");
-                            trading_window_items.push((info_image, item));
-                        }
-                        Err(_) => println!("No match. Checking next..."),
+                
+                    let output_unwrapped = output.unwrap(); // Bind `Output` to a variable to extend its lifetime
+                    let output_str = str::from_utf8(&output_unwrapped.stdout).unwrap().trim();
+                    
+                    if output_str != "Could not detect" {
+                        println!("Found match!");
+                        enigo.key_down(Key::Shift);
+                        enigo.mouse_click(MouseButton::Left);
+                        enigo.key_up(Key::Shift);
+                        item_limit += -1;
+                    } else {
+                        println!("No match. Checking next...");
                     }
                 }
             }
         }
     }
+
+    // Click checkmark to get into the confirmation trading window.
 }
 
 fn send_trade_request(in_game_id: &str) -> Result<&str, &str>{
