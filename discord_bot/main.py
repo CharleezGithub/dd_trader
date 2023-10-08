@@ -515,12 +515,65 @@ async def show_trade(ctx):
         conn.close()
 
 
+@bot.command(name="pay-fee")
+async def pay_fee(ctx, in_game_id: str):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+    from helpers.has_paid_gold_fee import has_user_paid_fee
+    if has_user_paid_fee(ctx.author.id, ctx.channel.id):
+        await ctx.send("You have already paid the gold fee.")
+        return
+    try:
+        print(
+            f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+        )
+        # Construct the API endpoint URL
+        api_endpoint = f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+
+        # Make the API request
+        response = requests.get(api_endpoint)
+        print("response:", response.status_code)
+        print(response.status_code == 200)
+        print("response:", response.text)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            data = response.text
+            if "TradeBot ready" == data:
+                await ctx.send(
+                    'Going into "The Bard' + "'s" + 'Theater #1"'
+                )  # Send the message from the API response, if provided
+            else:
+                await ctx.send(
+                    "TradeBot is not ready. Wait 3 minutes and try again. Message @asdgew if this problem persists."
+                )
+        else:
+            await ctx.send(
+                f"Failed to complete the trade. Trading bot is not online. Please message @asdgew."
+            )
+            await ctx.send(
+                f"Failed to complete the trade. Error {response.status_code}: {response.text}"
+            )
+
+    except Exception as e:
+        print(e)
+        await ctx.send(f"Unexpected error occurred. Please message @asdgew")
+        # await ctx.send(f"Unexpected error occurred: {str(e)}")
+
+
 @bot.command(name="complete-trade")
 async def complete_trade(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
             "This command can only be used within the 'Middleman Trades' category!"
         )
+        return
+    from helpers.has_paid_gold_fee import has_user_paid_fee
+    if not has_user_paid_fee(ctx.author.id, ctx.channel.id):
+        await ctx.send("You have not paid the gold fee yet. Do !pay-fee to pay the trading fee.")
         return
     try:
         print(
