@@ -596,14 +596,7 @@ pub fn collect_trade(
     
     // Find the other trader in the same trade as the trader.
     // This is done so that we can search for the items that the other person has traded to the bot so that the trader can get the other traders items and not their own back.
-    let other_trader: Option<&Trader> = None;
-    
-    if let Some(mut other_trader) = traders.get_other_trader_in_channel(&trader_discord_id, &trader_channel_id) {
-        other_trader = &other_trader.clone();
-    }
-
-    let other_trader_discord_id = &other_trader.unwrap().discord_id;
-    let other_trader_channel_id = &other_trader.unwrap().discord_channel_id;
+    let other_trader = traders.get_other_trader_in_channel(&trader_discord_id, &trader_channel_id);
 
     match send_trade_request(in_game_id) {
         Ok(_) => println!("Player accepted trade request"),
@@ -619,11 +612,15 @@ pub fn collect_trade(
     let info_vec = &other_trader.unwrap().info_images;
     let item_vec = &other_trader.unwrap().item_images;
 
+    // Store the items that made it through in this vector
+    // Then when the trade is done loop through the list and change their status from "in escrow" to "traded"
+    let mut in_window_items = Vec::new();
+
     // For each image pair. Download the pair and if there is a matching pair in the stash or inventory, add it to the trading window.
     let mut item_limit = 10;
-    for item in item_vec.iter() {
+    'add_items: for item in item_vec.iter() {
         if item_limit <= 0 {
-            break;
+            break 'add_items;
         }
         match download_image(&item, "temp_images/item/image.png") {
             Ok(_) => println!("Successfully downloaded item image"),
@@ -730,6 +727,7 @@ pub fn collect_trade(
                         enigo.key_down(Key::Shift);
                         enigo.mouse_click(MouseButton::Left);
                         enigo.key_up(Key::Shift);
+                        in_window_items.push((info_image, item));
                         item_limit += -1;
                     } else {
                         println!("No match. Checking next...");
@@ -739,7 +737,129 @@ pub fn collect_trade(
         }
     }
 
-    // Click checkmark to get into the confirmation trading window.
+    // Click checkbox to get into the confirmation trading window.
+    // Click the checkbox
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/trade_checkbox.png")
+        .output()
+        .expect("Failed to execute command");
+
+    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    
+    // Now check what items made it into the trading window by going through the list of items again and adding those who match in the confirmation window to a list.
+    // When there is no more items to add, click the checkbox and if the trade goes through, change the status of those items to "traded"
+    
+    // Make an imuttable clone of in_window_items for enumeration to avoid borrow checker error.
+    let in_window_items_clone = in_window_items.clone();
+
+    // Pair is (info, item)
+    for (index, pair) in in_window_items_clone.iter().enumerate() {
+        match download_image(&pair.1, "temp_images/item/image.png") {
+            Ok(_) => println!("Successfully downloaded item image"),
+            Err(err) => {
+                println!("Could not download image. Error \n{}", err);
+                return;
+            }
+        }
+
+        // Handling output and avoiding temporary value drop issue
+        let output_result = Command::new("python")
+            .arg("python_helpers/multi_obj_detection.py")
+            .arg("temp_images/item/image.png")
+            .output();
+
+        match output_result {
+            Ok(output) => {
+                let output_bytes = output.stdout;
+                let output_str = str::from_utf8(&output_bytes).unwrap().trim();
+                let coords: Vec<&str> = output_str.split('\n').collect();
+
+                // Now, coords contains each of the coordinates
+                for coord_str in coords.iter() {
+                    let coord: Vec<i32> = coord_str
+                        .split_whitespace()
+                        .map(|s| s.parse().expect("Failed to parse coordinate"))
+                        .collect();
+
+                    if coord.len() == 4 {
+                        let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
+
+                        let mut rng = rand::thread_rng();
+
+                        // Salt the pixels so that it does not click the same pixel every time.
+                        let salt = rng.gen_range(-9..9);
+
+                        // Gets the middle of the detected play button and clicks it
+                        let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
+                        let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
+
+                        match enigo_functions::move_to_location_fast(
+                            &mut enigo,
+                            middle_point_x,
+                            middle_point_y,
+                        ) {
+                            Ok(_) => println!("Successfully moved to this location!"),
+                            Err(err) => {
+                                println!("Got error while trying to move cursor: {:?}", err)
+                            }
+                        }
+
+                        // Tries to match every info image with the item and if there is a match then it will add it to the temporary vector variable.
+                        for info_image in info_vec.iter() {
+                            match download_image(info_image, "temp_images/info/image.png") {
+                                Ok(_) => println!("Successfully downloaded info image"),
+                                Err(err) => {
+                                    println!("Could not download image. Error \n{}", err);
+                                    return;
+                                }
+                            }
+
+                            // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it won't wait for 4 minutes if there is no match
+                            let output = Command::new("python")
+                                .arg("python_helpers/obj_detection.py")
+                                .arg("temp_images/info/item.png")
+                                .output();
+
+                            match output {
+                                Ok(_) => {
+                                    println!("Found match!");
+                                    // Recording the index to remove after the loop
+                                    
+                                }
+                                Err(_) => {
+                                    println!("No match. Checking next...");
+                                    in_window_items.remove(index);
+                                },
+                            }
+                        }
+                    }
+                }
+            }
+            Err(_) => {
+                println!("Could not find item. Cancelling trade and going to lobby..");
+                // GO TO LOBBY
+                todo!();
+            }
+        }
+    }
+
+    // Ensure that the trade went through
+    todo!();
+
+    // Check if trading_window_items is empty
+    if in_window_items.is_empty() {
+        println!("No matches where found! Going back to lobby");
+        return_to_lobby();
+        return;
+    } else {
+        println!("Changing the items statuses from 'in escrow' to 'traded'!");
+        todo!();
+    }
 }
 
 fn send_trade_request(in_game_id: &str) -> Result<&str, &str>{
