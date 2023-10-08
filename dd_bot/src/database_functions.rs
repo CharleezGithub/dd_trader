@@ -164,7 +164,7 @@ pub fn set_item_status_by_urls(
     }
 }
 
-pub fn populate_traders_from_db(traders_container: Arc<Mutex<TradersContainer>>) -> Result<()> {
+pub fn populate_traders_from_db(traders_container: &Arc<Mutex<TradersContainer>>) -> Result<()> {
     let mut traders = traders_container.lock().unwrap();
 
     let conn = Connection::open("path_to_your_db/trading_bot.db")?;

@@ -67,7 +67,7 @@ impl TradersContainer {
         }
         None
     }
-    
+
     fn update_gold_fee_status(&mut self, in_game_id: &str, new_status: bool) {
         match self {
             TradersContainer::ActiveTraders(traders) => {
@@ -204,9 +204,10 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
 
     let traders_container = Arc::new(Mutex::new(TradersContainer::ActiveTraders(Vec::new())));
 
-    match database_functions::populate_traders_from_db(traders_container) {
+    
+    match database_functions::populate_traders_from_db(&traders_container) {
         Ok(_) => println!("Populated trades containter!"),
-        Err(err) => println!("Could not populate traders containter."),
+        Err(_) => println!("Could not populate traders containter."),
     }
 
     // Clone the Arc for use in main_func
