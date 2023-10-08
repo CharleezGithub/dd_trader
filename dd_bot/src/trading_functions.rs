@@ -14,7 +14,7 @@ use enigo::*;
 use rand::Rng;
 use rocket::State;
 
-use crate::{TradersContainer, Trader};
+use crate::TradersContainer;
 use crate::{database_functions, ReadyState, TradeBotInfo};
 
 use crate::enigo_functions;
@@ -124,7 +124,7 @@ pub fn collect_gold_fee(
     // Goes into the trading tab and connects to bards trade post.
     // Why bard? Because it has the least amount of active traders and therefore not as demanding to be in.
     // Run the "Trade" tab detector
-    send_trade_request(in_game_id);
+    let _ = send_trade_request(in_game_id);
 
     // Check if user has put in 50 gold for the trade fee
     let output = Command::new("python")
@@ -294,7 +294,7 @@ pub fn complete_trade(
     }
 
     // Go into the trading tab and send a trade to the trader. Exact same as before with the gold fee.
-    send_trade_request(trader.unwrap().in_game_id.as_str());
+    let _ = send_trade_request(trader.unwrap().in_game_id.as_str());
 
     // Now we are in the trading window with the trader
 
@@ -832,9 +832,8 @@ pub fn collect_trade(
                             match output {
                                 Ok(_) => {
                                     println!("Found match!");
-                                    // Recording the index to remove after the loop
-                                    
                                 }
+                                // Might not work...
                                 Err(_) => {
                                     println!("No match. Checking next...");
                                     in_window_items.remove(index);

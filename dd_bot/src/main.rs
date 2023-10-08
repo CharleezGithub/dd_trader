@@ -222,7 +222,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
         .manage(enigo) // Add the enigo as managed state
         .manage(bot_info) // Add the bot_info as managed state
         .manage(traders_container) // Add the traders_container as managed state
-        .mount("/", routes![gold_fee, trade_request])
+        .mount("/", routes![gold_fee, trade_request, trade_collect])
 }
 
 #[rocket::main]
