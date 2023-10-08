@@ -250,7 +250,7 @@ pub fn collect_gold_fee(
 }
 
 
-pub fn collect_items( 
+pub fn complete_trade( 
     enigo: &State<Arc<Mutex<Enigo>>>,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     in_game_id: &str,
@@ -556,6 +556,10 @@ pub fn collect_items(
     }
 }
 
+// Collect items function
+fn collect_trade() {
+    
+}
 
 
 fn send_trade_request(in_game_id: &str) {
