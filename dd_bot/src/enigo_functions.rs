@@ -20,7 +20,7 @@ pub fn click_buton(
     let output_str = String::from_utf8(output.stdout).unwrap();
     println!("{}", output_str);
 
-    let (mut x1, mut y1, mut x2, mut y2) = (0, 0, 0, 0);
+    let (x1, y1, x2, y2): (i32, i32, i32, i32);
 
     if output.status.success() {
         let mut splits = output_str.trim().split_whitespace();
@@ -90,7 +90,7 @@ pub fn click_buton_right(
     let output_str = String::from_utf8(output.stdout).unwrap();
     println!("{}", output_str);
 
-    let (mut x1, mut y1, mut x2, mut y2) = (0, 0, 0, 0);
+    let (x1, y1, x2, y2): (i32, i32, i32, i32);
 
     if output.status.success() {
         let mut splits = output_str.trim().split_whitespace();
