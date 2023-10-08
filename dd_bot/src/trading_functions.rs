@@ -14,8 +14,8 @@ use enigo::*;
 use rand::Rng;
 use rocket::State;
 
-use crate::{TradeBotInfo, database_functions, ReadyState};
 use crate::TradersContainer;
+use crate::{database_functions, ReadyState, TradeBotInfo};
 
 use crate::enigo_functions;
 
@@ -109,14 +109,14 @@ pub fn collect_gold_fee(
     // If the bot is not ready then it will run the open game function
     // If the bot is starting then it will wait for the bot to be ready
     // If the bot is ready then it will continue as normal
-    'wait_loop: loop{
+    'wait_loop: loop {
         let bot_info_clone = bot_info.inner().clone();
         match info.ready {
             ReadyState::False => {
                 tokio::spawn(async move {
                     open_game_go_to_lobby(bot_info_clone).await;
                 });
-            },
+            }
             ReadyState::Starting => sleep(Duration::from_secs(2)),
             ReadyState::True => break 'wait_loop,
         }
@@ -235,11 +235,15 @@ pub fn collect_gold_fee(
     // Check if trader exists
     match trader {
         Some(trader) => {
-            match database_functions::set_gold_fee_status(trader.discord_channel_id.as_str(), trader.discord_id.as_str(), true) {
+            match database_functions::set_gold_fee_status(
+                trader.discord_channel_id.as_str(),
+                trader.discord_id.as_str(),
+                true,
+            ) {
                 Ok(_) => println!("Succesfully updated gold fee status!"),
                 Err(err) => println!("Could not update gold status: Error \n{}", err),
             }
-        },
+        }
         None => println!("Trader not found"),
     }
 
@@ -249,8 +253,7 @@ pub fn collect_gold_fee(
     traders.update_gold_fee_status(trader_discord_id_copy.as_str(), true);
 }
 
-
-pub fn complete_trade( 
+pub fn complete_trade(
     enigo: &State<Arc<Mutex<Enigo>>>,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     in_game_id: &str,
@@ -263,20 +266,20 @@ pub fn complete_trade(
     // If the bot is not ready then it will run the open game function
     // If the bot is starting then it will wait for the bot to be ready
     // If the bot is ready then it will continue as normal
-    'wait_loop: loop{
+    'wait_loop: loop {
         let bot_info_clone = bot_info.inner().clone();
         match info.ready {
             ReadyState::False => {
                 tokio::spawn(async move {
                     open_game_go_to_lobby(bot_info_clone).await;
                 });
-            },
+            }
             ReadyState::Starting => sleep(Duration::from_secs(2)),
             ReadyState::True => break 'wait_loop,
         }
     }
-        
-        // Get the trader with that in-game name
+
+    // Get the trader with that in-game name
     let traders = traders_container.lock().unwrap();
     let trader = traders.get_trader_by_in_game_id(in_game_id);
 
@@ -293,7 +296,6 @@ pub fn complete_trade(
     // Go into the trading tab and send a trade to the trader. Exact same as before with the gold fee.
     send_trade_request(trader.unwrap().in_game_id.as_str());
 
-
     // Now we are in the trading window with the trader
 
     // Loop through the items in the trader struct for this trader and use obj detection to check if the item is present
@@ -307,7 +309,7 @@ pub fn complete_trade(
     // After trading successfully and double checking in inspect window, change status to "in escrow" for the traded items in the database.
     let mut trading_window_items = Vec::new();
 
-    for item in item_vec.iter(){
+    for item in item_vec.iter() {
         match download_image(&item, "temp_images/item/image.png") {
             Ok(_) => println!("Successfully downloaded item image"),
             Err(err) => {
@@ -371,15 +373,15 @@ pub fn complete_trade(
                         .arg("python_helpers/obj_detection.py")
                         .arg("temp_images/info/item.png")
                         .output();
-    
+
                     match output {
                         Ok(_) => {
                             println!("Found match!");
                             trading_window_items.push((info_image, item));
-                        },
+                        }
                         Err(_) => println!("No match. Checking next..."),
                     }
-                } 
+                }
             }
         }
     }
@@ -444,14 +446,14 @@ pub fn complete_trade(
             }
         }
     }
-    
+
     // Now double check that the items are still in the trading window by itterating through the trading window vector and hovering over all the items again.
     // Pair is (info, item)
 
     // To store indices to remove
-    let mut indices_to_remove = Vec::new(); 
+    let mut indices_to_remove = Vec::new();
 
-    for (index, pair) in trading_window_items.iter().enumerate(){
+    for (index, pair) in trading_window_items.iter().enumerate() {
         match download_image(&pair.1, "temp_images/item/image.png") {
             Ok(_) => println!("Successfully downloaded item image"),
             Err(err) => {
@@ -497,7 +499,9 @@ pub fn complete_trade(
                             middle_point_y,
                         ) {
                             Ok(_) => println!("Successfully moved to this location!"),
-                            Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+                            Err(err) => {
+                                println!("Got error while trying to move cursor: {:?}", err)
+                            }
                         }
 
                         // Tries to match every info image with the item and if there is a match then it will add it to the temporary vector variable.
@@ -515,19 +519,19 @@ pub fn complete_trade(
                                 .arg("python_helpers/obj_detection.py")
                                 .arg("temp_images/info/item.png")
                                 .output();
-            
+
                             match output {
                                 Ok(_) => {
                                     println!("Found match!");
                                     // Recording the index to remove after the loop
                                     indices_to_remove.push(index);
-                                },
+                                }
                                 Err(_) => println!("No match. Checking next..."),
                             }
-                        } 
+                        }
                     }
                 }
-            },
+            }
             Err(_) => {
                 println!("Could not find item. Cancelling trade and going to lobby..");
                 // GO TO LOBBY
@@ -557,14 +561,131 @@ pub fn complete_trade(
 }
 
 // Collect items function
-fn collect_trade() {
-    
+pub fn collect_trade(
+    enigo: &State<Arc<Mutex<Enigo>>>,
+    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
+    in_game_id: &str,
+    traders_container: &State<Arc<Mutex<TradersContainer>>>,
+) {
+    let mut enigo = enigo.lock().unwrap();
+
+    let info = bot_info.lock().unwrap();
+
+    // If the bot is not ready then it will run the open game function
+    // If the bot is starting then it will wait for the bot to be ready
+    // If the bot is ready then it will continue as normal
+    'wait_loop: loop {
+        let bot_info_clone = bot_info.inner().clone();
+        match info.ready {
+            ReadyState::False => {
+                tokio::spawn(async move {
+                    open_game_go_to_lobby(bot_info_clone).await;
+                });
+            }
+            ReadyState::Starting => sleep(Duration::from_secs(2)),
+            ReadyState::True => break 'wait_loop,
+        }
+    }
+
+    // Get the trader with that in-game name
+    let traders = traders_container.lock().unwrap();
+    let trader = traders.get_trader_by_in_game_id(in_game_id);
+
+    match send_trade_request(in_game_id) {
+        Ok(_) => println!("Player accepted trade request"),
+        Err(_) => {
+            println!("Player declined request. Going back to lobby.");
+            return;
+        }
+    }
+    // Now we are in the trading window
+    // It should find matches in both the inventory and the stash and add them to the trading window.
+
+    // These 2 vectors store the traders items. It loops through these and find pairs and adds them to the trade.
+    let info_vec = &trader.unwrap().info_images;
+    let item_vec = &trader.unwrap().item_images;
+
+    // For each image pair. Download the pair and if there is a matching pair in the stash or inventory, add it to the trading window.
+    for item in item_vec.iter() {
+        match download_image(&item, "temp_images/item/image.png") {
+            Ok(_) => println!("Successfully downloaded item image"),
+            Err(err) => {
+                println!("Could not download image. Error \n{}", err);
+                return;
+            }
+        }
+
+        let output = Command::new("python")
+            .arg("python_helpers/multi_obj_detection.py")
+            .arg("temp_images/item/image.png")
+            .output()
+            .expect("Failed to execute command");
+
+        // Convert the output bytes to a string
+        let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+        // Split the string on newlines to get the list of coordinates
+        let coords: Vec<&str> = output_str.split('\n').collect();
+
+        // Now, coords contains each of the coordinates
+        for coord_str in coords.iter() {
+            let coord: Vec<i32> = coord_str
+                .split_whitespace()
+                .map(|s| s.parse().expect("Failed to parse coordinate"))
+                .collect();
+
+            if coord.len() == 4 {
+                let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
+
+                let mut rng = rand::thread_rng();
+
+                // Salt the pixels so that it does not click the same pixel every time.
+                let salt = rng.gen_range(-9..9);
+
+                // Gets the middle of the detected play button and clicks it
+                let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
+                let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
+
+                match enigo_functions::move_to_location_fast(
+                    &mut enigo,
+                    middle_point_x,
+                    middle_point_y,
+                ) {
+                    Ok(_) => println!("Successfully moved to this location!"),
+                    Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+                }
+
+                // Tries to match every info image with the item and if there is a match then it will add it to the temporary vector variable.
+                for info_image in info_vec.iter() {
+                    match download_image(info_image, "temp_images/info/image.png") {
+                        Ok(_) => println!("Successfully downloaded info image"),
+                        Err(err) => {
+                            println!("Could not download image. Error \n{}", err);
+                            return;
+                        }
+                    }
+
+                    // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it wont wait for 4 minutes of there is no match
+                    let output = Command::new("python")
+                        .arg("python_helpers/obj_detection.py")
+                        .arg("temp_images/info/item.png")
+                        .output();
+
+                    match output {
+                        Ok(_) => {
+                            println!("Found match!");
+                            trading_window_items.push((info_image, item));
+                        }
+                        Err(_) => println!("No match. Checking next..."),
+                    }
+                }
+            }
+        }
+    }
 }
 
-
-fn send_trade_request(in_game_id: &str) {
+fn send_trade_request(in_game_id: &str) -> Result<&str, &str>{
     let mut enigo = Enigo::new();
-
 
     // Goes into the trading tab and connects to bards trade post.
     // Why bard? Because it has the least amount of active traders and therefore not as demanding to be in.
@@ -642,8 +763,9 @@ fn send_trade_request(in_game_id: &str) {
     // Else go back to main window and return.
     else {
         return_to_lobby();
-        return;
+        return Err("Trader declined request");
     }
+    Ok("User accepted trade")
 }
 
 fn return_to_lobby() {
@@ -662,7 +784,6 @@ fn return_to_lobby() {
     return;
 }
 
-
 fn download_image(url: &str, save_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     // Ensure the 'temp_images' directory exists
     if !Path::new("temp_images").exists() {
@@ -671,7 +792,7 @@ fn download_image(url: &str, save_path: &str) -> Result<(), Box<dyn std::error::
 
     // Perform a blocking HTTP GET request
     let response = reqwest::blocking::get(url)?;
-    
+
     // Ensure the request was successful
     if response.status().is_success() {
         // Open a file to write the image data
@@ -683,7 +804,10 @@ fn download_image(url: &str, save_path: &str) -> Result<(), Box<dyn std::error::
 
         println!("Image downloaded to '{}'", save_path);
     } else {
-        return Err(Box::new(io::Error::new(io::ErrorKind::Other, "Failed to download image")));
+        return Err(Box::new(io::Error::new(
+            io::ErrorKind::Other,
+            "Failed to download image",
+        )));
     }
 
     Ok(())
