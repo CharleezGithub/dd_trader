@@ -14,7 +14,7 @@ use enigo::*;
 use rand::Rng;
 use rocket::State;
 
-use crate::TradersContainer;
+use crate::{TradersContainer, Trader};
 use crate::{database_functions, ReadyState, TradeBotInfo};
 
 use crate::enigo_functions;
@@ -589,7 +589,21 @@ pub fn collect_trade(
 
     // Get the trader with that in-game name
     let traders = traders_container.lock().unwrap();
-    let trader = traders.get_trader_by_in_game_id(in_game_id);
+    let trader = traders.get_trader_by_in_game_id(in_game_id).unwrap();
+
+    let trader_discord_id = trader.discord_id;
+    let trader_channel_id = trader.discord_channel_id;
+    
+    // Find the other trader in the same trade as the trader.
+    // This is done so that we can search for the items that the other person has traded to the bot so that the trader can get the other traders items and not their own back.
+    let mut other_trader: Option<&Trader> = None;
+    
+    if let Some(other_trader) = traders.get_other_trader_in_channel(&trader_discord_id, &trader_channel_id) {
+        other_trader = &other_trader.clone();
+    }
+
+    let other_trader_discord_id = other_trader.unwrap().discord_id;
+    let other_trader_channel_id = other_trader.unwrap().discord_channel_id;
 
     match send_trade_request(in_game_id) {
         Ok(_) => println!("Player accepted trade request"),
@@ -602,8 +616,8 @@ pub fn collect_trade(
     // It should find matches in both the inventory and the stash and add them to the trading window.
 
     // These 2 vectors store the traders items. It loops through these and find pairs and adds them to the trade.
-    let info_vec = &trader.unwrap().info_images;
-    let item_vec = &trader.unwrap().item_images;
+    let info_vec = &other_trader.unwrap().info_images;
+    let item_vec = &other_trader.unwrap().item_images;
 
     // For each image pair. Download the pair and if there is a matching pair in the stash or inventory, add it to the trading window.
     for item in item_vec.iter() {

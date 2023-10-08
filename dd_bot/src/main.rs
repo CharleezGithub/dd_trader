@@ -55,6 +55,19 @@ impl TradersContainer {
         }
     }
 
+    fn get_other_trader_in_channel(&self, discord_id: &str, discord_channel_id: &str) -> Option<&Trader> {
+        match self {
+            TradersContainer::ActiveTraders(traders) => {
+                for trader in traders.iter() {
+                    if trader.discord_channel_id == discord_channel_id && trader.discord_id != discord_id {
+                        return Some(trader);
+                    }
+                }
+            }
+        }
+        None
+    }
+    
     fn update_gold_fee_status(&mut self, in_game_id: &str, new_status: bool) {
         match self {
             TradersContainer::ActiveTraders(traders) => {
@@ -147,6 +160,35 @@ fn trade_request(
     traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
 
     trading_functions::complete_trade(enigo, bot_info, in_game_id, traders_container);
+
+    format!("TradeBot ready\n{}", bot_info.lock().unwrap().id)
+}
+
+#[get("/trade_collect/<in_game_id>/<discord_channel_id>/<discord_id>")]
+fn trade_collect(
+    in_game_id: &str,
+    discord_channel_id: &str,
+    discord_id: &str,
+    enigo: &State<Arc<Mutex<Enigo>>>,
+    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
+    traders_container: &State<Arc<Mutex<TradersContainer>>>,
+) -> String {
+    {
+        let info = bot_info.lock().unwrap();
+        match info.ready {
+            ReadyState::False => return String::from("TradeBot not ready"),
+            ReadyState::Starting => {
+                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
+            }
+            ReadyState::True => println!("Going into trade!"),
+        }
+    } // Lock is released here as the MutexGuard goes out of scope
+
+    let mut traders = traders_container.lock().unwrap();
+
+    traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
+
+    trading_functions::collect_trade(enigo, bot_info, in_game_id, traders_container);
 
     format!("TradeBot ready\n{}", bot_info.lock().unwrap().id)
 }
