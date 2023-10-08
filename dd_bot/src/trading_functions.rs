@@ -750,7 +750,7 @@ pub fn collect_trade(
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
 
-    
+    // Now the bot is in the double check trade window box.
     // Now check what items made it into the trading window by going through the list of items again and adding those who match in the confirmation window to a list.
     // When there is no more items to add, click the checkbox and if the trade goes through, change the status of those items to "traded"
     
@@ -766,6 +766,10 @@ pub fn collect_trade(
                 return;
             }
         }
+
+        // Need to make sure that the detection script only sees the trading box and does not detect to the sides.
+        // Because the inventory/stash is still visable on this screen so the screenshot that the bot takes needs to be narrowed to only the trading window.
+        todo!();
 
         // Handling output and avoiding temporary value drop issue
         let output_result = Command::new("python")
