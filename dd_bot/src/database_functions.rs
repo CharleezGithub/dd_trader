@@ -1,4 +1,7 @@
+use std::sync::{Arc, Mutex};
 use rusqlite::{params, Connection, Result};
+
+use crate::{Trader, TradersContainer};
 
 pub fn get_links_for_user(channel_id: &str, user_id: &str) -> Result<(Vec<String>, Vec<String>)> {
     let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
@@ -59,6 +62,38 @@ pub fn has_paid_fee(channel_id: &str, user_id: &str) -> Result<bool> {
     Ok(has_paid)
 }
 
+pub fn get_gold_for_user(channel_id: &str, user_id: &str) -> Result<i32> {
+    let conn = Connection::open("C:/path_to_your_db/trading_bot.db")?;
+
+    let mut stmt = conn.prepare(
+        "
+        SELECT trader1_gold, trader2_gold, trader1_id, trader2_id 
+        FROM trades 
+        JOIN traders ON traders.id = trades.trader1_id OR traders.id = trades.trader2_id 
+        WHERE trades.channel_id = ?1 
+        AND traders.discord_id = ?2
+    ",
+    )?;
+
+    let mut rows = stmt.query(params![channel_id, user_id])?;
+
+    if let Some(row) = rows.next()? {
+        let (trader1_gold, trader2_gold, trader1_id, trader2_id): (i32, i32, String, String) =
+            (row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?);
+
+        // Determine whether the user is trader1 or trader2, and return the corresponding gold amount
+        return Ok(if user_id == trader1_id {
+            trader1_gold
+        } else if user_id == trader2_id {
+            trader2_gold
+        } else {
+            return Err(rusqlite::Error::QueryReturnedNoRows);
+        });
+    }
+
+    Err(rusqlite::Error::QueryReturnedNoRows)
+}
+
 pub fn set_gold_fee_status(channel_id: &str, user_id: &str, has_paid: bool) -> Result<()> {
     let conn = Connection::open("C:/path_to_your_db/trading_bot.db")?;
 
@@ -68,7 +103,7 @@ pub fn set_gold_fee_status(channel_id: &str, user_id: &str, has_paid: bool) -> R
         SELECT trader1_id, trader2_id 
         FROM trades 
         WHERE channel_id = ?1
-    ",
+        ",
     )?;
 
     let mut rows = stmt.query(params![channel_id])?;
@@ -105,38 +140,6 @@ pub fn set_gold_fee_status(channel_id: &str, user_id: &str, has_paid: bool) -> R
     Ok(())
 }
 
-pub fn get_gold_for_user(channel_id: &str, user_id: &str) -> Result<i32> {
-    let conn = Connection::open("C:/path_to_your_db/trading_bot.db")?;
-
-    let mut stmt = conn.prepare(
-        "
-        SELECT trader1_gold, trader2_gold, trader1_id, trader2_id 
-        FROM trades 
-        JOIN traders ON traders.id = trades.trader1_id OR traders.id = trades.trader2_id 
-        WHERE trades.channel_id = ?1 
-        AND traders.discord_id = ?2
-    ",
-    )?;
-
-    let mut rows = stmt.query(params![channel_id, user_id])?;
-
-    if let Some(row) = rows.next()? {
-        let (trader1_gold, trader2_gold, trader1_id, trader2_id): (i32, i32, String, String) =
-            (row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?);
-
-        // Determine whether the user is trader1 or trader2, and return the corresponding gold amount
-        return Ok(if user_id == trader1_id {
-            trader1_gold
-        } else if user_id == trader2_id {
-            trader2_gold
-        } else {
-            return Err(rusqlite::Error::QueryReturnedNoRows);
-        });
-    }
-
-    Err(rusqlite::Error::QueryReturnedNoRows)
-}
-
 pub fn set_item_status_by_urls(
     item_image_url: &str,
     info_image_url: &str,
@@ -159,4 +162,75 @@ pub fn set_item_status_by_urls(
     } else {
         Ok(())
     }
+}
+
+pub fn populate_traders_from_db(traders_container: Arc<Mutex<TradersContainer>>) -> Result<()> {
+    let mut traders = traders_container.lock().unwrap();
+
+    let conn = Connection::open("path_to_your_db/trading_bot.db")?;
+
+    let mut stmt = conn.prepare(
+        "
+        SELECT 
+            t.id, t.discord_id, tr.channel_id, 
+            CASE WHEN t.id = tr.trader1_id THEN tr.trader1_gold ELSE tr.trader2_gold END,
+            CASE WHEN t.id = tr.trader1_id THEN tr.trader1_paid ELSE tr.trader2_paid END,
+            i.item_image_url, i.info_image_url
+        FROM traders t
+        JOIN trades tr ON t.id = tr.trader1_id OR t.id = tr.trader2_id
+        LEFT JOIN items i ON tr.id = i.trade_id AND t.id = i.trader_id
+        WHERE tr.status = 'ongoing'
+    ",
+    )?;
+
+    let rows = stmt.query_map(params![], |row| {
+        Ok((
+            row.get::<_, String>(1)?,         // discord_id
+            row.get::<_, String>(2)?,         // channel_id
+            row.get::<_, i32>(3)?,            // gold
+            row.get::<_, bool>(4)?,           // has_paid_gold_fee
+            row.get::<_, Option<String>>(5)?, // item_image_url
+            row.get::<_, Option<String>>(6)?, // info_image_url
+        ))
+    })?;
+
+    let mut traders_map: std::collections::HashMap<
+        (String, String),
+        (Vec<String>, Vec<String>, i32, bool),
+    > = std::collections::HashMap::new();
+    for row in rows {
+        if let Ok((
+            discord_id,
+            channel_id,
+            gold,
+            has_paid_gold_fee,
+            item_image_url,
+            info_image_url,
+        )) = row
+        {
+            let entry = traders_map
+                .entry((discord_id.clone(), channel_id.clone()))
+                .or_insert((Vec::new(), Vec::new(), gold, has_paid_gold_fee));
+            if let (Some(item_image_url), Some(info_image_url)) = (item_image_url, info_image_url) {
+                entry.0.push(item_image_url);
+                entry.1.push(info_image_url);
+            }
+        }
+    }
+
+    for ((discord_id, channel_id), (item_images, info_images, gold, has_paid_gold_fee)) in
+        traders_map
+    {
+        traders.append(Trader {
+            in_game_id: "".to_string(), // Empty, as this will be assigned later
+            discord_channel_id: channel_id,
+            discord_id,
+            item_images,
+            info_images,
+            gold,
+            has_paid_gold_fee,
+        });
+    }
+
+    Ok(())
 }

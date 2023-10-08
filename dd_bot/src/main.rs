@@ -49,17 +49,44 @@ impl TradersContainer {
 
     fn get_trader_by_in_game_id(&self, in_game_id: &str) -> Option<&Trader> {
         match self {
-            TradersContainer::ActiveTraders(traders) => {
-                traders.iter().find(|trader| trader.in_game_id == in_game_id)
-            }
+            TradersContainer::ActiveTraders(traders) => traders
+                .iter()
+                .find(|trader| trader.in_game_id == in_game_id),
         }
     }
 
     fn update_gold_fee_status(&mut self, in_game_id: &str, new_status: bool) {
         match self {
             TradersContainer::ActiveTraders(traders) => {
-                if let Some(trader) = traders.iter_mut().find(|trader| trader.in_game_id == in_game_id) {
+                if let Some(trader) = traders
+                    .iter_mut()
+                    .find(|trader| trader.in_game_id == in_game_id)
+                {
                     trader.has_paid_gold_fee = new_status;
+                }
+            }
+        }
+    }
+
+    fn set_in_game_id_by_discord_info(
+        &mut self,
+        new_in_game_id: &str,
+        discord_id: &str,
+        discord_channel_id: &str,
+    ) {
+        match self {
+            TradersContainer::ActiveTraders(traders) => {
+                for trader in traders.iter_mut() {
+                    if trader.discord_id == discord_id
+                        && trader.discord_channel_id == discord_channel_id
+                    {
+                        trader.in_game_id = new_in_game_id.to_string();
+                        println!(
+                            "Updated in_game_id for discord_id {}: {}",
+                            discord_id, new_in_game_id
+                        );
+                        break;
+                    }
                 }
             }
         }
@@ -77,54 +104,47 @@ fn gold_fee(
 ) -> String {
     {
         let info = bot_info.lock().unwrap();
-        match info.ready{
+        match info.ready {
             ReadyState::False => return String::from("TradeBot not ready"),
-            ReadyState::Starting => return String::from("TradeBot is starting. Please wait 2 minutes and try again."),
+            ReadyState::Starting => {
+                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
+            }
             ReadyState::True => println!("Going into trade!"),
-            
         }
     } // Lock is released here as the MutexGuard goes out of scope
 
     let mut traders = traders_container.lock().unwrap();
 
-    // Write the database part in python first and then come back and retrive it here.
-    let item_links =
-        database_functions::get_links_for_user(discord_channel_id, discord_id).unwrap();
-
-    let trader = Trader {
-        in_game_id: String::from(in_game_id),
-        discord_channel_id: String::from(discord_channel_id),
-        discord_id: String::from(discord_id),
-        item_images: item_links.0,
-        info_images: item_links.1,
-        gold: 0,
-        has_paid_gold_fee: false,
-    };
-
-    traders.append(trader);
-
+    traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
 
     trading_functions::collect_gold_fee(enigo, bot_info, in_game_id, traders_container);
 
     format!("TradeBot ready\n{}", bot_info.lock().unwrap().id)
 }
 
-#[get("/trade_request/<in_game_id>")]
+#[get("/trade_request/<in_game_id>/<discord_channel_id>/<discord_id>")]
 fn trade_request(
     in_game_id: &str,
+    discord_channel_id: &str,
+    discord_id: &str,
     enigo: &State<Arc<Mutex<Enigo>>>,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) -> String {
     {
         let info = bot_info.lock().unwrap();
-        match info.ready{
+        match info.ready {
             ReadyState::False => return String::from("TradeBot not ready"),
-            ReadyState::Starting => return String::from("TradeBot is starting. Please wait 2 minutes and try again."),
+            ReadyState::Starting => {
+                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
+            }
             ReadyState::True => println!("Going into trade!"),
-            
         }
     } // Lock is released here as the MutexGuard goes out of scope
+
+    let mut traders = traders_container.lock().unwrap();
+
+    traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
 
     trading_functions::complete_trade(enigo, bot_info, in_game_id, traders_container);
 
@@ -141,6 +161,11 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
     }));
 
     let traders_container = Arc::new(Mutex::new(TradersContainer::ActiveTraders(Vec::new())));
+
+    match database_functions::populate_traders_from_db(traders_container) {
+        Ok(_) => println!("Populated trades containter!"),
+        Err(err) => println!("Could not populate traders containter."),
+    }
 
     // Clone the Arc for use in main_func
     let bot_info_clone = bot_info.clone();
