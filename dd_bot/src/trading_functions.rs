@@ -535,7 +535,8 @@ pub fn complete_trade(
             Err(_) => {
                 println!("Could not find item. Cancelling trade and going to lobby..");
                 // GO TO LOBBY
-                todo!();
+                return_to_lobby();
+                return;
             }
         }
     }
@@ -550,7 +551,8 @@ pub fn complete_trade(
         println!("The trading_window_items vector is empty.");
     } else {
         println!("The trading_window_items vector is not empty. Cancelling the trade!");
-        todo!();
+        return_to_lobby();
+        return;
     }
     for pair in trading_window_items_clone.iter() {
         match database_functions::set_item_status_by_urls(pair.1, pair.0, "in escrow") {
@@ -895,7 +897,8 @@ pub fn collect_trade(
             Err(_) => {
                 println!("Could not find item. Cancelling trade and going to lobby..");
                 // GO TO LOBBY
-                todo!();
+                return_to_lobby();
+                return;
             }
         }
     }
@@ -970,7 +973,8 @@ pub fn collect_trade(
             Err(_) => {
                 println!("User did not accept trade.");
                 // GO TO LOBBY
-                todo!();
+                return_to_lobby();
+                return;
             }
         }
 
