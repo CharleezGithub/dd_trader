@@ -614,6 +614,7 @@ pub fn collect_trade(
 
     // Store the items that made it through in this vector
     // Then when the trade is done loop through the list and change their status from "in escrow" to "traded"
+    // (Info, item)
     let mut in_window_items = Vec::new();
 
     // For each image pair. Download the pair and if there is a matching pair in the stash or inventory, add it to the trading window.
@@ -852,16 +853,23 @@ pub fn collect_trade(
     }
 
     // Ensure that the trade went through
-    todo!();
+    //todo!();
 
     // Check if trading_window_items is empty
     if in_window_items.is_empty() {
         println!("No matches where found! Going back to lobby");
         return_to_lobby();
         return;
-    } else {
+    }
+    // If the in_window_items is not emtpy then change the status of those images from "in escrow" to "traded"
+    else {
         println!("Changing the items statuses from 'in escrow' to 'traded'!");
-        todo!();
+        for (info_url, item_url) in in_window_items {
+            match database_functions::set_item_status_by_urls(item_url, info_url, "traded") {
+                Ok(_) => println!("Changed the item status for 1 item!"),
+                Err(err) => println!("Got error while changing item status. Error: \n{}", err),
+            }
+        }
     }
 }
 
