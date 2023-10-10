@@ -188,9 +188,10 @@ fn trade_collect(
 
     traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
 
-    trading_functions::collect_trade(enigo, bot_info, in_game_id, traders_container);
-
-    format!("TradeBot ready\n{}", bot_info.lock().unwrap().id)
+    match trading_functions::collect_trade(enigo, bot_info, in_game_id, traders_container) {
+        Ok(_) => return String::from("Trade successful!"),
+        Err(err) => return err,
+    }
 }
 
 fn rocket() -> rocket::Rocket<rocket::Build> {
