@@ -1,17 +1,27 @@
 import pytesseract
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageGrab
 
-# Open the image file
-image = Image.open("images/total_gold_test9.png")
+
+# Capture a screenshot using ImageGrab
+image = ImageGrab.grab()
+
+crop_box = (800, 279, 910, 301)
+
+# Crop the image
+image = image.crop(crop_box)
 
 # Convert the image to grayscale
 image = image.convert("L")
 
-# Display the grayscale image
+# Display the cropped and grayscale image
 # image.show()
 
-# Perform OCR using PyTesseract
-text = pytesseract.image_to_string(image)
+# Use Tesseract to do OCR on the image
+custom_config = r"--oem 3 --psm 6 outputbase digits"  # OEM 3 is both standard and LSTM OCR, and PSM 6 assumes a single uniform block of text.
+text = pytesseract.image_to_string(image, config=custom_config)
 
 # Print the extracted text
-print(text.strip())
+if text.strip() == "":
+    print("No text detected")
+else:
+    print(text.strip())
