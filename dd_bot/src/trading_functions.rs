@@ -853,7 +853,7 @@ pub fn collect_trade(
     }
 
     // Ensure that the trade went through
-    //todo!();
+    todo!();
 
     // Check if trading_window_items is empty
     if in_window_items.is_empty() {
