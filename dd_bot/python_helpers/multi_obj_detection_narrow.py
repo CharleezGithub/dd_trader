@@ -25,13 +25,22 @@ if sensitive:
 else:
     limit = 0.90
 
+x_start, x_end = (
+    600,
+    1500,
+)  # Define the width interval where you want to perform template matching
+
 while max_val < limit:
     if tries > 240:
         break
 
     screenshot = ImageGrab.grab()
-    main_image = np.array(screenshot)
-    main_image = cv2.cvtColor(main_image, cv2.COLOR_BGR2RGB)
+    main_image_full = np.array(screenshot)
+    main_image_full = cv2.cvtColor(main_image_full, cv2.COLOR_BGR2RGB)
+
+    main_image = main_image_full[
+        :, x_start:x_end
+    ]  # Crop the image within the width interval
 
     template = cv2.imread(image_name, cv2.IMREAD_COLOR)
 
@@ -45,25 +54,30 @@ if tries < 240:
     threshold = 0.8
     loc = np.where(result >= threshold)
 
-    # Store rectangles in array
     rectangles = []
     for pt in zip(*loc[::-1]):
-        x1, y1 = pt[0], pt[1]
-        x2, y2 = pt[0] + template.shape[1], pt[1] + template.shape[0]
+        x1, y1 = pt[0] + x_start, pt[1]  # Add the x_offset to x1 coordinate
+        x2, y2 = (
+            pt[0] + template.shape[1] + x_start,
+            pt[1] + template.shape[0],
+        )  # Add the x_offset to x2 coordinate
         rectangles.append([x1, y1, x2, y2])
 
-    # Apply non-max suppression to the bounding boxes
     rects = np.array(rectangles)
     pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
 
     for x1, y1, x2, y2 in pick:
-        cv2.rectangle(main_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cv2.rectangle(
+            main_image_full, (x1, y1), (x2, y2), (0, 255, 0), 2
+        )  # Draw rectangle on the full image
         print(f"{x1} {y1} {x2} {y2}")
 
     window_name = "Detected Objects"
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
     cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-    cv2.imshow(window_name, main_image)
+    cv2.imshow(
+        window_name, main_image_full
+    )  # Show the full image with matched rectangles
 
     #cv2.waitKey(0)
     cv2.destroyAllWindows()
