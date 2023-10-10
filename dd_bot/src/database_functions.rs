@@ -255,3 +255,45 @@ pub fn items_in_escrow_count(trader: &Trader) -> Result<i32> {
 
     Ok(count)
 }
+
+pub fn add_gold_to_trader(channel_id: &String, discord_id: &String, gold_to_add: i32) -> Result<()> {
+    let conn = Connection::open("trading_bot_test.db")?;
+
+    // Determine whether the user is trader1 or trader2 in the channel
+    let trader_role_result: Result<String> = conn.query_row(
+        "SELECT 
+            CASE 
+                WHEN trader1_id = (SELECT id FROM traders WHERE discord_id = ?1) THEN 'trader1'
+                WHEN trader2_id = (SELECT id FROM traders WHERE discord_id = ?1) THEN 'trader2'
+                ELSE NULL
+            END AS trader_role
+        FROM trades 
+        WHERE channel_id = ?2",
+        params![discord_id, channel_id],
+        |row| row.get(0),
+    );
+
+    match trader_role_result {
+        Ok(role) => {
+            // Determine which trader's gold needs to be updated (trader1_gold_traded or trader2_gold_traded)
+            let gold_column = if &role == "trader1" {
+                "trader1_gold_traded"
+            } else {
+                "trader2_gold_traded"
+            };
+
+            conn.execute(
+                &format!(
+                    "UPDATE trades 
+                    SET {} = {} + ?1 
+                    WHERE channel_id = ?2",
+                    gold_column, gold_column
+                ),
+                params![gold_to_add, channel_id],
+            )?;
+
+            Ok(())
+        }
+        Err(_) => Err(rusqlite::Error::QueryReturnedNoRows),
+    }
+}

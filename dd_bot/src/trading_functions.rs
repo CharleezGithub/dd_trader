@@ -541,6 +541,101 @@ pub fn complete_trade(
         }
     }
 
+    // After checking all the items check the gold amount
+    // The bot ensures that the trade went through by making sure that it is the last link in the trade.
+    // The bot waits for the trader to accept the trade by clicking the checkmark before the bot itself does.
+    // Right as the trader clicks the button, the bot does as well, completing the trade for centain.
+    // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it won't wait for 4 minutes if there is no match
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/trader_ready.png")
+        .output();
+
+    match output {
+        Ok(_) => {
+            println!("Trader accepted the trade!")
+        }
+        // Might not work...
+        Err(_) => {
+            println!("User did not accept trade.");
+            // GO TO LOBBY
+            return_to_lobby();
+            return Err(String::from("User did not accept trade"));
+        }
+    }
+
+    // Get the amount of gold in the trade
+    let output = Command::new("python")
+        .arg("python_helpers/total_gold.py")
+        .output();
+
+    // Match the output of the gold detector and assigns the amount of gold put in by the trader to the gold variable
+    let gold: i32 = match output {
+        Ok(out) => {
+            let output_str = str::from_utf8(&out.stdout).unwrap().trim();
+            if output_str == "No text detected" || output_str == "0" {
+                0
+            } else {
+                output_str.parse().unwrap()
+            }
+        }
+        Err(_) => 0,
+    };
+
+    // Add the gold to the trader1_gold_traded or trader2_gold_traded
+    let _ = database_functions::add_gold_to_trader(&trader.unwrap().discord_channel_id, &trader.unwrap().discord_id, gold);
+
+
+    // Click the checkbox fast so that the other trader does not have time to decline in order to try to trick the bot.
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/trade_checkbox.png")
+        .output()
+        .expect("Failed to execute command");
+
+    // Convert the output into 4 coordinates and get the middle point of those.
+    // Then use the move_to_location_fast function to quickly move to the checkbox and click it
+    // Convert the output bytes to a string
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    // Split the string on newlines to get the list of coordinates
+    let coords: Vec<&str> = output_str.split('\n').collect();
+
+    // Now, coords contains each of the coordinates
+    for coord_str in coords.iter() {
+        let coord: Vec<i32> = coord_str
+            .split_whitespace()
+            .map(|s| s.parse().expect("Failed to parse coordinate"))
+            .collect();
+
+        if coord.len() == 4 {
+            let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
+
+            let mut rng = rand::thread_rng();
+
+            // Salt the pixels so that it does not click the same pixel every time.
+            let salt = rng.gen_range(-9..9);
+
+            // Gets the middle of the detected play button and clicks it
+            let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
+            let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
+
+            // Now move to the middlepoint
+            match enigo_functions::move_to_location_fast(
+                &mut enigo,
+                middle_point_x,
+                middle_point_y,
+            ) {
+                Ok(_) => println!("Successfully clicked button!"),
+                Err(err) => {
+                    println!("Got error while trying to click button: {:?}", err)
+                }
+            }
+
+            enigo.mouse_click(MouseButton::Left);
+        }
+    }
+
     // Removing items from trading_window_items using the indices recorded
     for index in indices_to_remove.into_iter().rev() {
         trading_window_items.remove(index);
@@ -552,7 +647,9 @@ pub fn complete_trade(
     } else {
         println!("The trading_window_items vector is not empty. Cancelling the trade!");
         return_to_lobby();
-        return Err(String::from("Some items may have been removed during trade"));
+        return Err(String::from(
+            "Some items may have been removed during trade",
+        ));
     }
 
     let mut result_of_status;
@@ -564,11 +661,11 @@ pub fn complete_trade(
             Ok(_) => {
                 println!("Updated item status!");
                 result_of_status = Ok(String::from("Success"));
-            },
+            }
             Err(err) => {
                 println!("Error updating item status. Error: \n{}", err);
                 result_of_status = Err(String::from("Error during trade"))
-        },
+            }
         }
     }
     match result_of_status {
@@ -624,11 +721,14 @@ pub fn collect_trade(
                 println!("No more items left in escrow.");
                 return Err(String::from("No items left in escrow"));
             }
-        },
+        }
         Err(err) => {
-            println!("Got error while counting number of items in escrow. Error:\n{}", err);
+            println!(
+                "Got error while counting number of items in escrow. Error:\n{}",
+                err
+            );
             return Err(String::from("No items left in escrow"));
-        },
+        }
     }
     match send_trade_request(in_game_id) {
         Ok(_) => println!("Player accepted trade request"),
@@ -848,13 +948,12 @@ pub fn collect_trade(
             }
         }
 
-        // Need to make sure that the detection script only sees the trading box and does not detect to the sides.
+        // Using narrow version of multi obj detection.
         // Because the inventory/stash is still visable on this screen so the screenshot that the bot takes needs to be narrowed to only the trading window.
-        todo!();
 
         // Handling output and avoiding temporary value drop issue
         let output_result = Command::new("python")
-            .arg("python_helpers/multi_obj_detection.py")
+            .arg("python_helpers/multi_obj_detection_narrow.py")
             .arg("temp_images/item/image.png")
             .output();
 
@@ -986,18 +1085,22 @@ pub fn collect_trade(
                         // Gets the middle of the detected play button and clicks it
                         let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
                         let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
-                        
+
                         // Now move to the middlepoint
-                        match enigo_functions::move_to_location_fast(&mut enigo, middle_point_x, middle_point_y) {
+                        match enigo_functions::move_to_location_fast(
+                            &mut enigo,
+                            middle_point_x,
+                            middle_point_y,
+                        ) {
                             Ok(_) => println!("Successfully clicked button!"),
-                            Err(err) => println!("Got error while trying to click button: {:?}", err),
+                            Err(err) => {
+                                println!("Got error while trying to click button: {:?}", err)
+                            }
                         }
 
                         enigo.mouse_click(MouseButton::Left);
                     }
-
                 }
-
             }
             // Might not work...
             Err(_) => {
