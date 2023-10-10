@@ -258,7 +258,7 @@ pub fn complete_trade(
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     in_game_id: &str,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
-) {
+) -> Result<String, String> {
     let mut enigo = enigo.lock().unwrap();
 
     let info = bot_info.lock().unwrap();
@@ -290,7 +290,7 @@ pub fn complete_trade(
     let has_paid_fee = database_functions::has_paid_fee(channel_id, discord_id).unwrap();
 
     if !has_paid_fee {
-        return;
+        return Err(String::from("User has not yet paid the gold fee"));
     }
 
     // Go into the trading tab and send a trade to the trader. Exact same as before with the gold fee.
@@ -314,7 +314,7 @@ pub fn complete_trade(
             Ok(_) => println!("Successfully downloaded item image"),
             Err(err) => {
                 println!("Could not download image. Error \n{}", err);
-                return;
+                return Err(String::from("Could not download image"));
             }
         }
 
@@ -364,7 +364,7 @@ pub fn complete_trade(
                         Ok(_) => println!("Successfully downloaded info image"),
                         Err(err) => {
                             println!("Could not download image. Error \n{}", err);
-                            return;
+                            return Err(String::from("Could not download image"));
                         }
                     }
 
@@ -458,7 +458,7 @@ pub fn complete_trade(
             Ok(_) => println!("Successfully downloaded item image"),
             Err(err) => {
                 println!("Could not download image. Error \n{}", err);
-                return;
+                return Err(String::from("Could not download image"));
             }
         }
 
@@ -510,7 +510,7 @@ pub fn complete_trade(
                                 Ok(_) => println!("Successfully downloaded info image"),
                                 Err(err) => {
                                     println!("Could not download image. Error \n{}", err);
-                                    return;
+                                    return Err(String::from("Could not download image"));
                                 }
                             }
 
@@ -536,7 +536,7 @@ pub fn complete_trade(
                 println!("Could not find item. Cancelling trade and going to lobby..");
                 // GO TO LOBBY
                 return_to_lobby();
-                return;
+                return Err(String::from("Could not find item"));
             }
         }
     }
@@ -552,13 +552,28 @@ pub fn complete_trade(
     } else {
         println!("The trading_window_items vector is not empty. Cancelling the trade!");
         return_to_lobby();
-        return;
+        return Err(String::from("Some items may have been removed during trade"));
     }
+
+    let mut result_of_status;
+
+    // If this value is not initialized below, then there is nothing in the trading_window_items_clone which there should be.
+    result_of_status = Err(String::from("Something went wrong"));
     for pair in trading_window_items_clone.iter() {
         match database_functions::set_item_status_by_urls(pair.1, pair.0, "in escrow") {
-            Ok(_) => println!("Updated item status!"),
-            Err(err) => println!("Error updating item status. Error: \n{}", err),
+            Ok(_) => {
+                println!("Updated item status!");
+                result_of_status = Ok(String::from("Success"));
+            },
+            Err(err) => {
+                println!("Error updating item status. Error: \n{}", err);
+                result_of_status = Err(String::from("Error during trade"))
+        },
         }
+    }
+    match result_of_status {
+        Ok(_) => return Ok(String::from("Trade successful")),
+        Err(err) => return Err(err),
     }
 }
 
