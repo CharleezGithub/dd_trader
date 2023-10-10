@@ -568,7 +568,7 @@ pub fn collect_trade(
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     in_game_id: &str,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
-) {
+) -> Result<String, String> {
     let mut enigo = enigo.lock().unwrap();
 
     let info = bot_info.lock().unwrap();
@@ -607,19 +607,19 @@ pub fn collect_trade(
         Ok(count) => {
             if count <= 0 {
                 println!("No more items left in escrow.");
-                return;
+                return Err(String::from("No items left in escrow"));
             }
         },
         Err(err) => {
             println!("Got error while counting number of items in escrow. Error:\n{}", err);
-            return;
+            return Err(String::from("No items left in escrow"));
         },
     }
     match send_trade_request(in_game_id) {
         Ok(_) => println!("Player accepted trade request"),
         Err(_) => {
             println!("Player declined request. Going back to lobby.");
-            return;
+            return Err(String::from("Player declined trade request"));
         }
     }
     // Now we are in the trading window
@@ -644,7 +644,7 @@ pub fn collect_trade(
             Ok(_) => println!("Successfully downloaded item image"),
             Err(err) => {
                 println!("Could not download image. Error \n{}", err);
-                return;
+                return Err(String::from("Could not download image"));
             }
         }
 
@@ -689,7 +689,7 @@ pub fn collect_trade(
 
         if output_str == "Could not detect" {
             return_to_lobby();
-            return;
+            return Err(String::from("No items found in trade"));
         }
 
         // Split the string on newlines to get the list of coordinates
@@ -729,7 +729,7 @@ pub fn collect_trade(
                         Ok(_) => println!("Successfully downloaded info image"),
                         Err(err) => {
                             println!("Could not download image. Error \n{}", err);
-                            return;
+                            return Err(String::from("Player declined request"));
                         }
                     }
 
@@ -829,7 +829,7 @@ pub fn collect_trade(
             Ok(_) => println!("Successfully downloaded item image"),
             Err(err) => {
                 println!("Could not download image. Error \n{}", err);
-                return;
+                return Err(String::from("Could not download image"));
             }
         }
 
@@ -885,7 +885,7 @@ pub fn collect_trade(
                                 Ok(_) => println!("Successfully downloaded info image"),
                                 Err(err) => {
                                     println!("Could not download image. Error \n{}", err);
-                                    return;
+                                    return Err(String::from("Could not download image"));
                                 }
                             }
 
@@ -913,7 +913,7 @@ pub fn collect_trade(
                 println!("Could not find item. Cancelling trade and going to lobby..");
                 // GO TO LOBBY
                 return_to_lobby();
-                return;
+                return Err(String::from("Could not find item"));
             }
         }
     }
@@ -922,7 +922,7 @@ pub fn collect_trade(
     if in_window_items.is_empty() {
         println!("No matches where found! Going back to lobby");
         return_to_lobby();
-        return;
+        return Err(String::from("No items found"));
     }
     // If the in_window_items is not emtpy then change the status of those images from "in escrow" to "traded"
     else {
@@ -989,7 +989,7 @@ pub fn collect_trade(
                 println!("User did not accept trade.");
                 // GO TO LOBBY
                 return_to_lobby();
-                return;
+                return Err(String::from("User did not accept trade"));
             }
         }
 
@@ -1001,6 +1001,7 @@ pub fn collect_trade(
             }
         }
     }
+    Ok(String::from("Trade successful"))
 }
 
 fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
