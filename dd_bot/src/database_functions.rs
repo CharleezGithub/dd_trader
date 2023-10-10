@@ -1,5 +1,5 @@
-use std::sync::{Arc, Mutex};
 use rusqlite::{params, Connection, Result};
+use std::sync::{Arc, Mutex};
 
 use crate::{Trader, TradersContainer};
 
@@ -233,4 +233,25 @@ pub fn populate_traders_from_db(traders_container: &Arc<Mutex<TradersContainer>>
     }
 
     Ok(())
+}
+
+pub fn items_in_escrow_count(trader: &Trader) -> Result<i32> {
+    let channel_id = &trader.discord_channel_id;
+    let discord_id = &trader.discord_id;
+
+    let conn = Connection::open("trading_bot_test.db")?;
+
+    let count: i32 = conn.query_row(
+        "SELECT COUNT(*)
+        FROM items
+        JOIN trades ON items.trade_id = trades.id
+        JOIN traders ON items.trader_id = traders.id
+        WHERE items.status = 'in escrow'
+        AND trades.channel_id = ?1
+        AND traders.discord_id = ?2",
+        params![channel_id, discord_id],
+        |row| row.get(0),
+    )?;
+
+    Ok(count)
 }

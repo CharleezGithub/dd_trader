@@ -600,6 +600,21 @@ pub fn collect_trade(
     // This is done so that we can search for the items that the other person has traded to the bot so that the trader can get the other traders items and not their own back.
     let other_trader = traders.get_other_trader_in_channel(&trader_discord_id, &trader_channel_id);
 
+    let items_escrow_count = database_functions::items_in_escrow_count(other_trader.unwrap());
+
+    // If there are no items in escrow then just return.
+    match items_escrow_count {
+        Ok(count) => {
+            if count <= 0 {
+                println!("No more items left in escrow.");
+                return;
+            }
+        },
+        Err(err) => {
+            println!("Got error while counting number of items in escrow. Error:\n{}", err);
+            return;
+        },
+    }
     match send_trade_request(in_game_id) {
         Ok(_) => println!("Player accepted trade request"),
         Err(_) => {
