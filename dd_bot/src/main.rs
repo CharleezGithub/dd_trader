@@ -189,9 +189,17 @@ fn trade_collect(
 
     traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
 
-    match trading_functions::collect_trade(enigo, bot_info, in_game_id, traders_container) {
-        Ok(_) => return String::from("Trade successful!"),
-        Err(err) => return err,
+    // Calls the collect trade function as many times as needed untill there is an error or that there are no more items for the other trader in escrow.
+    loop {
+        match trading_functions::collect_trade(enigo, bot_info, in_game_id, traders_container) {
+            Ok(_) => return String::from("Trade successful!"),
+            Err(err) => {
+                if err == String::from("No items left in escrow") {
+                    return String::from("All items traded");
+                }
+                return err;
+            },
+        }
     }
 }
 
