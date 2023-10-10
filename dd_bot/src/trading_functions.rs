@@ -593,7 +593,7 @@ pub fn collect_trade(
 
     let trader_discord_id = &trader.discord_id;
     let trader_channel_id = &trader.discord_channel_id;
-    
+
     // Find the other trader in the same trade as the trader.
     // This is done so that we can search for the items that the other person has traded to the bot so that the trader can get the other traders items and not their own back.
     let other_trader = traders.get_other_trader_in_channel(&trader_discord_id, &trader_channel_id);
@@ -662,9 +662,11 @@ pub fn collect_trade(
                 .expect("Failed to execute command");
 
             // Convert the output bytes to a string
-            str::from_utf8(&output_retry.stdout).unwrap().trim().to_string()
-        }
-        else {
+            str::from_utf8(&output_retry.stdout)
+                .unwrap()
+                .trim()
+                .to_string()
+        } else {
             output_str
         };
 
@@ -719,10 +721,10 @@ pub fn collect_trade(
                         .arg("python_helpers/obj_detection.py")
                         .arg("temp_images/info/item.png")
                         .output();
-                
+
                     let output_unwrapped = output.unwrap(); // Bind `Output` to a variable to extend its lifetime
                     let output_str = str::from_utf8(&output_unwrapped.stdout).unwrap().trim();
-                    
+
                     if output_str != "Could not detect" {
                         println!("Found match!");
                         enigo.key_down(Key::Shift);
@@ -752,11 +754,57 @@ pub fn collect_trade(
     }
 
     // Now the bot is in the double check trade window box.
-    // Now check what items made it into the trading window by going through the list of items again and adding those who match in the confirmation window to a list.
-    // When there is no more items to add, click the checkbox and if the trade goes through, change the status of those items to "traded"
-    
+    // Click the magnifying glasses on top of the items
+    let output = Command::new("python")
+        .arg("python_helpers/inspect_items.py")
+        .output()
+        .expect("Failed to execute command");
+
+    // Convert the output bytes to a string
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    // Split the string on newlines to get the list of coordinates
+    let coords: Vec<&str> = output_str.split('\n').collect();
+
+    // Now, coords contains each of the coordinates
+    for coord_str in coords.iter() {
+        let coord: Vec<i32> = coord_str
+            .split_whitespace()
+            .map(|s| s.parse().expect("Failed to parse coordinate"))
+            .collect();
+
+        if coord.len() == 4 {
+            let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
+
+            let mut rng = rand::thread_rng();
+
+            // Salt the pixels so that it does not click the same pixel every time.
+            let salt = rng.gen_range(-9..9);
+
+            // Gets the middle of the detected play button and clicks it
+            let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
+            let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
+
+            match enigo_functions::click_buton_right_direct(
+                &mut enigo,
+                middle_point_x,
+                middle_point_y,
+                true,
+                true,
+                0,
+                0,
+            ) {
+                Ok(_) => println!("Successfully clicked button!"),
+                Err(err) => println!("Got error while trying to click button: {:?}", err),
+            }
+        }
+    }
+
     // Make an imuttable clone of in_window_items for enumeration to avoid borrow checker error.
     let in_window_items_clone = in_window_items.clone();
+
+    // Now check what items made it into the trading window by going through the list of items again and adding those who match in the confirmation window to a list.
+    // When there is no more items to add, click the checkbox and if the trade goes through, change the status of those items to "traded"
 
     // Pair is (info, item)
     for (index, pair) in in_window_items_clone.iter().enumerate() {
@@ -838,7 +886,7 @@ pub fn collect_trade(
                                 Err(_) => {
                                     println!("No match. Checking next...");
                                     in_window_items.remove(index);
-                                },
+                                }
                             }
                         }
                     }
@@ -852,9 +900,6 @@ pub fn collect_trade(
         }
     }
 
-    // Ensure that the trade went through
-    todo!();
-
     // Check if trading_window_items is empty
     if in_window_items.is_empty() {
         println!("No matches where found! Going back to lobby");
@@ -863,6 +908,72 @@ pub fn collect_trade(
     }
     // If the in_window_items is not emtpy then change the status of those images from "in escrow" to "traded"
     else {
+        // The bot ensures that the trade went through by making sure that it is the last link in the trade.
+        // The bot waits for the trader to accept the trade by clicking the checkmark before the bot itself does.
+        // Right as the trader clicks the button, the bot does as well, completing the trade for centain.
+        // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it won't wait for 4 minutes if there is no match
+        let output = Command::new("python")
+            .arg("python_helpers/obj_detection.py")
+            .arg("images/trader_ready.png")
+            .output();
+
+        match output {
+            Ok(_) => {
+                println!("User accepted trade!");
+                // Click the checkbox fast so that the other trader does not have time to decline in order to try to trick the bot.
+                let output = Command::new("python")
+                    .arg("python_helpers/obj_detection.py")
+                    .arg("images/trade_checkbox.png")
+                    .output()
+                    .expect("Failed to execute command");
+
+                // Convert the output into 4 coordinates and get the middle point of those.
+                // Then use the move_to_location_fast function to quickly move to the checkbox and click it
+                // Convert the output bytes to a string
+                let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+                // Split the string on newlines to get the list of coordinates
+                let coords: Vec<&str> = output_str.split('\n').collect();
+
+                // Now, coords contains each of the coordinates
+                for coord_str in coords.iter() {
+                    let coord: Vec<i32> = coord_str
+                        .split_whitespace()
+                        .map(|s| s.parse().expect("Failed to parse coordinate"))
+                        .collect();
+
+                    if coord.len() == 4 {
+                        let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
+
+                        let mut rng = rand::thread_rng();
+
+                        // Salt the pixels so that it does not click the same pixel every time.
+                        let salt = rng.gen_range(-9..9);
+
+                        // Gets the middle of the detected play button and clicks it
+                        let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
+                        let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
+                        
+                        // Now move to the middlepoint
+                        match enigo_functions::move_to_location_fast(&mut enigo, middle_point_x, middle_point_y) {
+                            Ok(_) => println!("Successfully clicked button!"),
+                            Err(err) => println!("Got error while trying to click button: {:?}", err),
+                        }
+
+                        enigo.mouse_click(MouseButton::Left);
+                    }
+
+                }
+
+            }
+            // Might not work...
+            Err(_) => {
+                println!("User did not accept trade.");
+                // GO TO LOBBY
+                todo!();
+            }
+        }
+
         println!("Changing the items statuses from 'in escrow' to 'traded'!");
         for (info_url, item_url) in in_window_items {
             match database_functions::set_item_status_by_urls(item_url, info_url, "traded") {
@@ -873,7 +984,7 @@ pub fn collect_trade(
     }
 }
 
-fn send_trade_request(in_game_id: &str) -> Result<&str, &str>{
+fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     let mut enigo = Enigo::new();
 
     // Goes into the trading tab and connects to bards trade post.

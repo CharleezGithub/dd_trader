@@ -187,10 +187,10 @@ pub fn click_buton_direct(
         } else {
             steps = rng.gen_range(20..30);
             cx = rng.gen_range(
-                enigo.mouse_location().0..enigo.mouse_location().0 + rng2.gen_range(-50..50),
+                enigo.mouse_location().0..enigo.mouse_location().0 + rng2.gen_range(1..50),
             );
             cy = rng.gen_range(
-                enigo.mouse_location().1..enigo.mouse_location().1 + rng2.gen_range(-50..50),
+                enigo.mouse_location().1..enigo.mouse_location().1 + rng2.gen_range(1..50),
             );
         }
 
