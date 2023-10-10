@@ -27,7 +27,7 @@ else:
 
 x_start, x_end = (
     600,
-    1500,
+    1300,
 )  # Define the width interval where you want to perform template matching
 
 while max_val < limit:
