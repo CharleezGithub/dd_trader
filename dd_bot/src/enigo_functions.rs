@@ -162,15 +162,14 @@ pub fn click_buton_direct(
 ) -> Result<(), CommandError> {
     println!("{}, {}", x, y);
 
+    if minimize {
+        // Minize game
+        enigo.key_sequence_parse("{+META}m{-META}");
+    } else {
+        // At least go out of the game while moving the mouse
+        enigo.key_sequence_parse("{+META}{-META}");
+    }
     if smooth {
-        if minimize {
-            // Minize game
-            enigo.key_sequence_parse("{+META}m{-META}");
-        } else {
-            // At least go out of the game while moving the mouse
-            enigo.key_sequence_parse("{+META}{-META}");
-        }
-
         let mut rng = rand::thread_rng();
         let mut rng2 = rand::thread_rng();
         // Randomize steps (Amount of times it moves the cursor to get to destination)
@@ -214,11 +213,17 @@ pub fn click_buton_direct(
         } else {
             enigo.key_sequence_parse("{+META}{-META}");
             sleep(Duration::from_millis(rng.gen_range(100..200)));
-            enigo.mouse_click(MouseButton::Right);
+            enigo.mouse_click(MouseButton::Left);
         }
         Ok(())
     } else {
         enigo.mouse_move_to(x, y);
+
+        enigo.key_sequence_parse("{+META}{-META}");
+
+        let mut rng = rand::thread_rng();
+        sleep(Duration::from_millis(rng.gen_range(100..200)));
+
         enigo.mouse_click(MouseButton::Left);
         Ok(())
     }
@@ -234,15 +239,14 @@ pub fn click_buton_right_direct(
 ) -> Result<(), CommandError> {
     println!("{}, {}", x, y);
 
+    if minimize {
+        // Minize game
+        enigo.key_sequence_parse("{+META}m{-META}");
+    } else {
+        // At least go out of the game while moving the mouse
+        enigo.key_sequence_parse("{+META}{-META}");
+    }
     if smooth {
-        if minimize {
-            // Minize game
-            enigo.key_sequence_parse("{+META}m{-META}");
-        } else {
-            // At least go out of the game while moving the mouse
-            enigo.key_sequence_parse("{+META}{-META}");
-        }
-
         let mut rng = rand::thread_rng();
         let mut rng2 = rand::thread_rng();
         // Randomize steps (Amount of times it moves the cursor to get to destination)
@@ -291,16 +295,18 @@ pub fn click_buton_right_direct(
         Ok(())
     } else {
         enigo.mouse_move_to(x, y);
+
+        enigo.key_sequence_parse("{+META}{-META}");
+
+        let mut rng = rand::thread_rng();
+        sleep(Duration::from_millis(rng.gen_range(100..200)));
+
         enigo.mouse_click(MouseButton::Right);
         Ok(())
     }
 }
 
-pub fn move_to_location_fast(
-    enigo: &mut Enigo,
-    x: i32,
-    y: i32,
-) -> Result<(), CommandError> {
+pub fn move_to_location_fast(enigo: &mut Enigo, x: i32, y: i32) -> Result<(), CommandError> {
     let mut rng = rand::thread_rng();
     let mut rng2 = rand::thread_rng();
 
@@ -313,8 +319,7 @@ pub fn move_to_location_fast(
 
     // At least go out of the game while moving the mouse
     enigo.key_sequence_parse("{+META}{-META}");
-    
-    
+
     // Move the cursor with the bezier function
     bezier_move(
         enigo,

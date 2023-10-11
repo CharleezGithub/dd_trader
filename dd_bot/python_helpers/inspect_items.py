@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import sys
-from PIL import ImageGrab
+from PIL import ImageGrab, Image
 
 
 def extract_goldish_color(img):
@@ -92,74 +92,51 @@ def non_max_suppression(boxes, overlapThresh):
     return boxes[pick].astype("int")
 
 
-def template_matching(image_path, template_grab, threshold=0.70):
-    # Load the template and image
-    img = apply_gaussian_blur(cv2.imread(image_path))
+def template_matching(img, template_path, threshold=0.70):
+    # Apply Gaussian blur to the screenshot (since img is now the image and not the path)
+    img = apply_gaussian_blur(img)
 
-    template = np.array(template_grab)
-
-    template = apply_gaussian_blur(cv2.imread(template))
-    img_display = img.copy()  # For displaying the result
+    template = apply_gaussian_blur(cv2.imread(template_path))
+    img_display = img.copy()
 
     emphasized_img = extract_goldish_color(img)
     emphasized_template = extract_goldish_color(template)
 
     w, h = template.shape[1], template.shape[0]
-
-    # Apply template matching using the emphasized images
     res = cv2.matchTemplate(emphasized_img, emphasized_template, cv2.TM_CCOEFF_NORMED)
     loc = np.where(res >= threshold)
 
-    # Show the emphasized image
-    cv2.imshow("Emphasized Image", emphasized_img)
+    #cv2.imshow("Emphasized Image", emphasized_img)
     #cv2.waitKey(0)
 
     detected_instances = 0
-    coords = []
-
     boxes = []
 
-    # Iterate through the detected locations and draw rectangles
     for pt in zip(*loc[::-1]):
         confidence = res[pt[1]][pt[0]]
         boxes.append([pt[0], pt[1], pt[0] + w, pt[1] + h])
 
     boxes = np.array(boxes)
-    boxes = non_max_suppression(
-        boxes, 0.5
-    )  # 0.5 is the overlap threshold, you can adjust this value
+    boxes = non_max_suppression(boxes, 0.5)
 
     for box in boxes:
         cv2.rectangle(img_display, (box[0], box[1]), (box[2], box[3]), (0, 255, 0), 2)
-        print(
-            f"{box[0]} {box[1]} {box[2]} {box[3]}"
-        )  # Print coordinates in the format Rust script expects
+        print(f"{box[0]} {box[1]} {box[2]} {box[3]}")
 
         detected_instances += 1
-        #print(f"Confidence: {confidence:.2f}")
 
-    #print("Detected:", detected_instances)
-
-    # Display the result with detections
     #cv2.imshow("Detected Icons", img_display)
     #cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-    # Create a comma-separated string of coordinates and print it
-    #print(",".join([coord[0] for coord in coords]))
-
     return detected_instances
 
 
-# sys.argv[0] is the script name itself.
-# sys.argv[1] will be "my_argument_value" if provided.
-
-if __name__ == "__main__":
-    image_name = "images/test4.png"
-else:
-    # Capture a screenshot using ImageGrab
-    screenshot = ImageGrab.grab()
+# Capture a screenshot using ImageGrab
+screenshot = ImageGrab.grab()
+screenshot_np = np.array(screenshot)  # Convert to numpy array
+screenshot_bgr = cv2.cvtColor(screenshot_np, cv2.COLOR_RGB2BGR)  # Convert to BGR
 
 # Run the function
-template = screenshot
-template_matching(image_name, template)
+template_path = "images/inspect_items.png"
+template_matching(screenshot_bgr, template_path)

@@ -33,7 +33,7 @@ pub fn get_links_for_user(channel_id: &str, user_id: &str) -> Result<(Vec<String
 }
 
 pub fn has_paid_fee(channel_id: &str, user_id: &str) -> Result<bool> {
-    let conn = Connection::open("C:/path_to_your_db/trading_bot.db")?;
+    let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
     let mut stmt = conn.prepare(
         "
@@ -63,7 +63,7 @@ pub fn has_paid_fee(channel_id: &str, user_id: &str) -> Result<bool> {
 }
 
 pub fn get_gold_for_user(channel_id: &str, user_id: &str) -> Result<i32> {
-    let conn = Connection::open("C:/path_to_your_db/trading_bot.db")?;
+    let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
     let mut stmt = conn.prepare(
         "
@@ -95,7 +95,7 @@ pub fn get_gold_for_user(channel_id: &str, user_id: &str) -> Result<i32> {
 }
 
 pub fn set_gold_fee_status(channel_id: &str, user_id: &str, has_paid: bool) -> Result<()> {
-    let conn = Connection::open("C:/path_to_your_db/trading_bot.db")?;
+    let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
     // First, identify whether the user is trader1 or trader2 in the trade
     let mut stmt = conn.prepare(
@@ -145,7 +145,7 @@ pub fn set_item_status_by_urls(
     info_image_url: &str,
     new_status: &str,
 ) -> Result<()> {
-    let conn = Connection::open("C:/path_to_your_db/trading_bot.db")?;
+    let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
     let mut stmt = conn.prepare(
         "
@@ -167,7 +167,7 @@ pub fn set_item_status_by_urls(
 pub fn populate_traders_from_db(traders_container: &Arc<Mutex<TradersContainer>>) -> Result<()> {
     let mut traders = traders_container.lock().unwrap();
 
-    let conn = Connection::open("path_to_your_db/trading_bot.db")?;
+    let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
     let mut stmt = conn.prepare(
         "
@@ -239,7 +239,7 @@ pub fn items_in_escrow_count(trader: &Trader) -> Result<i32> {
     let channel_id = &trader.discord_channel_id;
     let discord_id = &trader.discord_id;
 
-    let conn = Connection::open("trading_bot.db")?;
+    let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
     let count: i32 = conn.query_row(
         "SELECT COUNT(*)
@@ -257,7 +257,7 @@ pub fn items_in_escrow_count(trader: &Trader) -> Result<i32> {
 }
 
 pub fn add_gold_to_trader(channel_id: &String, discord_id: &String, gold_to_add: i32) -> Result<()> {
-    let conn = Connection::open("trading_bot.db")?;
+    let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
     // Determine whether the user is trader1 or trader2 in the channel
     let trader_role_result: Result<String> = conn.query_row(
