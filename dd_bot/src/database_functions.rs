@@ -94,10 +94,26 @@ pub fn get_gold_for_user(channel_id: &str, user_id: &str) -> Result<i32> {
     Err(rusqlite::Error::QueryReturnedNoRows)
 }
 
-pub fn set_gold_fee_status(channel_id: &str, user_id: &str, has_paid: bool) -> Result<()> {
+pub fn set_gold_fee_status(channel_id: &str, user_id: &str, has_paid: bool) -> Result<(), rusqlite::Error> {
     let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
-    // First, identify whether the user is trader1 or trader2 in the trade
+    // Identify the trader id for the user
+    let mut stmt = conn.prepare(
+        "
+        SELECT id 
+        FROM traders 
+        WHERE discord_id = ?1
+        ",
+    )?;
+    let mut rows = stmt.query(params![user_id])?;
+    
+    let trader_id: i64 = if let Some(row) = rows.next()? {
+        row.get(0)?
+    } else {
+        return Err(rusqlite::Error::QueryReturnedNoRows);
+    };
+
+    // Identify whether the user is trader1 or trader2 in the trade
     let mut stmt = conn.prepare(
         "
         SELECT trader1_id, trader2_id 
@@ -105,29 +121,28 @@ pub fn set_gold_fee_status(channel_id: &str, user_id: &str, has_paid: bool) -> R
         WHERE channel_id = ?1
         ",
     )?;
-
     let mut rows = stmt.query(params![channel_id])?;
-
+    
     if let Some(row) = rows.next()? {
-        let (trader1_id, trader2_id): (String, String) = (row.get(0)?, row.get(1)?);
+        let (trader1_id, trader2_id): (i64, i64) = (row.get(0)?, row.get(1)?);
 
         // Determine which trader the user is and update the corresponding paid status
-        if user_id == trader1_id {
+        if trader_id == trader1_id {
             let mut stmt = conn.prepare(
                 "
                 UPDATE trades 
                 SET trader1_paid = ?2 
                 WHERE channel_id = ?1
-            ",
+                ",
             )?;
             stmt.execute(params![channel_id, has_paid])?;
-        } else if user_id == trader2_id {
+        } else if trader_id == trader2_id {
             let mut stmt = conn.prepare(
                 "
                 UPDATE trades 
                 SET trader2_paid = ?2 
                 WHERE channel_id = ?1
-            ",
+                ",
             )?;
             stmt.execute(params![channel_id, has_paid])?;
         } else {
