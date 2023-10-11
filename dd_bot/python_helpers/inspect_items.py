@@ -92,10 +92,13 @@ def non_max_suppression(boxes, overlapThresh):
     return boxes[pick].astype("int")
 
 
-def template_matching(image_path, template_path, threshold=0.70):
+def template_matching(image_path, template_grab, threshold=0.70):
     # Load the template and image
     img = apply_gaussian_blur(cv2.imread(image_path))
-    template = apply_gaussian_blur(cv2.imread(template_path))
+
+    template = np.array(template_grab)
+
+    template = apply_gaussian_blur(cv2.imread(template))
     img_display = img.copy()  # For displaying the result
 
     emphasized_img = extract_goldish_color(img)
@@ -109,7 +112,7 @@ def template_matching(image_path, template_path, threshold=0.70):
 
     # Show the emphasized image
     cv2.imshow("Emphasized Image", emphasized_img)
-    cv2.waitKey(0)
+    #cv2.waitKey(0)
 
     detected_instances = 0
     coords = []
@@ -138,8 +141,8 @@ def template_matching(image_path, template_path, threshold=0.70):
     #print("Detected:", detected_instances)
 
     # Display the result with detections
-    cv2.imshow("Detected Icons", img_display)
-    cv2.waitKey(0)
+    #cv2.imshow("Detected Icons", img_display)
+    #cv2.waitKey(0)
     cv2.destroyAllWindows()
 
     # Create a comma-separated string of coordinates and print it
@@ -158,5 +161,5 @@ else:
     screenshot = ImageGrab.grab()
 
 # Run the function
-template_path = "images/inspect_items.png"
-template_matching(image_name, template_path)
+template = screenshot
+template_matching(image_name, template)
