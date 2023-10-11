@@ -1,6 +1,7 @@
 import pytesseract
 from PIL import Image, ImageFilter, ImageGrab
 
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 # Capture a screenshot using ImageGrab
 image = ImageGrab.grab()

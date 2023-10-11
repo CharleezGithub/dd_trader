@@ -6,6 +6,7 @@ import sys
 from imutils.object_detection import non_max_suppression
 
 sensitive = False
+cool = False
 
 if len(sys.argv) > 1 and not len(sys.argv) > 2:
     image_name = sys.argv[1]
@@ -13,6 +14,8 @@ elif len(sys.argv) > 2:
     image_name = sys.argv[1]
     if sys.argv[2].strip() == "S":
         sensitive = True
+    if str(sys.argv[2].strip()) == "C":
+        cool = True
 else:
     image_name = "python_helpers/images/gold_fee_double_check.png"
 
@@ -22,6 +25,8 @@ tries = 0
 
 if sensitive:
     limit = 0.98
+elif cool:
+    limit = 0.70
 else:
     limit = 0.90
 

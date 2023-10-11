@@ -238,7 +238,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
     let enigo = Arc::new(Mutex::new(Enigo::new()));
 
     let bot_info = Arc::new(Mutex::new(TradeBotInfo {
-        ready: ReadyState::False,
+        ready: ReadyState::True,
         id: "".to_string(),
     }));
 
@@ -254,10 +254,12 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
     let bot_info_clone = bot_info.clone();
 
     // Spawn the open game function as a separate task
+    /* 
     tokio::spawn(async move {
         trading_functions::open_game_go_to_lobby(bot_info_clone).await;
     });
-
+    */
+    
     rocket::build()
         .manage(enigo) // Add the enigo as managed state
         .manage(bot_info) // Add the bot_info as managed state

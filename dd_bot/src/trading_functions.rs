@@ -298,7 +298,21 @@ pub fn complete_trade(
 
     // Now we are in the trading window with the trader
 
-    // Accept trade
+    // Wait for the trader to be ready and then accept the trade
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/trader_ready.png")
+        .output();
+
+    match output {
+        Ok(_) => println!("User did accept the trade"),
+        Err(_) => {
+            println!("User did not accept trade");
+            return_to_lobby();
+            return Err(String::from("User did not accept trade"));
+        }
+    }
+
     // Click the checkbox
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
@@ -310,6 +324,9 @@ pub fn complete_trade(
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
+
+    // Wait for trading window to popup before running inspect_items.py
+    sleep(Duration::from_millis(300));
 
     // Click the magnifying glasses on top of the items
     let output = Command::new("python")
@@ -362,6 +379,18 @@ pub fn complete_trade(
     // Loop through the items in the trader struct for this trader and use obj detection to check if the item is present
     // If item is present then add it to list.
 
+    let mut rng = rand::thread_rng();
+
+    // Moving away from items for obj detection purposes.
+    match enigo_functions::move_to_location_fast(
+        &mut enigo,
+        rng.gen_range(25..50),
+        rng.gen_range(25..50),
+    ) {
+        Ok(_) => println!("Successfully moved to this location!"),
+        Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+    }
+
     // Download 1 image set into temp_images folder at a time and check for a match
     let info_vec = &trader.unwrap().info_images;
     let item_vec = &trader.unwrap().item_images;
@@ -382,6 +411,7 @@ pub fn complete_trade(
         let output = Command::new("python")
             .arg("python_helpers/multi_obj_detection.py")
             .arg("temp_images/item/image.png")
+            .arg("C")
             .output()
             .expect("Failed to execute command");
 
@@ -391,25 +421,31 @@ pub fn complete_trade(
         // Split the string on newlines to get the list of coordinates
         let coords: Vec<&str> = output_str.split('\n').collect();
 
+        println!("coords: {}", output_str);
+        println!("coords: {:?}", coords);
+        
         // Now, coords contains each of the coordinates
         for coord_str in coords.iter() {
+            println!("Test1");
             let coord: Vec<i32> = coord_str
-                .split_whitespace()
+            .split_whitespace()
                 .map(|s| s.parse().expect("Failed to parse coordinate"))
                 .collect();
-
+            println!("Test2");
+            
             if coord.len() == 4 {
                 let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
-
+                
+                println!("Test3");
                 let mut rng = rand::thread_rng();
-
+                
                 // Salt the pixels so that it does not click the same pixel every time.
                 let salt = rng.gen_range(-9..9);
-
+                
                 // Gets the middle of the detected play button and clicks it
                 let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
                 let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
-
+                
                 match enigo_functions::move_to_location_fast(
                     &mut enigo,
                     middle_point_x,
@@ -421,6 +457,7 @@ pub fn complete_trade(
 
                 // Tries to match every info image with the item and if there is a match then it will add it to the temporary vector variable.
                 for info_image in info_vec.iter() {
+                    println!("Test4");
                     match download_image(info_image, "temp_images/info/image.png") {
                         Ok(_) => println!("Successfully downloaded info image"),
                         Err(err) => {
@@ -428,13 +465,16 @@ pub fn complete_trade(
                             return Err(String::from("Could not download image"));
                         }
                     }
-
+                    println!("Test5");
+                    
                     // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it wont wait for 4 minutes of there is no match
                     let output = Command::new("python")
                         .arg("python_helpers/obj_detection.py")
                         .arg("temp_images/info/item.png")
+                        .arg("C")
                         .output();
-
+                    
+                    println!("Test6");
                     match output {
                         Ok(_) => {
                             println!("Found match!");

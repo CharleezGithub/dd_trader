@@ -9,6 +9,7 @@ import sys
 # sys.argv[1] will be "my_argument_value" if provided.
 
 sensitive = False
+cool = False
 
 if len(sys.argv) > 1 and not len(sys.argv) > 2:
     image_name = sys.argv[1]
@@ -16,9 +17,11 @@ elif len(sys.argv) > 2:
     image_name = sys.argv[1]
     if str(sys.argv[2].strip()) == "S":
         sensitive = True
+    if str(sys.argv[2].strip()) == "C":
+        cool = True
 else:
     image_name = "images/play.png"
-    image_name = "python_helpers/images/gold_fee_double_check.png"
+    image_name = "python_helpers/images/image.png"
 
 max_val = 0.00
 
@@ -28,6 +31,8 @@ tries = 0
 
 if sensitive:
     limit = 0.98
+elif cool:
+    limit = 0.70
 else:
     limit = 0.90
 while max_val < limit:
