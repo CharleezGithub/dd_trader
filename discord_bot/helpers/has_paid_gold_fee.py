@@ -2,23 +2,35 @@ import sqlite3
 
 def has_user_paid_fee(discord_id, channel_id):
     # Replace with your database path
-    conn = sqlite3.connect("trading_bot_test.db")
+    conn = sqlite3.connect("trading_bot.db")
     cursor = conn.cursor()
     
     try:
+        # Get trader ID for the given discord_id
         cursor.execute("""
-            SELECT trader1_paid, trader2_paid, trader1_id, trader2_id
-            FROM trades
-            JOIN traders ON traders.id = trades.trader1_id OR traders.id = trades.trader2_id
-            WHERE trades.channel_id = ? AND traders.discord_id = ?
-        """, (channel_id, discord_id))
+            SELECT id
+            FROM traders
+            WHERE discord_id = ?
+        """, (discord_id,))
+        result = cursor.fetchone()
+        if not result:
+            print("User not found")
+            return False
+        trader_id = result[0]
+        
+        # Fetch payment status based on trader ID
+        cursor.execute("""
+            SELECT trader1_paid, trader2_paid 
+            FROM trades 
+            WHERE channel_id = ? AND (trader1_id = ? OR trader2_id = ?)
+        """, (channel_id, trader_id, trader_id))
         
         result = cursor.fetchone()
         
         # Check if result is not None and verify payment status
         if result:
-            trader1_paid, trader2_paid, trader1_id, trader2_id = result
-            if (discord_id == trader1_id and trader1_paid) or (discord_id == trader2_id and trader2_paid):
+            trader1_paid, trader2_paid = result
+            if (trader_id == trader_id and trader1_paid) or (trader_id == trader_id and trader2_paid):
                 return True
         
         return False
@@ -27,6 +39,7 @@ def has_user_paid_fee(discord_id, channel_id):
         return False
     finally:
         conn.close()
+
 
 # Example usage:
 # discord_id = "user_discord_id_here"
