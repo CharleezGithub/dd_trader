@@ -6,6 +6,23 @@ use crate::{Trader, TradersContainer};
 pub fn get_links_for_user(channel_id: &str, user_id: &str) -> Result<(Vec<String>, Vec<String>)> {
     let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
+    // Retrieve trader_id using discord_id (user_id)
+    let mut stmt = conn.prepare(
+        "
+        SELECT id 
+        FROM traders 
+        WHERE discord_id = ?1
+        ",
+    )?;
+    let mut rows = stmt.query(params![user_id])?;
+
+    let trader_id: i64 = if let Some(row) = rows.next()? {
+        row.get(0)?
+    } else {
+        return Err(rusqlite::Error::QueryReturnedNoRows); // Or consider providing a custom error message
+    };
+    
+    // Fetch item and info links using trader_id
     let mut stmt = conn.prepare(
         "
         SELECT items.item_image_url, items.info_image_url
@@ -16,7 +33,7 @@ pub fn get_links_for_user(channel_id: &str, user_id: &str) -> Result<(Vec<String
     ",
     )?;
 
-    let rows = stmt.query_map(params![channel_id, user_id], |row| {
+    let rows = stmt.query_map(params![channel_id, trader_id], |row| {
         Ok((row.get(0)?, row.get(1)?))
     })?;
 
@@ -32,59 +49,82 @@ pub fn get_links_for_user(channel_id: &str, user_id: &str) -> Result<(Vec<String
     Ok((item_links, info_links))
 }
 
+
 pub fn has_paid_fee(channel_id: &str, user_id: &str) -> Result<bool> {
     let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
+    // Retrieve trader_id using discord_id (user_id)
     let mut stmt = conn.prepare(
         "
-        SELECT trader1_paid, trader2_paid 
-        FROM trades 
-        WHERE channel_id = ?1 
-        AND (trader1_id = ?2 OR trader2_id = ?2)
-    ",
+        SELECT id 
+        FROM traders 
+        WHERE discord_id = ?1
+        ",
     )?;
+    let mut rows = stmt.query(params![user_id])?;
 
-    let mut has_paid = false;
-    let mut rows = stmt.query(params![channel_id, user_id])?;
+    let trader_id: i64 = if let Some(row) = rows.next()? {
+        row.get(0)?
+    } else {
+        return Ok(false); // Or consider Err to indicate that user is not found
+    };
+    
+    // Check the paid status in trades using trader_id
+    let mut stmt = conn.prepare(
+        "
+        SELECT trader1_paid, trader2_paid
+        FROM trades
+        WHERE channel_id = ?1 AND (trader1_id = ?2 OR trader2_id = ?2)
+        ",
+    )?;
+    
+    let mut rows = stmt.query(params![channel_id, trader_id])?;
 
     if let Some(row) = rows.next()? {
         // Check which trader the user is (trader1 or trader2) and retrieve the corresponding paid status
         let (trader1_paid, trader2_paid): (bool, bool) = (row.get(0)?, row.get(1)?);
 
-        // If user is trader1, check trader1_paid, else check trader2_paid
-        has_paid = if row.get::<_, String>(2)? == user_id {
-            trader1_paid
-        } else {
-            trader2_paid
-        };
+        // If user is trader1, return trader1_paid, else return trader2_paid
+        return Ok(trader1_paid || trader2_paid);
     }
 
-    Ok(has_paid)
+    Ok(false)
 }
+
 
 pub fn get_gold_for_user(channel_id: &str, user_id: &str) -> Result<i32> {
     let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
+    // Get trader's internal ID using discord_id (user_id)
+    let trader_id: i32 = conn.query_row(
+        "
+        SELECT id
+        FROM traders
+        WHERE discord_id = ?1
+        ",
+        params![user_id],
+        |row| row.get(0),
+    )?;
+
+    // Get gold values and trader IDs from the trades table
     let mut stmt = conn.prepare(
         "
         SELECT trader1_gold, trader2_gold, trader1_id, trader2_id 
         FROM trades 
-        JOIN traders ON traders.id = trades.trader1_id OR traders.id = trades.trader2_id 
-        WHERE trades.channel_id = ?1 
-        AND traders.discord_id = ?2
-    ",
+        WHERE channel_id = ?1
+        ",
     )?;
 
-    let mut rows = stmt.query(params![channel_id, user_id])?;
+    let mut rows = stmt.query(params![channel_id])?;
 
     if let Some(row) = rows.next()? {
-        let (trader1_gold, trader2_gold, trader1_id, trader2_id): (i32, i32, String, String) =
+        let (trader1_gold, trader2_gold, trader1_id, trader2_id): (i32, i32, i32, i32) =
             (row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?);
 
         // Determine whether the user is trader1 or trader2, and return the corresponding gold amount
-        return Ok(if user_id == trader1_id {
+        return Ok(if trader_id == trader1_id {
             trader1_gold
-        } else if user_id == trader2_id {
+        } else if trader_id == trader2_id {
             trader2_gold
         } else {
             return Err(rusqlite::Error::QueryReturnedNoRows);
@@ -93,6 +133,7 @@ pub fn get_gold_for_user(channel_id: &str, user_id: &str) -> Result<i32> {
 
     Err(rusqlite::Error::QueryReturnedNoRows)
 }
+
 
 pub fn set_gold_fee_status(channel_id: &str, user_id: &str, has_paid: bool) -> Result<(), rusqlite::Error> {
     let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
