@@ -239,7 +239,7 @@ pub fn items_in_escrow_count(trader: &Trader) -> Result<i32> {
     let channel_id = &trader.discord_channel_id;
     let discord_id = &trader.discord_id;
 
-    let conn = Connection::open("trading_bot_test.db")?;
+    let conn = Connection::open("trading_bot.db")?;
 
     let count: i32 = conn.query_row(
         "SELECT COUNT(*)
@@ -257,7 +257,7 @@ pub fn items_in_escrow_count(trader: &Trader) -> Result<i32> {
 }
 
 pub fn add_gold_to_trader(channel_id: &String, discord_id: &String, gold_to_add: i32) -> Result<()> {
-    let conn = Connection::open("trading_bot_test.db")?;
+    let conn = Connection::open("trading_bot.db")?;
 
     // Determine whether the user is trader1 or trader2 in the channel
     let trader_role_result: Result<String> = conn.query_row(

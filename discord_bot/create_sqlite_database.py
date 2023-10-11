@@ -1,7 +1,7 @@
 import sqlite3
 
 # Create a connection to the database (This will create the file if it doesn't exist)
-conn = sqlite3.connect("trading_bot_test.db")
+conn = sqlite3.connect("trading_bot.db")
 cursor = conn.cursor()
 
 # Create traders table
