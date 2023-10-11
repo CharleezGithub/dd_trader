@@ -344,12 +344,12 @@ pub fn complete_trade(
             let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
             let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
 
-            match enigo_functions::click_buton_right_direct(
+            match enigo_functions::click_buton_direct(
                 &mut enigo,
                 middle_point_x,
                 middle_point_y,
                 true,
-                true,
+                false,
                 0,
                 0,
             ) {
