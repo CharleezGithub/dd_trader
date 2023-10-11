@@ -126,10 +126,11 @@ fn gold_fee(
         }
     } // Lock is released here as the MutexGuard goes out of scope
 
-    let mut traders = traders_container.lock().unwrap();
-
-    traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
-
+    {
+        let mut traders = traders_container.lock().unwrap();
+        traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
+    }
+        
     trading_functions::collect_gold_fee(enigo, bot_info, in_game_id, traders_container);
 
     format!("TradeBot ready\n{}", bot_info.lock().unwrap().id)
@@ -157,7 +158,6 @@ fn trade_request(
 
     {
         let mut traders = traders_container.lock().unwrap();
-    
         traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
     }
 
@@ -186,11 +186,11 @@ fn trade_collect(
             ReadyState::True => println!("Going into trade!"),
         }
     } // Lock is released here as the MutexGuard goes out of scope
-
-    let mut traders = traders_container.lock().unwrap();
-
-    traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
-
+    
+    {
+        let mut traders = traders_container.lock().unwrap();
+        traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
+    }
     // Calls the collect trade function as many times as needed untill there is an error or that there are no more items for the other trader in escrow.
     loop {
         match trading_functions::collect_trade(enigo, bot_info, in_game_id, traders_container) {
