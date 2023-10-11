@@ -155,9 +155,11 @@ fn trade_request(
         }
     } // Lock is released here as the MutexGuard goes out of scope
 
-    let mut traders = traders_container.lock().unwrap();
-
-    traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
+    {
+        let mut traders = traders_container.lock().unwrap();
+    
+        traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
+    }
 
     match trading_functions::complete_trade(enigo, bot_info, in_game_id, traders_container) {
         Ok(_) => return String::from("Trade successful!"),
