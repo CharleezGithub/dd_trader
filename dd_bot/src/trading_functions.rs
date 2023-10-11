@@ -298,13 +298,6 @@ pub fn complete_trade(
 
     // Now we are in the trading window with the trader
 
-    // Loop through the items in the trader struct for this trader and use obj detection to check if the item is present
-    // If item is present then add it to list.
-
-    // Download 1 image set into temp_images folder at a time and check for a match
-    let info_vec = &trader.unwrap().info_images;
-    let item_vec = &trader.unwrap().item_images;
-
     // Accept trade
     // Click the checkbox
     let output = Command::new("python")
@@ -327,6 +320,8 @@ pub fn complete_trade(
     // Convert the output bytes to a string
     let output_str = str::from_utf8(&output.stdout).unwrap().trim();
 
+
+    println!("coords: {}", output_str);
     // Split the string on newlines to get the list of coordinates
     let coords: Vec<&str> = output_str.split('\n').collect();
 
@@ -363,6 +358,13 @@ pub fn complete_trade(
             }
         }
     }
+
+    // Loop through the items in the trader struct for this trader and use obj detection to check if the item is present
+    // If item is present then add it to list.
+
+    // Download 1 image set into temp_images folder at a time and check for a match
+    let info_vec = &trader.unwrap().info_images;
+    let item_vec = &trader.unwrap().item_images;
 
     // For each image pair. Download the pair and if there is a matching pair in the trading window, add it to list in memory.
     // After trading successfully, change status to "in escrow" for the traded items in the database.
