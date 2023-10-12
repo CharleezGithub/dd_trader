@@ -562,53 +562,6 @@ pub fn complete_trade(
         gold,
     );
 
-    // Click the checkbox fast so that the other trader does not have time to decline in order to try to trick the bot.
-    let output = Command::new("python")
-        .arg("python_helpers/obj_detection.py")
-        .arg("images/trade_checkbox.png")
-        .output()
-        .expect("Failed to execute command");
-
-    // Convert the output into 4 coordinates and get the middle point of those.
-    // Then use the move_to_location_fast function to quickly move to the checkbox and click it
-    // Convert the output bytes to a string
-    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
-
-    // Split the string on newlines to get the list of coordinates
-    let coords: Vec<&str> = output_str.split('\n').collect();
-
-    // Now, coords contains each of the coordinates
-    for coord_str in coords.iter() {
-        let coord: Vec<i32> = coord_str
-            .split_whitespace()
-            .map(|s| s.parse().expect("Failed to parse coordinate"))
-            .collect();
-
-        if coord.len() == 4 {
-            let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
-
-            let mut rng = rand::thread_rng();
-
-            // Salt the pixels so that it does not click the same pixel every time.
-            let salt = rng.gen_range(-9..9);
-
-            // Gets the middle of the detected play button and clicks it
-            let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
-            let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
-
-            // Now move to the middlepoint
-            match enigo_functions::move_to_location_fast(&mut enigo, middle_point_x, middle_point_y)
-            {
-                Ok(_) => println!("Successfully clicked button!"),
-                Err(err) => {
-                    println!("Got error while trying to click button: {:?}", err)
-                }
-            }
-
-            enigo.mouse_click(MouseButton::Left);
-        }
-    }
-
     let mut result_of_status;
 
     // If this value is not initialized below, then there is nothing in the trading_window_items_clone which there should be.
@@ -625,8 +578,61 @@ pub fn complete_trade(
             }
         }
     }
+
+    // If the result is "Success" then accept the trade, else dont.
     match result_of_status {
-        Ok(_) => return Ok(String::from("Trade successful")),
+        Ok(_) => {
+
+            // Click the checkbox fast so that the other trader does not have time to decline in order to try to trick the bot.
+            let output = Command::new("python")
+                .arg("python_helpers/obj_detection.py")
+                .arg("images/trade_checkbox.png")
+                .output()
+                .expect("Failed to execute command");
+
+            // Convert the output into 4 coordinates and get the middle point of those.
+            // Then use the move_to_location_fast function to quickly move to the checkbox and click it
+            // Convert the output bytes to a string
+            let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+            // Split the string on newlines to get the list of coordinates
+            let coords: Vec<&str> = output_str.split('\n').collect();
+
+            // Now, coords contains each of the coordinates
+            for coord_str in coords.iter() {
+                let coord: Vec<i32> = coord_str
+                    .split_whitespace()
+                    .map(|s| s.parse().expect("Failed to parse coordinate"))
+                    .collect();
+
+                if coord.len() == 4 {
+                    let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
+
+                    let mut rng = rand::thread_rng();
+
+                    // Salt the pixels so that it does not click the same pixel every time.
+                    let salt = rng.gen_range(-9..9);
+
+                    // Gets the middle of the detected play button and clicks it
+                    let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
+                    let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
+
+                    // Now move to the middlepoint
+                    match enigo_functions::move_to_location_fast(&mut enigo, middle_point_x, middle_point_y)
+                    {
+                        Ok(_) => println!("Successfully clicked button!"),
+                        Err(err) => {
+                            println!("Got error while trying to click button: {:?}", err)
+                        }
+                    }
+
+                    enigo.mouse_click(MouseButton::Left);
+                }
+            }
+
+
+            return Ok(String::from("Trade successful"))
+        },
         Err(err) => return Err(err),
     }
 }
