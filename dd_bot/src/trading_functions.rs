@@ -418,6 +418,7 @@ pub fn complete_trade(
             .expect("Failed to execute command");
         println!("Tringgg2");
         
+        println!("coords: {:?}", output);
         // Convert the output bytes to a string
         let output_str = str::from_utf8(&output.stdout).unwrap().trim();
         println!("Tringgg3");
@@ -485,9 +486,23 @@ pub fn complete_trade(
                     
                     println!("Test6");
                     match output {
-                        Ok(_) => {
-                            println!("Found match!");
-                            trading_window_items.push((info_image, item));
+                        Ok(out) => {
+                            let output_str = str::from_utf8(&out.stdout).unwrap().trim();
+                    
+                            // Split the string on newlines to get the list of coordinates
+                            let coords: Vec<&str> = output_str.split('\n').collect();
+                    
+                            // Now, coords contains each of the coordinates
+                            for coord_str in coords.iter() {
+                    
+                                if *coord_str == "Could not detect" || *coord_str == "" {
+                                    println!("Could not find match");
+                                    continue;
+                                }
+                                println!("Found match!");
+                                trading_window_items.push((info_image, item));
+                            }
+                        
                         }
                         Err(_) => println!("No match. Checking next..."),
                     }
