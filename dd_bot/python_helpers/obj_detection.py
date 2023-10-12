@@ -25,7 +25,7 @@ elif len(sys.argv) > 2:
         elif arg.strip() == "F":
             fast = True
 else:
-    image_name = "python_helpers/images/gold_fee_double_check.png"
+    image_name = "temp_images/info/image.png"
 
 max_val = 0.00
 
