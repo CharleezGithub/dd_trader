@@ -14,12 +14,13 @@ if len(sys.argv) > 1 and not len(sys.argv) > 2:
     image_name = sys.argv[1]
 elif len(sys.argv) > 2:
     image_name = sys.argv[1]
-    if str(sys.argv[2].strip()) == "S":
-        sensitive = True
-    if str(sys.argv[2].strip()) == "C":
-        cool = True
-    if str(sys.argv[3].strip()) == "F":
-        fast = True
+    for arg in sys.argv[2:4]:
+        if arg.strip() == "S":
+            sensitive = True
+        elif arg.strip() == "C":
+            cool = True
+        elif arg.strip() == "F":
+            fast = True
 else:
     image_name = "python_helpers/images/gold_fee_double_check.png"
 
@@ -87,15 +88,15 @@ try:
             )  # Draw rectangle on the full image
             print(f"{x1} {y1} {x2} {y2}")
 
-        window_name = "Detected Objects"
-        cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-        cv2.imshow(
-            window_name, main_image_full
-        )  # Show the full image with matched rectangles
+        # window_name = "Detected Objects"
+        # cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+        # cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        # cv2.imshow(
+        # window_name, main_image_full
+        # )  # Show the full image with matched rectangles
 
-        #cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
     else:
         print("Could not detect")
 except Exception as e:

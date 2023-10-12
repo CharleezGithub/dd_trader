@@ -17,12 +17,13 @@ if len(sys.argv) > 1 and not len(sys.argv) > 2:
     image_name = sys.argv[1]
 elif len(sys.argv) > 2:
     image_name = sys.argv[1]
-    if str(sys.argv[2].strip()) == "S":
-        sensitive = True
-    if str(sys.argv[2].strip()) == "C":
-        cool = True
-    if str(sys.argv[3].strip()) == "F":
-        fast = True
+    for arg in sys.argv[2:4]:
+        if arg.strip() == "S":
+            sensitive = True
+        elif arg.strip() == "C":
+            cool = True
+        elif arg.strip() == "F":
+            fast = True
 else:
     image_name = "python_helpers/images/gold_fee_double_check.png"
 
@@ -64,7 +65,7 @@ while max_val < limit:
 
     tries += 1
     time.sleep(1)
-    #print(f"Certainty Score: {max_val:.2f}")
+    # print(f"Certainty Score: {max_val:.2f}")
 
 
 if tries < max_tries:
@@ -73,38 +74,17 @@ if tries < max_tries:
     bottom_right = (top_left[0] + template.shape[1], top_left[1] + template.shape[0])
 
     # Draw a rectangle around the matched object
-    cv2.rectangle(
-        main_image, top_left, bottom_right, (0, 255, 0), 2
-    )  # Change rectangle color to green for visibility
+    cv2.rectangle(main_image, top_left, bottom_right, (0, 255, 0), 2)
 
     # Display the result in a named window
-    window_name = "Detected Object"
-    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-    # Set the window to fullscreen
-    cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    # window_name = "Detected Object"
+    # cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+    # cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    # cv2.imshow(window_name, main_image)
 
-    cv2.imshow(window_name, main_image)
+    # Print the coordinates of the detected object directly
+    print(top_left[0], top_left[1], bottom_right[0], bottom_right[1])
 
-    # Get the screen coordinates of the window
-    x, y, w, h = cv2.getWindowImageRect(window_name)
-
-    # Calculate the screen coordinates of the detected object
-    screen_top_left = (x + top_left[0], y + top_left[1])
-    screen_bottom_right = (x + bottom_right[0], y + bottom_right[1])
-
-    # Top left coords, Bottom right coords. x1 y1 x2 y2
-    print(
-        screen_top_left[0],
-        screen_top_left[1],
-        screen_bottom_right[0],
-        screen_bottom_right[1],
-    )
-
-    # Print the certainty score (i.e., the maximum correlation coefficient)
-    # print(f"Certainty Score: {max_val:.2f}")
-
-
-    #cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()
 else:
     print("Could not detect")
