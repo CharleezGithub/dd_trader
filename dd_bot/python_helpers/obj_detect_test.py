@@ -10,12 +10,9 @@ import sys
 
 # Preprocess image function
 def preprocess(img):
-    # Convert the image to grayscale
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Use Gaussian blur to reduce noise and improve match
-    blurred = cv2.GaussianBlur(gray, (5,5), 0)
-    return blurred
-
+    # Equalize the histogram
+    equalized = cv2.equalizeHist(img, cv2.COLOR_BGR2GRAY)
+    return equalized
 
 sensitive = False
 cool = False
