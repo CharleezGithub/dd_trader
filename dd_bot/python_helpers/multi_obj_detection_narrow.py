@@ -22,7 +22,7 @@ elif len(sys.argv) > 2:
         elif arg.strip() == "F":
             fast = True
 else:
-    image_name = "python_helpers/images/gold_fee_double_check.png"
+    image_name = "temp_images/item/image.png"
 
 max_val = 0.00
 
@@ -33,7 +33,7 @@ if sensitive:
 elif cool:
     limit = 0.70
 else:
-    limit = 0.90
+    limit = 0.70
 
 if fast:
     max_tries = 5
@@ -66,6 +66,7 @@ try:
         tries += 1
         time.sleep(1)
 
+    print(tries < max_tries)
     if tries < max_tries:
         threshold = 0.8
         loc = np.where(result >= threshold)
@@ -82,21 +83,22 @@ try:
         rects = np.array(rectangles)
         pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
 
+        print(pick)
         for x1, y1, x2, y2 in pick:
             cv2.rectangle(
                 main_image_full, (x1, y1), (x2, y2), (0, 255, 0), 2
             )  # Draw rectangle on the full image
             print(f"{x1} {y1} {x2} {y2}")
 
-        # window_name = "Detected Objects"
-        # cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-        # cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-        # cv2.imshow(
-        # window_name, main_image_full
-        # )  # Show the full image with matched rectangles
+        window_name = "Detected Objects"
+        cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        cv2.imshow(
+        window_name, main_image_full
+        )  # Show the full image with matched rectangles
 
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
     else:
         print("Could not detect")
 except Exception as e:
