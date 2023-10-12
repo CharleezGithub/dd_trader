@@ -37,28 +37,58 @@ else:
     limit = 0.90
 while max_val < limit:
     print("hello")
-    # If it has tried for 4 minutes then break
     if tries > 240:
         break
     # Capture a screenshot using ImageGrab
     screenshot = ImageGrab.grab()
-
-    # Convert the screenshot to an OpenCV format
     main_image = np.array(screenshot)
-
-    # Convert the screenshot image from BGR to RGB (OpenCV loads images in BGR by default)
     main_image = cv2.cvtColor(main_image, cv2.COLOR_BGR2RGB)
 
     # Load the template
     template = cv2.imread(image_name, cv2.IMREAD_COLOR)
+    (tH, tW) = template.shape[:2]
 
-    # Use template matching
-    result = cv2.matchTemplate(main_image, template, cv2.TM_CCOEFF_NORMED)
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+    # loop over the scales of the image
+    found = None
+    for scale in np.linspace(0.2, 1.0, 20)[::-1]:
+        # resize the image according to the scale, and keep track of the ratio
+        resized = cv2.resize(main_image, (int(main_image.shape[1] * scale), int(main_image.shape[0] * scale)))
+        r = main_image.shape[1] / float(resized.shape[1])
+
+        # if the resized image is smaller than the template, then break from the loop
+        if resized.shape[0] < tH or resized.shape[1] < tW:
+            break
+
+        # detect edges in the resized, grayscale image and apply template matching
+        result = cv2.matchTemplate(resized, template, cv2.TM_CCOEFF_NORMED)
+        (_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
+
+        # if we have found a new maximum correlation value, then update the corresponding variable
+        if found is None or maxVal > found[0]:
+            found = (maxVal, maxLoc, r)
+
+    # unpack the found tuple and compute the (x, y) coordinates of the bounding box
+    (_, maxLoc, r) = found
+    (startX, startY) = (int(maxLoc[0] * r), int(maxLoc[1] * r))
+    (endX, endY) = (int((maxLoc[0] + tW) * r), int((maxLoc[1] + tH) * r))
+
+    # draw a bounding box around the detected result
+    cv2.rectangle(main_image, (startX, startY), (endX, endY), (0, 255, 0), 2)
+
+    # Get the screen coordinates of the window
+    x, y, w, h = cv2.getWindowImageRect("Detected Object")
+
+    # Calculate the screen coordinates of the detected object
+    screen_top_left = (x + startX, y + startY)
+    screen_bottom_right = (x + endX, y + endY)
+
+    print(screen_top_left[0], screen_top_left[1], screen_bottom_right[0], screen_bottom_right[1])
+
+    # show the detection and the confidence level
+    print(f"Certainty Score: {found[0]:.2f}")
 
     tries += 1
     time.sleep(1)
-    print(f"Certainty Score: {max_val:.2f}")
 
 
 if tries < 240:
