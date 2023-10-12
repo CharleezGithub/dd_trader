@@ -386,6 +386,7 @@ pub fn complete_trade(
         &mut enigo,
         rng.gen_range(25..50),
         rng.gen_range(25..50),
+        true,
     ) {
         Ok(_) => println!("Successfully moved to this location!"),
         Err(err) => println!("Got error while trying to move cursor: {:?}", err),
@@ -459,6 +460,7 @@ pub fn complete_trade(
                     &mut enigo,
                     middle_point_x,
                     middle_point_y,
+                    false,
                 ) {
                     Ok(_) => println!("Successfully moved to this location!"),
                     Err(err) => println!("Got error while trying to move cursor: {:?}", err),
@@ -618,7 +620,7 @@ pub fn complete_trade(
                     let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
 
                     // Now move to the middlepoint
-                    match enigo_functions::move_to_location_fast(&mut enigo, middle_point_x, middle_point_y)
+                    match enigo_functions::move_to_location_fast(&mut enigo, middle_point_x, middle_point_y, true)
                     {
                         Ok(_) => println!("Successfully clicked button!"),
                         Err(err) => {
@@ -796,6 +798,7 @@ pub fn collect_trade(
                     &mut enigo,
                     middle_point_x,
                     middle_point_y,
+                    true,
                 ) {
                     Ok(_) => println!("Successfully moved to this location!"),
                     Err(err) => println!("Got error while trying to move cursor: {:?}", err),
@@ -949,6 +952,7 @@ pub fn collect_trade(
                             &mut enigo,
                             middle_point_x,
                             middle_point_y,
+                            true,
                         ) {
                             Ok(_) => println!("Successfully moved to this location!"),
                             Err(err) => {
@@ -1054,6 +1058,7 @@ pub fn collect_trade(
                             &mut enigo,
                             middle_point_x,
                             middle_point_y,
+                            true,
                         ) {
                             Ok(_) => println!("Successfully clicked button!"),
                             Err(err) => {

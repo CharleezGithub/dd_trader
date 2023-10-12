@@ -306,7 +306,7 @@ pub fn click_buton_right_direct(
     }
 }
 
-pub fn move_to_location_fast(enigo: &mut Enigo, x: i32, y: i32) -> Result<(), CommandError> {
+pub fn move_to_location_fast(enigo: &mut Enigo, x: i32, y: i32, win_key: bool) -> Result<(), CommandError> {
     let mut rng = rand::thread_rng();
     let mut rng2 = rand::thread_rng();
 
@@ -317,8 +317,12 @@ pub fn move_to_location_fast(enigo: &mut Enigo, x: i32, y: i32) -> Result<(), Co
     let cy =
         rng.gen_range(enigo.mouse_location().1..enigo.mouse_location().1 + rng2.gen_range(1..50));
 
-    // At least go out of the game while moving the mouse
-    enigo.key_sequence_parse("{+META}{-META}");
+    // Should go out of game every time but in some cases that is just not possible.
+    // For example when the bot is moving over to hover over an item. When pressing the windows key,
+    // the info screen for the item goes away.
+    if win_key {
+        enigo.key_sequence_parse("{+META}{-META}");
+    }
 
     // Move the cursor with the bezier function
     bezier_move(
