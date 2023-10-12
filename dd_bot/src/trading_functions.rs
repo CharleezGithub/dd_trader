@@ -728,7 +728,8 @@ pub fn collect_trade(
     let mut in_window_items = Vec::new();
 
     // For each image pair. Download the pair and if there is a matching pair in the stash or inventory, add it to the trading window.
-    let mut item_limit = 10;
+    // Max items that you can have per trade.
+    let mut item_limit = 25;
     'add_items: for item in item_vec.iter() {
         if item_limit <= 0 {
             break 'add_items;
@@ -811,7 +812,7 @@ pub fn collect_trade(
                     &mut enigo,
                     middle_point_x,
                     middle_point_y,
-                    true,
+                    false,
                 ) {
                     Ok(_) => println!("Successfully moved to this location!"),
                     Err(err) => println!("Got error while trying to move cursor: {:?}", err),
@@ -896,7 +897,7 @@ pub fn collect_trade(
             let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
             let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
 
-            match enigo_functions::click_buton_right_direct(
+            match enigo_functions::click_buton_direct(
                 &mut enigo,
                 middle_point_x,
                 middle_point_y,
