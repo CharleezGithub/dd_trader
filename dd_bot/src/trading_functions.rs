@@ -409,9 +409,10 @@ pub fn complete_trade(
         }
 
         let output = Command::new("python")
-            .arg("python_helpers/multi_obj_detection.py")
+            .arg("python_helpers/multi_obj_detection_narrow.py")
             .arg("temp_images/item/image.png")
             .arg("C")
+            .arg("F")
             .output()
             .expect("Failed to execute command");
 
@@ -472,6 +473,7 @@ pub fn complete_trade(
                         .arg("python_helpers/obj_detection.py")
                         .arg("temp_images/info/item.png")
                         .arg("C")
+                        .arg("F")
                         .output();
                     
                     println!("Test6");
@@ -721,7 +723,7 @@ pub fn collect_trade(
             }
 
             let output_retry = Command::new("python")
-                .arg("python_helpers/multi_obj_detection.py")
+                .arg("python_helpers/multi_obj_detection_narrow.py")
                 .arg("temp_images/item/image.png")
                 .output()
                 .expect("Failed to execute command");

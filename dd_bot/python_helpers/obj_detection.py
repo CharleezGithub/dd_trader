@@ -11,6 +11,8 @@ import sys
 sensitive = False
 cool = False
 
+fast = False
+
 if len(sys.argv) > 1 and not len(sys.argv) > 2:
     image_name = sys.argv[1]
 elif len(sys.argv) > 2:
@@ -19,12 +21,12 @@ elif len(sys.argv) > 2:
         sensitive = True
     if str(sys.argv[2].strip()) == "C":
         cool = True
+    if str(sys.argv[3].strip()) == "F":
+        fast = True
 else:
     image_name = "python_helpers/images/gold_fee_double_check.png"
 
 max_val = 0.00
-
-# Make a timeout
 
 tries = 0
 
@@ -35,9 +37,14 @@ elif cool:
 else:
     limit = 0.90
 
+if fast:
+    max_tries = 5
+else:
+    max_tries = 240
+
 while max_val < limit:
     # If it has tried for 4 minutes then break
-    if tries > 240:
+    if tries > max_tries:
         break
     # Capture a screenshot using ImageGrab
     screenshot = ImageGrab.grab()
@@ -60,7 +67,7 @@ while max_val < limit:
     #print(f"Certainty Score: {max_val:.2f}")
 
 
-if tries < 240:
+if tries < max_tries:
     # Get the top-left corner of the matched area
     top_left = max_loc
     bottom_right = (top_left[0] + template.shape[1], top_left[1] + template.shape[0])

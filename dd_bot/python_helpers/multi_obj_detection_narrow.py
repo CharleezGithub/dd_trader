@@ -8,14 +8,18 @@ from imutils.object_detection import non_max_suppression
 sensitive = False
 cool = False
 
+fast = False
+
 if len(sys.argv) > 1 and not len(sys.argv) > 2:
     image_name = sys.argv[1]
 elif len(sys.argv) > 2:
     image_name = sys.argv[1]
-    if sys.argv[2].strip() == "S":
+    if str(sys.argv[2].strip()) == "S":
         sensitive = True
     if str(sys.argv[2].strip()) == "C":
         cool = True
+    if str(sys.argv[3].strip()) == "F":
+        fast = True
 else:
     image_name = "python_helpers/images/gold_fee_double_check.png"
 
@@ -30,13 +34,18 @@ elif cool:
 else:
     limit = 0.90
 
+if fast:
+    max_tries = 5
+else:
+    max_tries = 240
+
 x_start, x_end = (
     600,
     1300,
 )  # Define the width interval where you want to perform template matching
 
 while max_val < limit:
-    if tries > 240:
+    if tries > max_tries:
         break
 
     screenshot = ImageGrab.grab()
@@ -55,7 +64,7 @@ while max_val < limit:
     tries += 1
     time.sleep(1)
 
-if tries < 240:
+if tries < max_tries:
     threshold = 0.8
     loc = np.where(result >= threshold)
 
