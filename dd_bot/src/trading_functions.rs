@@ -432,7 +432,7 @@ pub fn complete_trade(
         for coord_str in coords.iter() {
             println!("Test1");
 
-            if *coord_str == "Could not detect" {
+            if *coord_str == "Could not detect" || *coord_str == "" {
                 continue;
             }
                 let coord: Vec<i32> = coord_str
