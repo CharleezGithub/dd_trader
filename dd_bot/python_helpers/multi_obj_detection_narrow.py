@@ -66,7 +66,6 @@ try:
         tries += 1
         time.sleep(1)
 
-    print(tries < max_tries)
     if tries < max_tries:
         threshold = limit
         loc = np.where(result >= threshold)
@@ -83,7 +82,6 @@ try:
         rects = np.array(rectangles)
         pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
 
-        print(pick)
         for x1, y1, x2, y2 in pick:
             cv2.rectangle(
                 main_image_full, (x1, y1), (x2, y2), (0, 255, 0), 2
