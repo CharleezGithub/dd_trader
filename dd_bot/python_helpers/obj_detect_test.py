@@ -10,8 +10,18 @@ import sys
 
 # Preprocess image function
 def preprocess(img):
-    # Equalize the histogram
-    equalized = cv2.equalizeHist(img, cv2.COLOR_BGR2GRAY)
+    # Split the image into its color channels
+    channels = cv2.split(img)
+    
+    # Equalize the histogram for each channel
+    eq_channels = [cv2.equalizeHist(channel) for channel in channels]
+    
+    # Merge the channels back together
+    equalized = cv2.merge(eq_channels)
+    
+    # Ensure the image is of type CV_8U
+    equalized = equalized.astype(np.uint8)
+    
     return equalized
 
 sensitive = False
