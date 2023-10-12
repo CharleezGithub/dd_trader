@@ -68,7 +68,7 @@ try:
 
     print(tries < max_tries)
     if tries < max_tries:
-        threshold = 0.8
+        threshold = limit
         loc = np.where(result >= threshold)
 
         rectangles = []
@@ -90,15 +90,15 @@ try:
             )  # Draw rectangle on the full image
             print(f"{x1} {y1} {x2} {y2}")
 
-        window_name = "Detected Objects"
-        cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-        cv2.imshow(
-        window_name, main_image_full
-        )  # Show the full image with matched rectangles
+        # window_name = "Detected Objects"
+        # cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+        # cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        # cv2.imshow(
+        # window_name, main_image_full
+        # )  # Show the full image with matched rectangles
 
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
     else:
         print("Could not detect")
 except Exception as e:
