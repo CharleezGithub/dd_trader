@@ -8,22 +8,6 @@ import sys
 # sys.argv[0] is the script name itself.
 # sys.argv[1] will be "my_argument_value" if provided.
 
-# Preprocess image function
-def preprocess(img):
-    # Split the image into its color channels
-    channels = cv2.split(img)
-    
-    # Equalize the histogram for each channel
-    eq_channels = [cv2.equalizeHist(channel) for channel in channels]
-    
-    # Merge the channels back together
-    equalized = cv2.merge(eq_channels)
-    
-    # Ensure the image is of type CV_8U
-    equalized = equalized.astype(np.uint8)
-    
-    return equalized
-
 sensitive = False
 cool = False
 
@@ -66,14 +50,10 @@ while max_val < limit:
     main_image = cv2.cvtColor(main_image, cv2.COLOR_BGR2RGB)
 
     # Load the template
-    template = cv2.imread(image_name, cv2.IMREAD_UNCHANGED)
-
-    # Preprocess the main_image and template
-    main_image_preprocessed = preprocess(main_image)
-    template_preprocessed = preprocess(template)
+    template = cv2.imread(image_name, cv2.IMREAD_COLOR)
 
     # Use template matching
-    result = cv2.matchTemplate(main_image_preprocessed, template_preprocessed, cv2.TM_CCOEFF_NORMED)
+    result = cv2.matchTemplate(main_image, template, cv2.TM_CCORR)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
 
     tries += 1

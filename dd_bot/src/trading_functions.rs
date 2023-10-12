@@ -408,6 +408,7 @@ pub fn complete_trade(
             }
         }
 
+        println!("Tringgggg");
         let output = Command::new("python")
             .arg("python_helpers/multi_obj_detection_narrow.py")
             .arg("temp_images/item/image.png")
@@ -415,9 +416,11 @@ pub fn complete_trade(
             .arg("F")
             .output()
             .expect("Failed to execute command");
-
+        println!("Tringgg2");
+        
         // Convert the output bytes to a string
         let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+        println!("Tringgg3");
 
         // Split the string on newlines to get the list of coordinates
         let coords: Vec<&str> = output_str.split('\n').collect();
@@ -428,8 +431,12 @@ pub fn complete_trade(
         // Now, coords contains each of the coordinates
         for coord_str in coords.iter() {
             println!("Test1");
-            let coord: Vec<i32> = coord_str
-            .split_whitespace()
+
+            if *coord_str == "Could not detect" {
+                continue;
+            }
+                let coord: Vec<i32> = coord_str
+                .split_whitespace()
                 .map(|s| s.parse().expect("Failed to parse coordinate"))
                 .collect();
             println!("Test2");
