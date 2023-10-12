@@ -54,7 +54,7 @@ while max_val < limit:
     time.sleep(1)
 
 if tries < max_tries:
-    threshold = 0.8
+    threshold = limit
     loc = np.where(result >= threshold)
 
     # Store rectangles in array
