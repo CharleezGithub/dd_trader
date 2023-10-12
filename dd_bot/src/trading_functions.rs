@@ -481,7 +481,7 @@ pub fn complete_trade(
                     // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it wont wait for 4 minutes of there is no match
                     let output = Command::new("python")
                         .arg("python_helpers/obj_detection.py")
-                        .arg("temp_images/info/item.png")
+                        .arg("temp_images/info/image.png")
                         .arg("C")
                         .arg("F")
                         .output();
@@ -515,6 +515,19 @@ pub fn complete_trade(
 
     // Make copy to use for later
     let trading_window_items_clone = trading_window_items.clone();
+
+
+    // Moving away from items for obj detection purposes.
+    match enigo_functions::move_to_location_fast(
+        &mut enigo,
+        rng.gen_range(25..50),
+        rng.gen_range(25..50),
+        true,
+    ) {
+        Ok(_) => println!("Successfully moved to this location!"),
+        Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+    }
+
 
     // After checking all the items check the gold amount
     // The bot ensures that the trade went through by making sure that it is the last link in the trade.
