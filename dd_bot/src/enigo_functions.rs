@@ -337,7 +337,9 @@ pub fn move_to_location_fast(enigo: &mut Enigo, x: i32, y: i32, win_key: bool) -
     );
 
     // Go back into game
-    enigo.key_sequence_parse("{+META}{-META}");
+    if win_key {
+        enigo.key_sequence_parse("{+META}{-META}");
+    }
     Ok(())
 }
 
