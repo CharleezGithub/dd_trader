@@ -409,7 +409,6 @@ pub fn complete_trade(
             }
         }
 
-        println!("Tringgggg");
         let output = Command::new("python")
             .arg("python_helpers/multi_obj_detection_narrow.py")
             .arg("temp_images/item/image.png")
@@ -417,22 +416,15 @@ pub fn complete_trade(
             .arg("F")
             .output()
             .expect("Failed to execute command");
-        println!("Tringgg2");
         
-        println!("coords: {:?}", output);
         // Convert the output bytes to a string
         let output_str = str::from_utf8(&output.stdout).unwrap().trim();
-        println!("Tringgg3");
 
         // Split the string on newlines to get the list of coordinates
         let coords: Vec<&str> = output_str.split('\n').collect();
 
-        println!("coords: {}", output_str);
-        println!("coords: {:?}", coords);
-        
         // Now, coords contains each of the coordinates
         for coord_str in coords.iter() {
-            println!("Test1");
 
             if *coord_str == "Could not detect" || *coord_str == "" {
                 continue;
@@ -441,12 +433,10 @@ pub fn complete_trade(
                 .split_whitespace()
                 .map(|s| s.parse().expect("Failed to parse coordinate"))
                 .collect();
-            println!("Test2");
             
             if coord.len() == 4 {
                 let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
                 
-                println!("Test3");
                 let mut rng = rand::thread_rng();
                 
                 // Salt the pixels so that it does not click the same pixel every time.
@@ -468,7 +458,6 @@ pub fn complete_trade(
 
                 // Tries to match every info image with the item and if there is a match then it will add it to the temporary vector variable.
                 for info_image in info_vec.iter() {
-                    println!("Test4");
                     match download_image(info_image, "temp_images/info/image.png") {
                         Ok(_) => println!("Successfully downloaded info image"),
                         Err(err) => {
@@ -476,7 +465,6 @@ pub fn complete_trade(
                             return Err(String::from("Could not download image"));
                         }
                     }
-                    println!("Test5");
                     
                     // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it wont wait for 4 minutes of there is no match
                     let output = Command::new("python")
@@ -486,7 +474,6 @@ pub fn complete_trade(
                         .arg("F")
                         .output();
                     
-                    println!("Test6");
                     match output {
                         Ok(out) => {
                             let output_str = str::from_utf8(&out.stdout).unwrap().trim();
@@ -1194,6 +1181,7 @@ fn return_to_lobby() {
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/play_tab.png")
+        .arg("F")
         .output()
         .expect("Failed to execute command");
 
