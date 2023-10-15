@@ -13,6 +13,9 @@ cool = False
 
 fast = False
 
+# If we want to wait longer before returning then use the "L" argument. Good for waiting for updates.
+longer = False
+
 if len(sys.argv) > 1 and not len(sys.argv) > 2:
     image_name = sys.argv[1]
 elif len(sys.argv) > 2:
@@ -24,6 +27,8 @@ elif len(sys.argv) > 2:
             cool = True
         elif arg.strip() == "F":
             fast = True
+        elif arg.strip() == "L":
+            longer = True
 else:
     image_name = "temp_images/info/image.png"
 
@@ -40,6 +45,8 @@ else:
 
 if fast:
     max_tries = 5
+elif longer:
+    max_tries = 600
 else:
     max_tries = 240
 
