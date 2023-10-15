@@ -50,10 +50,31 @@ pub async fn open_game_go_to_lobby(bot_info: Arc<Mutex<TradeBotInfo>>) {
     // Start the launcher
     start_game(&mut enigo, "blacksmith");
 
+    // Quickly check if the game needs to update
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/update.png")
+        .arg("F")
+        .output()
+        .expect("Failed to execute command");
+
+    // Convert the output bytes to a string
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    // If the update menu was found then click the update button
+    if output_str != "Could not find"{
+        match enigo_functions::click_buton(&mut enigo, output, false, 0, 0) {
+            Ok(_) => println!("Successfully clicked button!"),
+            Err(err) => println!("Got error while trying to click button: {:?}", err),
+        }
+    }
+
+
     // Run the launcher play button detector
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/play.png")
+        .arg("L")
         .output()
         .expect("Failed to execute command");
 
