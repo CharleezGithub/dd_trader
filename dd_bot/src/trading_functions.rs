@@ -983,6 +983,8 @@ pub fn collect_trade(
         let output_result = Command::new("python")
             .arg("python_helpers/multi_obj_detection_narrow.py")
             .arg("temp_images/item/image.png")
+            .arg("C")
+            .arg("F")
             .output();
 
         println!("Test26");
