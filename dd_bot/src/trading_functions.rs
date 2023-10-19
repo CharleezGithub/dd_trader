@@ -730,6 +730,11 @@ pub fn collect_trade(
             return Err(String::from("Player declined trade request"));
         }
     }
+
+
+    // Need a way to check if and when the trader has accepted the offer. Else the bot will just keep going.
+
+
     // Now we are in the trading window
     // It should find matches in both the inventory and the stash and add them to the trading window.
 
