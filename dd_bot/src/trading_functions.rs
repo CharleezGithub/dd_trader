@@ -905,7 +905,7 @@ pub fn collect_trade(
     println!("Test21");
 
     // Now the bot is in the double check trade window box.
-    // Click the magnifying glasses on top of the items
+    // Click the magnifying glasses on top of the items, incase the trader put anything in there
     let output = Command::new("python")
         .arg("python_helpers/inspect_items.py")
         .output()
@@ -937,6 +937,7 @@ pub fn collect_trade(
             let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
             let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
 
+            println!("Test23");
             match enigo_functions::click_buton_direct(
                 &mut enigo,
                 middle_point_x,
@@ -952,6 +953,7 @@ pub fn collect_trade(
         }
     }
 
+    println!("Test24");
     // Make an imuttable clone of in_window_items for enumeration to avoid borrow checker error.
     let in_window_items_clone = in_window_items.clone();
 
@@ -967,6 +969,7 @@ pub fn collect_trade(
                 return Err(String::from("Could not download image"));
             }
         }
+        println!("Test25");
 
         // Using narrow version of multi obj detection.
         // Because the inventory/stash is still visable on this screen so the screenshot that the bot takes needs to be narrowed to only the trading window.
@@ -977,8 +980,10 @@ pub fn collect_trade(
             .arg("temp_images/item/image.png")
             .output();
 
+        println!("Test26");
         match output_result {
             Ok(output) => {
+                println!("Test27");
                 let output_bytes = output.stdout;
                 let output_str = str::from_utf8(&output_bytes).unwrap().trim();
                 let coords: Vec<&str> = output_str.split('\n').collect();
@@ -990,7 +995,9 @@ pub fn collect_trade(
                         .map(|s| s.parse().expect("Failed to parse coordinate"))
                         .collect();
 
+                    println!("Test28");
                     if coord.len() == 4 {
+                        println!("Test28");
                         let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
 
                         let mut rng = rand::thread_rng();
@@ -1002,6 +1009,7 @@ pub fn collect_trade(
                         let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
                         let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
 
+                        println!("Test29");
                         match enigo_functions::move_to_location_fast(
                             &mut enigo,
                             middle_point_x,
@@ -1014,6 +1022,7 @@ pub fn collect_trade(
                             }
                         }
 
+                        println!("Test30");
                         // Tries to match every info image with the item and if there is a match then it will add it to the temporary vector variable.
                         for info_image in info_vec.iter() {
                             match download_image(info_image, "temp_images/info/image.png") {
@@ -1024,12 +1033,14 @@ pub fn collect_trade(
                                 }
                             }
 
+                            println!("Test31");
                             // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it won't wait for 4 minutes if there is no match
                             let output = Command::new("python")
                                 .arg("python_helpers/obj_detection.py")
                                 .arg("temp_images/info/item.png")
                                 .output();
 
+                            println!("Test32");
                             match output {
                                 Ok(_) => {
                                     println!("Found match!");
@@ -1045,6 +1056,7 @@ pub fn collect_trade(
                 }
             }
             Err(_) => {
+                println!("Test33");
                 println!("Could not find item. Cancelling trade and going to lobby..");
                 // GO TO LOBBY
                 return_to_lobby();
@@ -1053,14 +1065,17 @@ pub fn collect_trade(
         }
     }
 
+    println!("Test34");
     // Check if trading_window_items is empty
     if in_window_items.is_empty() {
+        println!("Test35");
         println!("No matches where found! Going back to lobby");
         return_to_lobby();
         return Err(String::from("No items found"));
     }
     // If the in_window_items is not emtpy then change the status of those images from "in escrow" to "traded"
     else {
+        println!("Test36");
         // The bot ensures that the trade went through by making sure that it is the last link in the trade.
         // The bot waits for the trader to accept the trade by clicking the checkmark before the bot itself does.
         // Right as the trader clicks the button, the bot does as well, completing the trade for centain.
@@ -1070,6 +1085,7 @@ pub fn collect_trade(
             .arg("images/trader_ready.png")
             .output();
 
+        println!("Test37");
         match output {
             Ok(_) => {
                 println!("User accepted trade!");
@@ -1080,33 +1096,37 @@ pub fn collect_trade(
                     .output()
                     .expect("Failed to execute command");
 
+                println!("Test38");
                 // Convert the output into 4 coordinates and get the middle point of those.
                 // Then use the move_to_location_fast function to quickly move to the checkbox and click it
                 // Convert the output bytes to a string
                 let output_str = str::from_utf8(&output.stdout).unwrap().trim();
-
+                
                 // Split the string on newlines to get the list of coordinates
                 let coords: Vec<&str> = output_str.split('\n').collect();
-
+                
+                println!("Test39");
                 // Now, coords contains each of the coordinates
                 for coord_str in coords.iter() {
                     let coord: Vec<i32> = coord_str
-                        .split_whitespace()
+                    .split_whitespace()
                         .map(|s| s.parse().expect("Failed to parse coordinate"))
                         .collect();
-
+                    
+                    println!("Test40");
                     if coord.len() == 4 {
                         let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
-
+                        
                         let mut rng = rand::thread_rng();
-
+                        
                         // Salt the pixels so that it does not click the same pixel every time.
                         let salt = rng.gen_range(-9..9);
-
+                        
                         // Gets the middle of the detected play button and clicks it
                         let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
                         let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
-
+                        
+                        println!("Test41");
                         // Now move to the middlepoint
                         match enigo_functions::move_to_location_fast(
                             &mut enigo,
@@ -1119,20 +1139,22 @@ pub fn collect_trade(
                                 println!("Got error while trying to click button: {:?}", err)
                             }
                         }
-
+                        
                         enigo.mouse_click(MouseButton::Left);
                     }
                 }
             }
             // Might not work...
             Err(_) => {
+                println!("Test42");
                 println!("User did not accept trade.");
                 // GO TO LOBBY
                 return_to_lobby();
                 return Err(String::from("User did not accept trade"));
             }
         }
-
+        
+        println!("Test43");
         println!("Changing the items statuses from 'in escrow' to 'traded'!");
         for (info_url, item_url) in in_window_items {
             match database_functions::set_item_status_by_urls(item_url, info_url, "traded") {
@@ -1141,6 +1163,7 @@ pub fn collect_trade(
             }
         }
     }
+    println!("Test44");
     Ok(String::from("Trade successful"))
 }
 
