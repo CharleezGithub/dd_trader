@@ -5,6 +5,8 @@ import time
 import sys
 from imutils.object_detection import non_max_suppression
 
+sensitive = False
+cool = False
 fast = False
 
 if len(sys.argv) > 1 and not len(sys.argv) > 2:
@@ -19,7 +21,7 @@ elif len(sys.argv) > 2:
         elif arg.strip() == "F":
             fast = True
 else:
-    image_name = "python_helpers/images/gold_fee_double_check.png"
+    image_name = "temp_images/item/image.png"
 
 max_val = 0.00
 
