@@ -1,5 +1,6 @@
 use std::str;
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use enigo::*;
 
@@ -219,14 +220,22 @@ fn trade_collect(
         let mut traders = traders_container.lock().unwrap();
         traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id, discord_channel_id);
     }
+
+    let should_break = Arc::new(AtomicBool::new(false));
+
     // Calls the collect trade function as many times as needed untill there is an error or that there are no more items for the other trader in escrow.
-    loop {
+    'trade_loop: loop {
+        if should_break.load(Ordering::SeqCst) {
+            break 'trade_loop;
+        }
+
         // Dereference `State` and clone the inner `Arc`.
         let enigo_cloned = enigo.inner().clone();
         let bot_info_cloned = bot_info.inner().clone();
         let traders_container_cloned = traders_container.inner().clone();
         let in_game_id_cloned = in_game_id.clone();
 
+        let should_break_cloned = should_break.clone();
 
         // Spawning a new asynchronous task
         tokio::spawn(async move {
@@ -244,9 +253,16 @@ fn trade_collect(
             })
             .await;
 
+        tokio::task::yield_now().await;
+
             // Log the result or handle it further, based on requirements
             match result {
-                Ok(s) => println!("Trade result: {}", s),
+                Ok(s) => {
+                    println!("Trade result: {}", s);
+                    if s == "All items traded" {
+                        should_break_cloned.store(true, Ordering::SeqCst);
+                    }
+                },
                 Err(e) => eprintln!("Trade error: {:?}", e),
             }
         });
@@ -254,6 +270,8 @@ fn trade_collect(
 
 
     }
+    // Does not account for failure
+    String::from("Trade complete")
 }
 
 fn rocket() -> rocket::Rocket<rocket::Build> {
