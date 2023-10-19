@@ -33,7 +33,7 @@ if sensitive:
 elif cool:
     limit = 0.70
 else:
-    limit = 0.70
+    limit = 0.90
 
 if fast:
     max_tries = 5
@@ -62,6 +62,8 @@ try:
 
         result = cv2.matchTemplate(main_image, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+
+        print(max_val)
 
         tries += 1
         time.sleep(1)
