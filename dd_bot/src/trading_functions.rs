@@ -746,6 +746,7 @@ pub fn collect_trade(
     let mut item_limit = 25;
     'add_items: for item in item_vec.iter() {
         if item_limit <= 0 {
+            println!("Reached item limit!");
             break 'add_items;
         }
         match download_image(&item, "temp_images/item/image.png") {
@@ -867,7 +868,6 @@ pub fn collect_trade(
     }
 
     // Click checkbox to get into the confirmation trading window.
-    // Click the checkbox
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/trade_checkbox.png")
