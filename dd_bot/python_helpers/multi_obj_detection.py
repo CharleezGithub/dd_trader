@@ -56,6 +56,13 @@ while max_val < limit:
     time.sleep(1)
 
 if tries < max_tries:
+    from PIL import Image
+
+    # Convert the OpenCV image format (numpy array) to a PIL image
+    img_pil = Image.fromarray(cv2.cvtColor(main_image, cv2.COLOR_BGR2RGB))
+    img_pil.show()
+    print(max_val)
+
     threshold = limit
     loc = np.where(result >= threshold)
 
