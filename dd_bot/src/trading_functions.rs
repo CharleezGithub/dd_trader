@@ -4,6 +4,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
 
+use std::fs;
 use std::fs::File;
 use std::io;
 use std::path::Path;
@@ -756,7 +757,7 @@ pub fn collect_trade(
                 return Err(String::from("Could not download image"));
             }
         }
-        sleep(Duration::from_secs(1));
+        //sleep(Duration::from_secs(1));
         println!("Test1");
         // Convert the output bytes to a string
         let output_str = {
@@ -1390,7 +1391,7 @@ fn return_to_lobby() {
 fn download_image(url: &str, save_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     // Ensure the 'temp_images' directory exists
     if !Path::new("temp_images").exists() {
-        std::fs::create_dir("temp_images")?;
+        fs::create_dir("temp_images")?;
     }
 
     // Perform a blocking HTTP GET request
@@ -1410,6 +1411,30 @@ fn download_image(url: &str, save_path: &str) -> Result<(), Box<dyn std::error::
         return Err(Box::new(io::Error::new(
             io::ErrorKind::Other,
             "Failed to download image",
+        )));
+    }
+
+    // Adaptive wait
+    let max_attempts = 20;
+    for _ in 0..max_attempts {
+        let metadata = fs::metadata(save_path);
+        if let Ok(meta) = metadata {
+            if meta.len() > 0 && meta.is_file() {
+                // File exists and has content, break out of the loop
+                break;
+            }
+        }
+        // Sleep for a short interval before checking again
+        sleep(Duration::from_millis(100));
+    }
+
+    // Optionally, after the loop, you can check one final time and 
+    // return an error if the file is still not ready.
+    let metadata = fs::metadata(save_path);
+    if metadata.is_err() || metadata.unwrap().len() == 0 {
+        return Err(Box::new(io::Error::new(
+            io::ErrorKind::Other,
+            "File is not ready after adaptive wait",
         )));
     }
 
