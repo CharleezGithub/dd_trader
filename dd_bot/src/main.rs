@@ -197,7 +197,7 @@ fn trade_request(
 
 #[get("/trade_collect/<in_game_id>/<discord_channel_id>/<discord_id>")]
 fn trade_collect(
-    in_game_id: &str,
+    in_game_id: String,
     discord_channel_id: &str,
     discord_id: &str,
     enigo: &State<Arc<Mutex<Enigo>>>,
@@ -217,19 +217,42 @@ fn trade_collect(
 
     {
         let mut traders = traders_container.lock().unwrap();
-        traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
+        traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id, discord_channel_id);
     }
     // Calls the collect trade function as many times as needed untill there is an error or that there are no more items for the other trader in escrow.
     loop {
-        match trading_functions::collect_trade(enigo, bot_info, in_game_id, traders_container) {
-            Ok(_) => return String::from("Trade successful!"),
-            Err(err) => {
-                if err == String::from("No items left in escrow") {
-                    return String::from("All items traded");
+        // Dereference `State` and clone the inner `Arc`.
+        let enigo_cloned = enigo.inner().clone();
+        let bot_info_cloned = bot_info.inner().clone();
+        let traders_container_cloned = traders_container.inner().clone();
+        let in_game_id_cloned = in_game_id.clone();
+
+
+        // Spawning a new asynchronous task
+        tokio::spawn(async move {
+            // Using spawn_blocking to handle potential blocking/synchronous code
+            let result = tokio::task::spawn_blocking(move || {
+                match trading_functions::collect_trade(enigo_cloned, bot_info_cloned, in_game_id_cloned.as_ref(), traders_container_cloned) {
+                    Ok(_) => return String::from("Trade successful!"),
+                    Err(err) => {
+                        if err == String::from("No items left in escrow") {
+                            return String::from("All items traded");
+                        }
+                        return err;
+                    },
                 }
-                return err;
-            },
-        }
+            })
+            .await;
+
+            // Log the result or handle it further, based on requirements
+            match result {
+                Ok(s) => println!("Trade result: {}", s),
+                Err(e) => eprintln!("Trade error: {:?}", e),
+            }
+        });
+
+
+
     }
 }
 

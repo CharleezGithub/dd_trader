@@ -144,7 +144,12 @@ pub fn collect_gold_fee(
     // Goes into the trading tab and connects to bards trade post.
     // Why bard? Because it has the least amount of active traders and therefore not as demanding to be in.
     // Run the "Trade" tab detector
-    let _ = send_trade_request(in_game_id);
+    match send_trade_request(in_game_id) {
+        Ok(_) => println!("Player accepted trade request"),
+        Err(_) => {
+            println!("Player declined request. Going back to lobby.");
+        }
+    }
 
     // Check if user has put in 50 gold for the trade fee
     let output = Command::new("python")
@@ -314,7 +319,13 @@ pub fn complete_trade(
     }
 
     // Go into the trading tab and send a trade to the trader. Exact same as before with the gold fee.
-    let _ = send_trade_request(trader.unwrap().in_game_id.as_str());
+    match send_trade_request(trader.unwrap().in_game_id.as_str()) {
+        Ok(_) => println!("Player accepted trade request"),
+        Err(_) => {
+            println!("Player declined request. Going back to lobby.");
+            return Err(String::from("Player declined trade request"));
+        }
+    }
 
     // Now we are in the trading window with the trader
 
@@ -657,10 +668,10 @@ pub fn complete_trade(
 
 // Collect items function
 pub fn collect_trade(
-    enigo: &State<Arc<Mutex<Enigo>>>,
-    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
+    enigo: Arc<Mutex<Enigo>>,
+    bot_info: Arc<Mutex<TradeBotInfo>>,
     in_game_id: &str,
-    traders_container: &State<Arc<Mutex<TradersContainer>>>,
+    traders_container: Arc<Mutex<TradersContainer>>,
 ) -> Result<String, String> {
     let mut enigo = enigo.lock().unwrap();
 
@@ -670,7 +681,7 @@ pub fn collect_trade(
     // If the bot is starting then it will wait for the bot to be ready
     // If the bot is ready then it will continue as normal
     'wait_loop: loop {
-        let bot_info_clone = bot_info.inner().clone();
+        let bot_info_clone = bot_info.clone();
         match info.ready {
             ReadyState::False => {
                 tokio::spawn(async move {
