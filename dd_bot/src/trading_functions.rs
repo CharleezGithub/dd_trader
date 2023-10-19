@@ -875,9 +875,7 @@ pub fn collect_trade(
                     println!("Test17");
                     if output_str != "Could not detect" {
                         println!("Found match!");
-                        enigo.key_down(Key::Shift);
                         enigo.mouse_click(MouseButton::Left);
-                        enigo.key_up(Key::Shift);
                         in_window_items.push((info_image, item));
                         item_limit += -1;
                         println!("Test18");
