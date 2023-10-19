@@ -822,18 +822,20 @@ pub fn collect_trade(
         .collect();
     
     println!("Test11");
-            if coord.len() == 4 {
+    if coord.len() == 4 {
+                println!("Test12");
                 let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
-
+                
                 let mut rng = rand::thread_rng();
-
+                
                 // Salt the pixels so that it does not click the same pixel every time.
                 let salt = rng.gen_range(-9..9);
-
+                
                 // Gets the middle of the detected play button and clicks it
                 let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
                 let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
-
+                
+                println!("Test13");
                 match enigo_functions::move_to_location_fast(
                     &mut enigo,
                     middle_point_x,
@@ -843,7 +845,8 @@ pub fn collect_trade(
                     Ok(_) => println!("Successfully moved to this location!"),
                     Err(err) => println!("Got error while trying to move cursor: {:?}", err),
                 }
-
+                
+                println!("Test14");
                 // Tries to match every info image with the item and if there is a match then it will add it to the temporary vector variable.
                 for info_image in info_vec.iter() {
                     match download_image(info_image, "temp_images/info/image.png") {
@@ -853,56 +856,64 @@ pub fn collect_trade(
                             return Err(String::from("Player declined request"));
                         }
                     }
-
+                    
+                    println!("Test15");
                     // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it wont wait for 4 minutes of there is no match
                     let output = Command::new("python")
-                        .arg("python_helpers/obj_detection.py")
-                        .arg("temp_images/info/item.png")
-                        .output();
-
-                    let output_unwrapped = output.unwrap(); // Bind `Output` to a variable to extend its lifetime
-                    let output_str = str::from_utf8(&output_unwrapped.stdout).unwrap().trim();
-
-                    if output_str != "Could not detect" {
-                        println!("Found match!");
-                        enigo.key_down(Key::Shift);
-                        enigo.mouse_click(MouseButton::Left);
-                        enigo.key_up(Key::Shift);
-                        in_window_items.push((info_image, item));
-                        item_limit += -1;
-                    } else {
-                        println!("No match. Checking next...");
-                    }
+                    .arg("python_helpers/obj_detection.py")
+                    .arg("temp_images/info/item.png")
+                    .output();
+                
+                println!("Test16");
+                let output_unwrapped = output.unwrap(); // Bind `Output` to a variable to extend its lifetime
+                let output_str = str::from_utf8(&output_unwrapped.stdout).unwrap().trim();
+                
+                println!("Test17");
+                if output_str != "Could not detect" {
+                    println!("Found match!");
+                    enigo.key_down(Key::Shift);
+                    enigo.mouse_click(MouseButton::Left);
+                    enigo.key_up(Key::Shift);
+                    in_window_items.push((info_image, item));
+                    item_limit += -1;
+                    println!("Test18");
+                } else {
+                    println!("Test19");
+                    println!("No match. Checking next...");
                 }
             }
         }
     }
+}
 
+    println!("Test20");
     // Click checkbox to get into the confirmation trading window.
     let output = Command::new("python")
-        .arg("python_helpers/obj_detection.py")
-        .arg("images/trade_checkbox.png")
-        .output()
-        .expect("Failed to execute command");
+    .arg("python_helpers/obj_detection.py")
+    .arg("images/trade_checkbox.png")
+    .output()
+    .expect("Failed to execute command");
 
-    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
-        Ok(_) => println!("Successfully clicked button!"),
-        Err(err) => println!("Got error while trying to click button: {:?}", err),
-    }
-
+match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+    Ok(_) => println!("Successfully clicked button!"),
+    Err(err) => println!("Got error while trying to click button: {:?}", err),
+}
+    println!("Test21");
+    
     // Now the bot is in the double check trade window box.
     // Click the magnifying glasses on top of the items
     let output = Command::new("python")
-        .arg("python_helpers/inspect_items.py")
-        .output()
-        .expect("Failed to execute command");
+    .arg("python_helpers/inspect_items.py")
+    .output()
+    .expect("Failed to execute command");
 
-    // Convert the output bytes to a string
-    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+// Convert the output bytes to a string
+let output_str = str::from_utf8(&output.stdout).unwrap().trim();
 
-    // Split the string on newlines to get the list of coordinates
-    let coords: Vec<&str> = output_str.split('\n').collect();
+// Split the string on newlines to get the list of coordinates
+let coords: Vec<&str> = output_str.split('\n').collect();
 
+    println!("Test22");
     // Now, coords contains each of the coordinates
     for coord_str in coords.iter() {
         let coord: Vec<i32> = coord_str
