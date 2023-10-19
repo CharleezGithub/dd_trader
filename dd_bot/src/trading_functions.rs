@@ -757,60 +757,71 @@ pub fn collect_trade(
             }
         }
 
+        println!("Test1");
         // Convert the output bytes to a string
         let output_str = {
             let output = Command::new("python")
-                .arg("python_helpers/multi_obj_detection.py")
-                .arg("temp_images/item/image.png")
-                .output()
-                .expect("Failed to execute command");
-
-            str::from_utf8(&output.stdout).unwrap().trim().to_string()
-        };
-
+            .arg("python_helpers/multi_obj_detection.py")
+            .arg("temp_images/item/image.png")
+            .output()
+            .expect("Failed to execute command");
+        
+        str::from_utf8(&output.stdout).unwrap().trim().to_string()
+    };
+    
+        println!("Test2");
         // If it could not detect any items in the inventory then go to stash and try again
         let output_str = if output_str == "Could not detect" {
             let output_stash = Command::new("python")
-                .arg("python_helpers/obj_detection.py")
-                .arg("images/stash.png")
-                .output()
-                .expect("Failed to execute command");
-
-            match enigo_functions::click_buton(&mut enigo, output_stash, true, 0, 0) {
-                Ok(_) => println!("Successfully clicked button!"),
-                Err(err) => println!("Got error while trying to click button: {:?}", err),
-            }
-
-            let output_retry = Command::new("python")
-                .arg("python_helpers/multi_obj_detection_narrow.py")
-                .arg("temp_images/item/image.png")
-                .output()
-                .expect("Failed to execute command");
-
-            // Convert the output bytes to a string
-            str::from_utf8(&output_retry.stdout)
-                .unwrap()
-                .trim()
-                .to_string()
-        } else {
-            output_str
-        };
-
-        if output_str == "Could not detect" {
-            return_to_lobby();
-            return Err(String::from("No items found in trade"));
+            .arg("python_helpers/obj_detection.py")
+            .arg("images/stash.png")
+            .output()
+            .expect("Failed to execute command");
+        
+        println!("Test3");
+        match enigo_functions::click_buton(&mut enigo, output_stash, true, 0, 0) {
+            Ok(_) => println!("Successfully clicked button!"),
+            Err(err) => println!("Got error while trying to click button: {:?}", err),
         }
-
-        // Split the string on newlines to get the list of coordinates
-        let coords: Vec<&str> = output_str.split('\n').collect();
-
-        // Now, coords contains each of the coordinates
-        for coord_str in coords.iter() {
-            let coord: Vec<i32> = coord_str
-                .split_whitespace()
-                .map(|s| s.parse().expect("Failed to parse coordinate"))
-                .collect();
-
+        
+            println!("Test4");
+            let output_retry = Command::new("python")
+            .arg("python_helpers/multi_obj_detection_narrow.py")
+            .arg("temp_images/item/image.png")
+            .output()
+            .expect("Failed to execute command");
+        
+        println!("Test5");
+        // Convert the output bytes to a string
+        str::from_utf8(&output_retry.stdout)
+        .unwrap()
+        .trim()
+        .to_string()
+    } else {
+        println!("Test6");
+        output_str
+    };
+    
+    println!("Test7");
+    if output_str == "Could not detect" {
+        println!("Test8");
+        return_to_lobby();
+        return Err(String::from("No items found in trade"));
+    }
+    
+    println!("Test9");
+    // Split the string on newlines to get the list of coordinates
+    let coords: Vec<&str> = output_str.split('\n').collect();
+    
+    println!("Test10");
+    // Now, coords contains each of the coordinates
+    for coord_str in coords.iter() {
+        let coord: Vec<i32> = coord_str
+        .split_whitespace()
+        .map(|s| s.parse().expect("Failed to parse coordinate"))
+        .collect();
+    
+    println!("Test11");
             if coord.len() == 4 {
                 let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
 
