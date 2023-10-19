@@ -763,6 +763,7 @@ pub fn collect_trade(
             let output = Command::new("python")
                 .arg("python_helpers/multi_obj_detection.py")
                 .arg("temp_images/item/image.png")
+                .arg("C")
                 .output()
                 .expect("Failed to execute command");
             println!("Coords: {:?}", output);
