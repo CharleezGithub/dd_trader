@@ -9,7 +9,7 @@ def check_all_items_in_escrow(channel_id):
     try:
         cursor.execute(
             """
-            SELECT status
+            SELECT items.status
             FROM items
             JOIN trades ON items.trade_id = trades.id
             WHERE trades.channel_id = ?
