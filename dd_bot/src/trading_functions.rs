@@ -1237,7 +1237,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
         .arg("python_helpers/obj_detection.py")
         .arg("images/trade_send_request.png")
         .output();
-
+    
     user_is_in_trade = match &output {
         Ok(_) => true,
         Err(_) => false,
@@ -1253,7 +1253,26 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
         return_to_lobby();
         return Err("Trader declined request");
     }
-    Ok("User accepted trade")
+    
+    
+    // Check if we are in the trading window.
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/trade_screen_identifier.png")
+        .arg("C")
+        .output()
+        .expect("Failed to execute command");
+
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    if output_str != "Could not detect" {
+        println!("Successfully clicked button!");
+        return Ok("User accepted trade");
+    }
+    else {
+        println!("Could not detect trading window");
+        return Err("Could not detect trading window");
+    }
 }
 
 fn return_to_lobby() {
