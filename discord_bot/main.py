@@ -627,7 +627,7 @@ async def collect(ctx, in_game_id: str):
 
     # Check if all the gold in the trade has been traded
     from helpers.traded_gold_match import check_gold
-    result = check_gold
+    result = check_gold(ctx.channel.id)
     # Check the status of the result
     has_enough_gold, traders_missing = result
 
@@ -637,12 +637,29 @@ async def collect(ctx, in_game_id: str):
         print(traders_missing)
     else:  # It's a list of discord IDs
         if len(traders_missing) == 1:
-            print(f"Trader with discord ID {traders_missing[0]} doesn't have enough gold.")
-            await ctx.send(f"Trader with discord ID {traders_missing[0]} doesn't have enough gold.")
+            # Fetch the user
+            try:
+                user = await bot.fetch_user(int(traders_missing[0]))
+                user_name = user.name
+            except discord.NotFound:
+                user_name = "Unknown User"
+            print(f"Trader {user_name}, has not traded all their gold yet.")
+            await ctx.send(f"Trader {user_name}, has not traded all their gold yet.")
             return
         else:
-            print(f"Traders with discord IDs {', '.join(traders_missing)} don't have enough gold.")
-            await ctx.send(f"Traders with discord IDs {', '.join(traders_missing)} don't have enough gold.")
+            trader_names = []
+            for i, trader in enumerate(traders_missing):
+                # Fetch the user
+                try:
+                    user = await bot.fetch_user(int(traders_missing[i]))
+                    user_name = user.name
+                except discord.NotFound:
+                    user_name = "Unknown User"
+
+                trader_names.append(user_name)
+                
+            print(f"Traders {', '.join(trader_names)}, have not traded all their gold yet.")
+            await ctx.send(f"Traders {', '.join(trader_names)}, have not traded all their gold yet.")
             return
 
 
