@@ -625,6 +625,28 @@ async def collect(ctx, in_game_id: str):
         )
         return
 
+    # Check if all the gold in the trade has been traded
+    from helpers.traded_gold_match import check_gold
+    result = check_gold
+    # Check the status of the result
+    has_enough_gold, traders_missing = result
+
+    if traders_missing is None:
+        print("Both traders have paid.")
+    elif isinstance(traders_missing, str):  # It's an error message
+        print(traders_missing)
+    else:  # It's a list of discord IDs
+        if len(traders_missing) == 1:
+            print(f"Trader with discord ID {traders_missing[0]} doesn't have enough gold.")
+            await ctx.send(f"Trader with discord ID {traders_missing[0]} doesn't have enough gold.")
+            return
+        else:
+            print(f"Traders with discord IDs {', '.join(traders_missing)} don't have enough gold.")
+            await ctx.send(f"Traders with discord IDs {', '.join(traders_missing)} don't have enough gold.")
+            return
+
+
+    # Check if the items are in escrow or not.
     from helpers.escrow_status import check_all_items_in_escrow
 
     if check_all_items_in_escrow(ctx.channel.id):
