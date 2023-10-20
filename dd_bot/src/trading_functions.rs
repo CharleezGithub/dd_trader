@@ -1,6 +1,6 @@
 use std::process::Command;
-use std::str;
-use std::sync::{Arc, Mutex};
+use std::{str, result};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -595,10 +595,10 @@ pub fn complete_trade(
             &trader.unwrap().discord_id,
             gold,
         );
-    
+
         match add_gold_result {
             Ok(_) => result_of_status = Ok(String::from("Added gold")),
-            Err(_) => result_of_status = Err(String::from("Could not add gold"))
+            Err(_) => result_of_status = Err(String::from("Could not add gold")),
         }
     }
 
@@ -820,8 +820,7 @@ pub fn collect_trade(
         println!("Test7");
         if output_str == "Could not detect" {
             println!("Test8");
-            return_to_lobby();
-            return Err(String::from("No items found in trade"));
+            break 'add_items;
         }
 
         println!("Test9");
@@ -903,6 +902,8 @@ pub fn collect_trade(
             }
         }
     }
+
+    // Add gold here maybe?
 
     println!("Test20");
     // Click checkbox to get into the confirmation trading window.
@@ -1117,31 +1118,31 @@ pub fn collect_trade(
                 // Then use the move_to_location_fast function to quickly move to the checkbox and click it
                 // Convert the output bytes to a string
                 let output_str = str::from_utf8(&output.stdout).unwrap().trim();
-                
+
                 // Split the string on newlines to get the list of coordinates
                 let coords: Vec<&str> = output_str.split('\n').collect();
-                
+
                 println!("Test39");
                 // Now, coords contains each of the coordinates
                 for coord_str in coords.iter() {
                     let coord: Vec<i32> = coord_str
-                    .split_whitespace()
+                        .split_whitespace()
                         .map(|s| s.parse().expect("Failed to parse coordinate"))
                         .collect();
-                    
+
                     println!("Test40");
                     if coord.len() == 4 {
                         let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
-                        
+
                         let mut rng = rand::thread_rng();
-                        
+
                         // Salt the pixels so that it does not click the same pixel every time.
                         let salt = rng.gen_range(-9..9);
-                        
+
                         // Gets the middle of the detected play button and clicks it
                         let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
                         let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
-                        
+
                         println!("Test41");
                         // Now move to the middlepoint
                         match enigo_functions::move_to_location_fast(
@@ -1155,7 +1156,7 @@ pub fn collect_trade(
                                 println!("Got error while trying to click button: {:?}", err)
                             }
                         }
-                        
+
                         enigo.mouse_click(MouseButton::Left);
                     }
                 }
@@ -1169,7 +1170,7 @@ pub fn collect_trade(
                 return Err(String::from("User did not accept trade"));
             }
         }
-        
+
         println!("Test43");
         println!("Changing the items statuses from 'in escrow' to 'traded'!");
         for (info_url, item_url) in in_window_items {
@@ -1248,7 +1249,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
         .arg("python_helpers/obj_detection.py")
         .arg("images/trade_send_request.png")
         .output();
-    
+
     user_is_in_trade = match &output {
         Ok(_) => true,
         Err(_) => false,
@@ -1264,8 +1265,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
         return_to_lobby();
         return Err("Trader declined request");
     }
-    
-    
+
     // Check if we are in the trading window.
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
@@ -1279,8 +1279,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     if output_str != "Could not detect" {
         println!("Successfully clicked button!");
         return Ok("User accepted trade");
-    }
-    else {
+    } else {
         println!("Could not detect trading window");
         return Err("Could not detect trading window");
     }
@@ -1463,7 +1462,7 @@ fn download_image(url: &str, save_path: &str) -> Result<(), Box<dyn std::error::
         sleep(Duration::from_millis(100));
     }
 
-    // Optionally, after the loop, you can check one final time and 
+    // Optionally, after the loop, you can check one final time and
     // return an error if the file is still not ready.
     let metadata = fs::metadata(save_path);
     if metadata.is_err() || metadata.unwrap().len() == 0 {
