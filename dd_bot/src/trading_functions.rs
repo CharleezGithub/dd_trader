@@ -1,6 +1,6 @@
 use std::process::Command;
-use std::str;
-use std::sync::{Arc, Mutex};
+use std::{str, result};
+use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -595,10 +595,10 @@ pub fn complete_trade(
             &trader.unwrap().discord_id,
             gold,
         );
-    
+
         match add_gold_result {
             Ok(_) => result_of_status = Ok(String::from("Added gold")),
-            Err(_) => result_of_status = Err(String::from("Could not add gold"))
+            Err(_) => result_of_status = Err(String::from("Could not add gold")),
         }
     }
 
@@ -820,8 +820,7 @@ pub fn collect_trade(
         println!("Test7");
         if output_str == "Could not detect" {
             println!("Test8");
-            return_to_lobby();
-            return Err(String::from("No items found in trade"));
+            break 'add_items;
         }
 
         println!("Test9");
@@ -901,6 +900,184 @@ pub fn collect_trade(
                     }
                 }
             }
+        }
+    }
+
+    fn click_gold(output: std::process::Output, total_pouches: i32) -> Result<String, String>{
+        let mut enigo = Enigo::new();
+
+        let mut pouch_count = 0;
+
+        let output_str = str::from_utf8(&output.stdout).unwrap().trim().to_string();
+
+        // Split the string on newlines to get the list of coordinates
+        let coords: Vec<&str> = output_str.split('\n').collect();
+
+        // Now, coords contains each of the coordinates
+        for coord_str in coords.iter() {
+            if *coord_str == "Could not detect" || *coord_str == "" {
+                continue;
+            }
+            let coord: Vec<i32> = coord_str
+                .split_whitespace()
+                .map(|s| s.parse().expect("Failed to parse coordinate"))
+                .collect();
+
+            if coord.len() == 4 {
+                let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
+
+                let mut rng = rand::thread_rng();
+
+                // Salt the pixels so that it does not click the same pixel every time.
+                let salt = rng.gen_range(-9..9);
+
+                // Gets the middle of the detected play button and clicks it
+                let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
+                let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
+
+                match enigo_functions::move_to_location_fast(
+                    &mut enigo,
+                    middle_point_x,
+                    middle_point_y,
+                    false,
+                ) {
+                    Ok(_) => println!("Successfully moved to this location!"),
+                    Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+                }
+                enigo.mouse_click(MouseButton::Left);
+                pouch_count += 1;
+            }
+            if pouch_count >= total_pouches {
+                return Ok(String::from("Total reached"));
+            }
+        }
+        Ok(String::from("Good"))
+    }
+    // If no pairs where found then check if it needs to add gold and if so then add gold
+    if in_window_items.is_empty() {
+        let total_gold = other_trader.unwrap().gold;
+        // If there is still gold left. (Reason for 30 is that the bot shouldnt give any gold if the user has lets say 1 gold left. Becuase the bot trades in 50 and 35 pouches only)
+        if total_gold > 30 {
+            let total_pouches = (total_gold as f64 / 50.0).round() as i32;
+            // Convert the output bytes to a string
+            let output = Command::new("python")
+                .arg("python_helpers/multi_obj_detection.py")
+                .arg("images/50_gold_pouch.png")
+                .arg("F")
+                .output()
+                .expect("Failed to execute command");
+
+            let output_str = str::from_utf8(&output.stdout).unwrap().trim().to_string();
+
+            // If there are no 50 gold pouches to be found then try the stash instead
+            if output_str == "Could not detect" {
+                let output_stash = Command::new("python")
+                    .arg("python_helpers/obj_detection.py")
+                    .arg("images/stash.png")
+                    .output()
+                    .expect("Failed to execute command");
+
+                match enigo_functions::click_buton(&mut enigo, output_stash, true, 0, 0) {
+                    Ok(_) => println!("Successfully clicked button!"),
+                    Err(err) => println!("Got error while trying to click button: {:?}", err),
+                }
+
+                // Now we are in the stash
+                // Search after 50g pouches here as well
+                let output = Command::new("python")
+                    .arg("python_helpers/multi_obj_detection.py")
+                    .arg("images/50_gold_pouch.png")
+                    .arg("F")
+                    .output()
+                    .expect("Failed to execute command");
+        
+                let output_str = str::from_utf8(&output.stdout).unwrap().trim().to_string();
+        
+                // If there are no 50 gold pouches in both the inventory and stash
+                // Then search after 35g pouches. (Those are the ones left after the trading fee)
+                if output_str == "Could not detect" {
+                    // Now we are in the stash
+                    // Search after 35g pouches here as well
+                    let output = Command::new("python")
+                        .arg("python_helpers/multi_obj_detection.py")
+                        .arg("images/35_gold_pouch.png")
+                        .arg("F")
+                        .output()
+                        .expect("Failed to execute command");
+            
+                    let output_str = str::from_utf8(&output.stdout).unwrap().trim().to_string();
+                    
+                    // If it could not detect 35g pouches in the stash then check the inventory
+                    if output_str == "Could not detect" { 
+                        let output_stash = Command::new("python")
+                        .arg("python_helpers/obj_detection.py")
+                        .arg("images/inventory.png")
+                        .output()
+                        .expect("Failed to execute command");
+
+                        match enigo_functions::click_buton(&mut enigo, output_stash, true, 0, 0) {
+                            Ok(_) => println!("Successfully clicked button!"),
+                            Err(err) => println!("Got error while trying to click button: {:?}", err),
+                        }
+
+                        // Now we are in the inventory again. Last time searching
+                        let output = Command::new("python")
+                            .arg("python_helpers/multi_obj_detection.py")
+                            .arg("images/35_gold_pouch.png")
+                            .arg("F")
+                            .output()
+                            .expect("Failed to execute command");
+                
+                        let output_str = str::from_utf8(&output.stdout).unwrap().trim().to_string();
+                        
+                        // If it could not detect any 50g or 35g pouches then return to the lobby and notify the player.
+                        if output_str == "Could not detect" { 
+                            return_to_lobby();
+                            return Err(String::from("Could not find any money in stash"));
+                        }
+                    }
+                }
+            }
+            
+
+            // If the total amount of pouches was not clicked then go to stash and try again
+            match click_gold(output, total_pouches){
+                Ok(result) => {
+                    if result != "Total reached" {
+                        let output_stash = Command::new("python")
+                            .arg("python_helpers/obj_detection.py")
+                            .arg("images/stash.png")
+                            .output()
+                            .expect("Failed to execute command");
+    
+                        match enigo_functions::click_buton(&mut enigo, output_stash, true, 0, 0) {
+                            Ok(_) => println!("Successfully clicked button!"),
+                            Err(err) => println!("Got error while trying to click button: {:?}", err),
+                        }
+
+                        // Now we are in the stash
+                        // Search after 50g pouches here as well
+                        let output = Command::new("python")
+                            .arg("python_helpers/multi_obj_detection.py")
+                            .arg("images/50_gold_pouch.png")
+                            .arg("F")
+                            .output()
+                            .expect("Failed to execute command");
+
+                        match click_gold(output, total_pouches){
+                            Ok(result) => {
+                                if result != "Total reached" {
+                                    return_to_lobby();
+                                    return Err(String::from("Could not find enough gold"))
+                                }
+                            }
+                            Err(err) => println!("Error clicking gold: {}", err)
+                        }
+                    }
+                },
+                Err(err) => println!("Error clicking gold: {}", err)
+            }
+
         }
     }
 
@@ -1117,31 +1294,31 @@ pub fn collect_trade(
                 // Then use the move_to_location_fast function to quickly move to the checkbox and click it
                 // Convert the output bytes to a string
                 let output_str = str::from_utf8(&output.stdout).unwrap().trim();
-                
+
                 // Split the string on newlines to get the list of coordinates
                 let coords: Vec<&str> = output_str.split('\n').collect();
-                
+
                 println!("Test39");
                 // Now, coords contains each of the coordinates
                 for coord_str in coords.iter() {
                     let coord: Vec<i32> = coord_str
-                    .split_whitespace()
+                        .split_whitespace()
                         .map(|s| s.parse().expect("Failed to parse coordinate"))
                         .collect();
-                    
+
                     println!("Test40");
                     if coord.len() == 4 {
                         let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
-                        
+
                         let mut rng = rand::thread_rng();
-                        
+
                         // Salt the pixels so that it does not click the same pixel every time.
                         let salt = rng.gen_range(-9..9);
-                        
+
                         // Gets the middle of the detected play button and clicks it
                         let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
                         let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
-                        
+
                         println!("Test41");
                         // Now move to the middlepoint
                         match enigo_functions::move_to_location_fast(
@@ -1155,7 +1332,7 @@ pub fn collect_trade(
                                 println!("Got error while trying to click button: {:?}", err)
                             }
                         }
-                        
+
                         enigo.mouse_click(MouseButton::Left);
                     }
                 }
@@ -1169,7 +1346,7 @@ pub fn collect_trade(
                 return Err(String::from("User did not accept trade"));
             }
         }
-        
+
         println!("Test43");
         println!("Changing the items statuses from 'in escrow' to 'traded'!");
         for (info_url, item_url) in in_window_items {
@@ -1248,7 +1425,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
         .arg("python_helpers/obj_detection.py")
         .arg("images/trade_send_request.png")
         .output();
-    
+
     user_is_in_trade = match &output {
         Ok(_) => true,
         Err(_) => false,
@@ -1264,8 +1441,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
         return_to_lobby();
         return Err("Trader declined request");
     }
-    
-    
+
     // Check if we are in the trading window.
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
@@ -1279,8 +1455,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     if output_str != "Could not detect" {
         println!("Successfully clicked button!");
         return Ok("User accepted trade");
-    }
-    else {
+    } else {
         println!("Could not detect trading window");
         return Err("Could not detect trading window");
     }
@@ -1463,7 +1638,7 @@ fn download_image(url: &str, save_path: &str) -> Result<(), Box<dyn std::error::
         sleep(Duration::from_millis(100));
     }
 
-    // Optionally, after the loop, you can check one final time and 
+    // Optionally, after the loop, you can check one final time and
     // return an error if the file is still not ready.
     let metadata = fs::metadata(save_path);
     if metadata.is_err() || metadata.unwrap().len() == 0 {
