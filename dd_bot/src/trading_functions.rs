@@ -1222,10 +1222,13 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
         .expect("Failed to execute command");
 
     // Search after the trader in the trade tab
-    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+    match enigo_functions::click_buton(&mut enigo, output, true, 0, 30) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
+
+    // Clear the search bar so that it is ready for a new id.
+    enigo.key_sequence_parse("{+CONTROL}a{-CONTROL}{+DELETE}{-DELETE}");
 
     let user_is_in_trade: bool;
 
