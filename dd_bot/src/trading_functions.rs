@@ -583,17 +583,25 @@ pub fn complete_trade(
         Err(_) => 0,
     };
 
-    // Add the gold to the trader1_gold_traded or trader2_gold_traded
-    let _ = database_functions::add_gold_to_trader(
-        &trader.unwrap().discord_channel_id,
-        &trader.unwrap().discord_id,
-        gold,
-    );
-
     let mut result_of_status;
 
     // If this value is not initialized below, then there is nothing in the trading_window_items_clone which there should be.
     result_of_status = Err(String::from("Something went wrong"));
+
+    if gold > 0 {
+        // Add the gold to the trader1_gold_traded or trader2_gold_traded
+        let add_gold_result = database_functions::add_gold_to_trader(
+            &trader.unwrap().discord_channel_id,
+            &trader.unwrap().discord_id,
+            gold,
+        );
+    
+        match add_gold_result {
+            Ok(_) => result_of_status = Ok(String::from("Added gold")),
+            Err(_) => result_of_status = Err(String::from("Could not add gold"))
+        }
+    }
+
     for pair in trading_window_items_clone.iter() {
         match database_functions::set_item_status_by_urls(pair.1, pair.0, "in escrow") {
             Ok(_) => {
