@@ -284,6 +284,10 @@ async def add_gold(ctx, gold: int):
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
+    
+    if gold % 50 != 0:
+        await ctx.send("Gold has to be in increments of 50!")
+        return
 
     discord_id = str(ctx.author.id)  # Get user ID from context
     channel_id = str(ctx.channel.id)  # Get channel ID from context
