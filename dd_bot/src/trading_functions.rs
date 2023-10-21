@@ -676,7 +676,7 @@ pub fn complete_trade(
 }
 
 // Collect items function
-pub fn collect_trade(
+pub fn claim_items(
     enigo: Arc<Mutex<Enigo>>,
     bot_info: Arc<Mutex<TradeBotInfo>>,
     in_game_id: &str,
@@ -1183,6 +1183,8 @@ pub fn collect_trade(
     println!("Test44");
     Ok(String::from("Trade successful"))
 }
+
+
 
 fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     let mut enigo = Enigo::new();

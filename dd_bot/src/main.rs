@@ -241,7 +241,7 @@ fn trade_collect(
         tokio::spawn(async move {
             // Using spawn_blocking to handle potential blocking/synchronous code
             let result = tokio::task::spawn_blocking(move || {
-                match trading_functions::collect_trade(enigo_cloned, bot_info_cloned, in_game_id_cloned.as_ref(), traders_container_cloned) {
+                match trading_functions::claim_items(enigo_cloned, bot_info_cloned, in_game_id_cloned.as_ref(), traders_container_cloned) {
                     Ok(_) => return String::from("Trade successful!"),
                     Err(err) => {
                         if err == String::from("No items left in escrow") {
