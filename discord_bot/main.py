@@ -70,12 +70,18 @@ async def custom_help(ctx, *, command_name=None):
         embed.add_field(
             name="!deposit [In-game player-id]",
             value="TO DO!",
-            # value="Complete the trade by trading your items to the middleman bot in the game using this command. Once both players have traded their items to the middleman, the players can do !collect in order to collect the items they traded for.",
+            # value="Complete the trade by trading your items to the middleman bot in the game using this command. Once both players have traded their items to the middleman, the players can do !claim-gold and claim-items in order to collect the items they traded for.",
             inline=False,
         )
 
         embed.add_field(
-            name="!collect",
+            name="!claim-items",
+            value="TO DO!",
+            # value="Collect the items that you traded for.",
+            inline=False,
+        )
+        embed.add_field(
+            name="!claim-gold",
             value="TO DO!",
             # value="Collect the items that you traded for.",
             inline=False,
@@ -136,17 +142,17 @@ async def custom_help(ctx, *, command_name=None):
             embed.add_field(name="Usage", value="!deposit [In-game player-id]")
             embed.add_field(
                 name="Notes",
-                value="Once both players have traded their items to the middleman bot, you and the other player can use the !collect command to retrieve the items you traded for.",
+                value="Once both players have traded their items to the middleman bot, you and the other player can use the !claim-items and claim-gold command to retrieve the items you traded for.",
             )
             await ctx.send(embed=embed)
 
-        elif command_name.lower() in ["collect", "!collect"]:
+        elif command_name.lower() in ["claim-items", "!claim-items"]:
             embed = discord.Embed(
-                title="!collect",
+                title="!claim-items",
                 description="Collect the items that you traded for.",
                 color=0x55A7F7,
             )
-            embed.add_field(name="Usage", value="!collect")
+            embed.add_field(name="Usage", value="!claim-items")
             embed.add_field(
                 name="Notes",
                 value="This command allows you to collect the items you've acquired after completing a trade. Both parties are required to trade their items with the middleman bot before being able to collect the items.",
@@ -617,8 +623,8 @@ async def deposit(ctx, in_game_id: str):
         # await ctx.send(f"Unexpected error occurred: {str(e)}")
 
 
-@bot.command(name="collect")
-async def collect(ctx, in_game_id: str):
+@bot.command(name="claim-items")
+async def claim_items(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
             "This command can only be used within the 'Middleman Trades' category!"
