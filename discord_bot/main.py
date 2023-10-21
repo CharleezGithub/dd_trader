@@ -68,7 +68,7 @@ async def custom_help(ctx, *, command_name=None):
             inline=False,
         )
         embed.add_field(
-            name="!trade-complete [In-game player-id]",
+            name="!deposit [In-game player-id]",
             value="TO DO!",
             # value="Complete the trade by trading your items to the middleman bot in the game using this command. Once both players have traded their items to the middleman, the players can do !collect in order to collect the items they traded for.",
             inline=False,
@@ -127,13 +127,13 @@ async def custom_help(ctx, *, command_name=None):
             )
             await ctx.send(embed=embed)
 
-        elif command_name.lower() in ["trade-complete", "!trade-complete"]:
+        elif command_name.lower() in ["deposit", "!deposit"]:
             embed = discord.Embed(
-                title="!trade-complete [In-game player-id]",
+                title="!deposit [In-game player-id]",
                 description="Trade your items to the middleman bot in the game.",
                 color=0x55A7F7,
             )
-            embed.add_field(name="Usage", value="!trade-complete [In-game player-id]")
+            embed.add_field(name="Usage", value="!deposit [In-game player-id]")
             embed.add_field(
                 name="Notes",
                 value="Once both players have traded their items to the middleman bot, you and the other player can use the !collect command to retrieve the items you traded for.",
@@ -568,8 +568,8 @@ async def pay_fee(ctx, in_game_id: str):
         # await ctx.send(f"Unexpected error occurred: {str(e)}")
 
 
-@bot.command(name="complete-trade")
-async def complete_trade(ctx, in_game_id: str):
+@bot.command(name="deposit")
+async def deposit(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
             "This command can only be used within the 'Middleman Trades' category!"
