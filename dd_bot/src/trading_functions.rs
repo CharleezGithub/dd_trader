@@ -1,6 +1,6 @@
 use std::process::Command;
-use std::{str, result};
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::str;
+use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -1184,7 +1184,121 @@ pub fn claim_items(
     Ok(String::from("Trade successful"))
 }
 
+pub fn claim_gold(
+    enigo: Arc<Mutex<Enigo>>,
+    bot_info: Arc<Mutex<TradeBotInfo>>,
+    in_game_id: &str,
+    traders_container: Arc<Mutex<TradersContainer>>,
+) -> Result<String, String> {
+    let mut enigo = enigo.lock().unwrap();
 
+    let info = bot_info.lock().unwrap();
+
+    // If the bot is not ready then it will run the open game function
+    // If the bot is starting then it will wait for the bot to be ready
+    // If the bot is ready then it will continue as normal
+    'wait_loop: loop {
+        let bot_info_clone = bot_info.clone();
+        match info.ready {
+            ReadyState::False => {
+                tokio::spawn(async move {
+                    open_game_go_to_lobby(bot_info_clone).await;
+                });
+            }
+            ReadyState::Starting => sleep(Duration::from_secs(2)),
+            ReadyState::True => break 'wait_loop,
+        }
+    }
+
+    // Get the trader with that in-game name
+    let traders = traders_container.lock().unwrap();
+    let trader = traders.get_trader_by_in_game_id(in_game_id).unwrap();
+
+    let trader_discord_id = &trader.discord_id;
+    let trader_channel_id = &trader.discord_channel_id;
+
+    // Find the other trader in the same trade as the trader.
+    // This is done so that we can search for the items that the other person has traded to the bot so that the trader can get the other traders items and not their own back.
+    let other_trader = traders.get_other_trader_in_channel(&trader_discord_id, &trader_channel_id);
+
+    let other_trader_gold = other_trader.unwrap().gold;
+
+    if other_trader_gold < 30 {
+        return Ok(String::from(
+            "User did not have enough gold left for a trade",
+        ));
+    }
+
+    // Go into the trading tab and send a trade to the trader. Exact same as before with the gold fee.
+    match send_trade_request(trader.in_game_id.as_str()) {
+        Ok(_) => println!("Player accepted trade request"),
+        Err(_) => {
+            println!("Player declined request. Going back to lobby.");
+            return_to_lobby();
+            return Err(String::from("Player declined trade request"));
+        }
+    }
+
+    // Get the amount of 50g and 35g pouches from both the inventory and the stash, while in the trading window.
+    let output_50g_inv = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/50_gold_pouch.png")
+        .output()
+        .expect("Failed to execute command");
+
+    let output_35g_inv = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/35_gold_pouch.png")
+        .output()
+        .expect("Failed to execute command");
+
+    // Convert the output bytes to a String
+    let coords_50g_pouch_inv = str::from_utf8(&output_50g_inv.stdout).unwrap().trim();
+    let coords_35g_pouch_inv = str::from_utf8(&output_35g_inv.stdout).unwrap().trim();
+
+    // Split the string by lines and count them
+    let pouch_count_50g_inv = coords_50g_pouch_inv.lines().count();
+    let pouch_count_35g_inv = coords_35g_pouch_inv.lines().count();
+
+    // Now go to the stash and count those as well
+    let stash_output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/stash.png")
+        .output()
+        .expect("Failed to execute command");
+
+    match enigo_functions::click_buton(&mut enigo, stash_output, true, 0, 0) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    let output_50g_stash = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/50_gold_pouch.png")
+        .output()
+        .expect("Failed to execute command");
+
+    let output_35g_stash = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/35_gold_pouch.png")
+        .output()
+        .expect("Failed to execute command");
+
+    // Convert the output bytes to a String
+    let coords_50g_pouch_stash = str::from_utf8(&output_50g_stash.stdout).unwrap().trim();
+    let coords_35g_pouch_stash = str::from_utf8(&output_35g_stash.stdout).unwrap().trim();
+
+    // Split the string by lines and count them
+    let pouch_count_50g_stash = coords_50g_pouch_stash.lines().count();
+    let pouch_count_35g_stash = coords_35g_pouch_stash.lines().count();
+
+
+    // Now the bot has counted the total amount of 50g and 35g pouches available.
+    // We also have all the coordiantes for the different pouches in both the inventory and stash.
+    
+
+    Ok(String::from("Test"))
+}
 
 fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     let mut enigo = Enigo::new();
