@@ -1,6 +1,6 @@
 use std::str;
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 
 use enigo::*;
 
@@ -56,11 +56,17 @@ impl TradersContainer {
         }
     }
 
-    fn get_other_trader_in_channel(&self, discord_id: &str, discord_channel_id: &str) -> Option<&Trader> {
+    fn get_other_trader_in_channel(
+        &self,
+        discord_id: &str,
+        discord_channel_id: &str,
+    ) -> Option<&Trader> {
         match self {
             TradersContainer::ActiveTraders(traders) => {
                 for trader in traders.iter() {
-                    if trader.discord_channel_id == discord_channel_id && trader.discord_id != discord_id {
+                    if trader.discord_channel_id == discord_channel_id
+                        && trader.discord_id != discord_id
+                    {
                         return Some(trader);
                     }
                 }
@@ -131,7 +137,7 @@ fn gold_fee(
         let mut traders = traders_container.lock().unwrap();
         traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
     }
-        
+
     trading_functions::collect_gold_fee(enigo, bot_info, in_game_id, traders_container);
 
     format!("TradeBot ready\n{}", bot_info.lock().unwrap().id)
@@ -194,8 +200,6 @@ fn trade_request(
     String::from("Trade request received. Processing...")
 }
 
-
-
 #[get("/trade_collect/<in_game_id>/<discord_channel_id>/<discord_id>")]
 fn trade_collect(
     in_game_id: String,
@@ -223,53 +227,111 @@ fn trade_collect(
 
     let should_break = Arc::new(AtomicBool::new(false));
 
-    // Calls the collect trade function as many times as needed untill there is an error or that there are no more items for the other trader in escrow.
-    'trade_loop: loop {
-        if should_break.load(Ordering::SeqCst) {
-            break 'trade_loop;
-        }
+    // Dereference `State` and clone the inner `Arc`.
+    let enigo_cloned = enigo.inner().clone();
+    let bot_info_cloned = bot_info.inner().clone();
+    let traders_container_cloned = traders_container.inner().clone();
+    let in_game_id_cloned = in_game_id.clone();
 
-        // Dereference `State` and clone the inner `Arc`.
-        let enigo_cloned = enigo.inner().clone();
-        let bot_info_cloned = bot_info.inner().clone();
-        let traders_container_cloned = traders_container.inner().clone();
-        let in_game_id_cloned = in_game_id.clone();
-
-        let should_break_cloned = should_break.clone();
-
-        // Spawning a new asynchronous task
-        tokio::spawn(async move {
-            // Using spawn_blocking to handle potential blocking/synchronous code
-            let result = tokio::task::spawn_blocking(move || {
-                match trading_functions::claim_items(enigo_cloned, bot_info_cloned, in_game_id_cloned.as_ref(), traders_container_cloned) {
-                    Ok(_) => return String::from("Trade successful!"),
-                    Err(err) => {
-                        if err == String::from("No items left in escrow") {
-                            return String::from("All items traded");
-                        }
-                        return err;
-                    },
+    // Spawning a new asynchronous task
+    tokio::spawn(async move {
+        // Using spawn_blocking to handle potential blocking/synchronous code
+        let result = tokio::task::spawn_blocking(move || {
+            match trading_functions::claim_items(
+                enigo_cloned,
+                bot_info_cloned,
+                in_game_id_cloned.as_ref(),
+                traders_container_cloned,
+            ) {
+                Ok(_) => return String::from("Trade successful!"),
+                Err(err) => {
+                    if err == String::from("No items left in escrow") {
+                        return String::from("All items traded");
+                    }
+                    return err;
                 }
-            })
-            .await;
+            }
+        })
+        .await;
 
         tokio::task::yield_now().await;
 
-            // Log the result or handle it further, based on requirements
-            match result {
-                Ok(s) => {
-                    println!("Trade result: {}", s);
-                    if s == "All items traded" {
-                        should_break_cloned.store(true, Ordering::SeqCst);
-                    }
-                },
-                Err(e) => eprintln!("Trade error: {:?}", e),
+        // Log the result or handle it further, based on requirements
+        match result {
+            Ok(s) => {
+                println!("Trade result: {}", s);
             }
-        });
+            Err(e) => eprintln!("Trade error: {:?}", e),
+        }
+    });
+    // Does not account for failure
+    String::from("Trade complete")
+}
 
+#[get("/claim_gold/<in_game_id>/<discord_channel_id>/<discord_id>")]
+fn claim_gold(
+    in_game_id: String,
+    discord_channel_id: &str,
+    discord_id: &str,
+    enigo: &State<Arc<Mutex<Enigo>>>,
+    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
+    traders_container: &State<Arc<Mutex<TradersContainer>>>,
+) -> String {
+    {
+        let info = bot_info.lock().unwrap();
+        match info.ready {
+            ReadyState::False => return String::from("TradeBot not ready"),
+            ReadyState::Starting => {
+                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
+            }
+            ReadyState::True => println!("Going into trade!"),
+        }
+    } // Lock is released here as the MutexGuard goes out of scope
 
-
+    {
+        let mut traders = traders_container.lock().unwrap();
+        traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id, discord_channel_id);
     }
+
+    let should_break = Arc::new(AtomicBool::new(false));
+
+    let enigo_cloned = enigo.inner().clone();
+    let bot_info_cloned = bot_info.inner().clone();
+    let traders_container_cloned = traders_container.inner().clone();
+    let in_game_id_cloned = in_game_id.clone();
+
+    // Spawning a new asynchronous task
+    tokio::spawn(async move {
+        // Using spawn_blocking to handle potential blocking/synchronous code
+        let result = tokio::task::spawn_blocking(move || {
+            match trading_functions::claim_gold(
+                enigo_cloned,
+                bot_info_cloned,
+                in_game_id_cloned.as_ref(),
+                traders_container_cloned,
+            ) {
+                Ok(_) => return String::from("Trade successful!"),
+                Err(err) => {
+                    if err == String::from("No items left in escrow") {
+                        return String::from("All items traded");
+                    }
+                    return err;
+                }
+            }
+        })
+        .await;
+
+        tokio::task::yield_now().await;
+
+        // Log the result or handle it further, based on requirements
+        match result {
+            Ok(s) => {
+                println!("Trade result: {}", s);
+            }
+            Err(e) => eprintln!("Trade error: {:?}", e),
+        }
+    });
+
     // Does not account for failure
     String::from("Trade complete")
 }
@@ -285,7 +347,6 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
 
     let traders_container = Arc::new(Mutex::new(TradersContainer::ActiveTraders(Vec::new())));
 
-    
     match database_functions::populate_traders_from_db(&traders_container) {
         Ok(_) => println!("Populated trades containter!"),
         Err(_) => println!("Could not populate traders containter."),
@@ -295,12 +356,12 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
     let bot_info_clone = bot_info.clone();
 
     // Spawn the open game function as a separate task
-    /* 
+    /*
     tokio::spawn(async move {
         trading_functions::open_game_go_to_lobby(bot_info_clone).await;
     });
     */
-    
+
     rocket::build()
         .manage(enigo) // Add the enigo as managed state
         .manage(bot_info) // Add the bot_info as managed state
