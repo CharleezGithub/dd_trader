@@ -324,6 +324,7 @@ pub fn complete_trade(
         Ok(_) => println!("Player accepted trade request"),
         Err(_) => {
             println!("Player declined request. Going back to lobby.");
+            return_to_lobby();
             return Err(String::from("Player declined trade request"));
         }
     }
@@ -436,6 +437,7 @@ pub fn complete_trade(
             Ok(_) => println!("Successfully downloaded item image"),
             Err(err) => {
                 println!("Could not download image. Error \n{}", err);
+                return_to_lobby();
                 return Err(String::from("Could not download image"));
             }
         }
@@ -492,6 +494,7 @@ pub fn complete_trade(
                         Ok(_) => println!("Successfully downloaded info image"),
                         Err(err) => {
                             println!("Could not download image. Error \n{}", err);
+                            return_to_lobby();
                             return Err(String::from("Could not download image"));
                         }
                     }
@@ -671,7 +674,10 @@ pub fn complete_trade(
 
             return Ok(String::from("Trade successful"));
         }
-        Err(err) => return Err(err),
+        Err(err) => {
+            return_to_lobby();
+            return Err(err)
+        }
     }
 }
 
@@ -735,6 +741,7 @@ pub fn claim_items(
         Ok(_) => println!("Player accepted trade request"),
         Err(_) => {
             println!("Player declined request. Going back to lobby.");
+            return_to_lobby();
             return Err(String::from("Player declined trade request"));
         }
     }
@@ -763,6 +770,7 @@ pub fn claim_items(
             Ok(_) => println!("Successfully downloaded item image"),
             Err(err) => {
                 println!("Could not download image. Error \n{}", err);
+                return_to_lobby();
                 return Err(String::from("Could not download image"));
             }
         }
@@ -870,6 +878,7 @@ pub fn claim_items(
                         Ok(_) => println!("Successfully downloaded info image"),
                         Err(err) => {
                             println!("Could not download image. Error \n{}", err);
+                            return_to_lobby();
                             return Err(String::from("Player declined request"));
                         }
                     }
@@ -981,6 +990,7 @@ pub fn claim_items(
             Ok(_) => println!("Successfully downloaded item image"),
             Err(err) => {
                 println!("Could not download image. Error \n{}", err);
+                return_to_lobby();
                 return Err(String::from("Could not download image"));
             }
         }
@@ -1046,6 +1056,7 @@ pub fn claim_items(
                                 Ok(_) => println!("Successfully downloaded info image"),
                                 Err(err) => {
                                     println!("Could not download image. Error \n{}", err);
+                                    return_to_lobby();
                                     return Err(String::from("Could not download image"));
                                 }
                             }
@@ -1308,6 +1319,7 @@ pub fn claim_gold(
     let total_gold = ((pouch_count_50g_inv + pouch_count_50g_stash) * 50)
         + ((pouch_count_35g_inv + pouch_count_35g_stash) * 35);
     if total_gold < (other_trader_gold - 30) {
+        return_to_lobby();
         return Err(String::from("Not enough gold"));
     }
 
