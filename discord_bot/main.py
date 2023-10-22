@@ -585,6 +585,18 @@ async def deposit(ctx, in_game_id: str):
     if not has_user_paid_fee(ctx.author.id, ctx.channel.id):
         await ctx.send("You have not paid the gold fee yet. Do !pay-fee to pay the trading fee.")
         return
+    
+    # Check if there are still items marked as "not traded"
+    from helpers.escrow_status import has_untraded_items
+
+    if has_untraded_items(ctx.author.id, ctx.channel.id):
+        print("There are items tagged 'not traded'.")
+    else:
+        await ctx.send(
+            "All current items have been traded to the bot. Do ´add-items´ if you wish to add more items to the trade."
+        )
+        return
+
     try:
         print(
             f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
