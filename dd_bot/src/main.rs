@@ -200,8 +200,8 @@ fn trade_request(
     String::from("Trade request received. Processing...")
 }
 
-#[get("/trade_collect/<in_game_id>/<discord_channel_id>/<discord_id>")]
-fn trade_collect(
+#[get("/claim_items/<in_game_id>/<discord_channel_id>/<discord_id>")]
+fn claim_items(
     in_game_id: String,
     discord_channel_id: &str,
     discord_id: &str,
@@ -366,7 +366,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
         .manage(enigo) // Add the enigo as managed state
         .manage(bot_info) // Add the bot_info as managed state
         .manage(traders_container) // Add the traders_container as managed state
-        .mount("/", routes![gold_fee, trade_request, trade_collect])
+        .mount("/", routes![gold_fee, trade_request, claim_items, claim_gold])
 }
 
 #[rocket::main]
