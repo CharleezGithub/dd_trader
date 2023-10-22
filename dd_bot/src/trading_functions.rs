@@ -1257,8 +1257,8 @@ pub fn claim_gold(
     let coords_35g_pouch_inv = str::from_utf8(&output_35g_inv.stdout).unwrap().trim();
 
     // Split the string by lines and count them
-    let pouch_count_50g_inv = coords_50g_pouch_inv.lines().count();
-    let pouch_count_35g_inv = coords_35g_pouch_inv.lines().count();
+    let pouch_count_50g_inv = coords_50g_pouch_inv.lines().count() as i32;
+    let pouch_count_35g_inv = coords_35g_pouch_inv.lines().count() as i32;
 
     // Now go to the stash and count those as well
     let stash_output = Command::new("python")
@@ -1289,13 +1289,98 @@ pub fn claim_gold(
     let coords_35g_pouch_stash = str::from_utf8(&output_35g_stash.stdout).unwrap().trim();
 
     // Split the string by lines and count them
-    let pouch_count_50g_stash = coords_50g_pouch_stash.lines().count();
-    let pouch_count_35g_stash = coords_35g_pouch_stash.lines().count();
+    let pouch_count_50g_stash = coords_50g_pouch_stash.lines().count() as i32;
+    let pouch_count_35g_stash = coords_35g_pouch_stash.lines().count() as i32;
 
+    // Going back to inventory screen
+    let stash_output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/inventory.png")
+        .output()
+        .expect("Failed to execute command");
+
+    match enigo_functions::click_buton(&mut enigo, stash_output, true, 0, 0) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    // Count total amount of gold and check if there is enough to complete the transaction
+    let total_gold = ((pouch_count_50g_inv + pouch_count_50g_stash) * 50)
+        + ((pouch_count_35g_inv + pouch_count_35g_stash) * 35);
+    if total_gold < (other_trader_gold - 30) {
+        return Err(String::from("Not enough gold"));
+    }
 
     // Now the bot has counted the total amount of 50g and 35g pouches available.
     // We also have all the coordiantes for the different pouches in both the inventory and stash.
-    
+    // And we know that the bot has sufficient funds
+    // Run the pouch calculator algorithim to calculate how many and where those pouches should come from
+    let (inv_50, stash_50, inv_35, stash_35) = calculate_pouches(
+        other_trader_gold,
+        pouch_count_50g_inv,
+        pouch_count_50g_stash,
+        pouch_count_35g_inv,
+        pouch_count_35g_stash,
+    );
+
+    let mut clicked_pouches = 0;
+    let max_window_pouches = 25;
+
+    // If there are any pouches present in the inventory then click them
+    if inv_50 > 0 || inv_35 > 0 {
+        // Loop through the 50's in the inventory and click on them
+        clicked_pouches = click_pouches(
+            coords_50g_pouch_inv,
+            inv_50,
+            clicked_pouches,
+            max_window_pouches,
+        );
+
+        // Loop through the 35's in the inventory and click on them
+        clicked_pouches = click_pouches(
+            coords_35g_pouch_inv,
+            inv_35,
+            clicked_pouches,
+            max_window_pouches,
+        );
+    }
+
+    // If there are any pouches present in the stash then click them
+    // Going into stash and clicking on those as well
+    if stash_50 > 0 || stash_35 > 0 {
+        let stash_output = Command::new("python")
+            .arg("python_helpers/obj_detection.py")
+            .arg("images/stash.png")
+            .output()
+            .expect("Failed to execute command");
+
+        match enigo_functions::click_buton(&mut enigo, stash_output, true, 0, 0) {
+            Ok(_) => println!("Successfully clicked button!"),
+            Err(err) => println!("Got error while trying to click button: {:?}", err),
+        }
+
+        // Loop through the 50's in the stash and click on them
+        clicked_pouches = click_pouches(
+            coords_50g_pouch_stash,
+            stash_50,
+            clicked_pouches,
+            max_window_pouches,
+        );
+
+        // Loop through the 35's in the stash and click on them
+        click_pouches(
+            coords_35g_pouch_stash,
+            stash_35,
+            clicked_pouches,
+            max_window_pouches,
+        );
+    }
+
+    // Now all the gold is in the trading window.
+    // Wait for the trader to click accept and then click it as well. (This is so that we can be certain that the trader also clicked accept)
+    // Then inspect all the items and again wait for the trader to click accept.
+    // Read the total amount of gold from the Total gold section of the trade.
+    // If it went through, subtract the total amount of gold from the trader_gold_traded and return Ok(String::from("Successfully went through")).
 
     Ok(String::from("Test"))
 }
@@ -1592,4 +1677,144 @@ fn download_image(url: &str, save_path: &str) -> Result<(), Box<dyn std::error::
     }
 
     Ok(())
+}
+
+fn calculate_pouches(
+    owe: i32,
+    inventory_50: i32,
+    stash_50: i32,
+    inventory_35: i32,
+    stash_35: i32,
+) -> (i32, i32, i32, i32) {
+    let mut used_inventory_50 = 0;
+    let mut used_stash_50 = 0;
+    let mut used_inventory_35 = 0;
+    let mut used_stash_35 = 0;
+    let mut owe = owe;
+
+    // Use 50-coin packs from the inventory first
+    while owe >= 50 && used_inventory_50 < inventory_50 {
+        owe -= 50;
+        used_inventory_50 += 1;
+    }
+
+    // Use 50-coin packs from the stash next
+    while owe >= 50 && used_stash_50 < stash_50 {
+        owe -= 50;
+        used_stash_50 += 1;
+    }
+
+    // Adjust for potential better configurations with extra 50-coin packs
+    let mut best_owe = owe;
+    let mut best_inventory_50 = used_inventory_50;
+    let mut best_stash_50 = used_stash_50;
+    while used_inventory_50 + used_stash_50 < inventory_50 + stash_50 {
+        owe -= 50;
+        if used_inventory_50 < inventory_50 {
+            used_inventory_50 += 1;
+        } else {
+            used_stash_50 += 1;
+        }
+        let current_difference = owe.abs();
+        if current_difference <= 20 {
+            best_owe = owe;
+            best_inventory_50 = used_inventory_50;
+            best_stash_50 = used_stash_50;
+            break;
+        }
+    }
+
+    owe = best_owe;
+    used_inventory_50 = best_inventory_50;
+    used_stash_50 = best_stash_50;
+
+    // Use 35-coin packs from the inventory
+    while (owe > 20 || owe < -20) && used_inventory_35 < inventory_35 {
+        owe -= 35;
+        used_inventory_35 += 1;
+    }
+
+    // Use 35-coin packs from the stash
+    while (owe > 20 || owe < -20) && used_stash_35 < stash_35 {
+        owe -= 35;
+        used_stash_35 += 1;
+    }
+
+    let total_paid =
+        (used_inventory_50 + used_stash_50) * 50 + (used_inventory_35 + used_stash_35) * 35;
+    println!("Total amount paid back: {} coins", total_paid);
+    println!(
+        "Used {} packs of 50 from inventory and {} from stash",
+        used_inventory_50, used_stash_50
+    );
+    println!(
+        "Used {} packs of 35 from inventory and {} from stash",
+        used_inventory_35, used_stash_35
+    );
+
+    (
+        used_inventory_50,
+        used_stash_50,
+        used_inventory_35,
+        used_stash_35,
+    )
+}
+
+// Clicks on pouches
+fn click_pouches(
+    coords_pouches: &str,
+    pouch_count: i32,
+    mut clicked_pouches: i32,
+    max_clicked: i32,
+) -> i32 {
+    let mut enigo = Enigo::new();
+
+    let coords: Vec<&str> = coords_pouches.split('\n').collect();
+
+    // Now, coords contains each of the coordinates
+    for (i, coord_str) in coords.iter().enumerate() {
+        // Check if no pouches should be used before clicking on them
+        if pouch_count < 1 {
+            break;
+        }
+        // Check if the for loop has clicked on the amount of bags that it was supposed too
+        if i as i32 >= pouch_count {
+            break;
+        }
+        if clicked_pouches >= max_clicked {
+            break;
+        }
+
+        let coord: Vec<i32> = coord_str
+            .split_whitespace()
+            .map(|s| s.parse().expect("Failed to parse coordinate"))
+            .collect();
+
+        if coord.len() == 4 {
+            let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
+
+            let mut rng = rand::thread_rng();
+
+            // Salt the pixels so that it does not click the same pixel every time.
+            let salt = rng.gen_range(-9..9);
+
+            // Gets the middle of the detected gold pouch and salt it to not click the same pixel every time
+            let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
+            let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
+
+            match enigo_functions::move_to_location_fast(
+                &mut enigo,
+                middle_point_x,
+                middle_point_y,
+                true,
+            ) {
+                Ok(_) => println!("Successfully moved to this location!"),
+                Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+            }
+            // Now we are hovering over a money pouch, click on it to add it to the trade
+            enigo.mouse_click(MouseButton::Left);
+            clicked_pouches += 1;
+        }
+    }
+    clicked_pouches
 }
