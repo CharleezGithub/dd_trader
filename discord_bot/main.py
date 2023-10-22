@@ -722,4 +722,103 @@ async def claim_items(ctx, in_game_id: str):
         # await ctx.send(f"Unexpected error occurred: {str(e)}")
 
 
+@bot.command(name="claim-gold")
+async def claim_gold(ctx, in_game_id: str):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+
+    # Check if all the gold in the trade has been traded
+    from helpers.traded_gold_match import check_gold
+    result = check_gold(ctx.channel.id)
+    # Check the status of the result
+    has_enough_gold, traders_missing = result
+
+    if traders_missing is None:
+        print("Both traders have paid.")
+    elif isinstance(traders_missing, str):  # It's an error message
+        print(traders_missing)
+    else:  # It's a list of discord IDs
+        if len(traders_missing) == 1:
+            # Fetch the user
+            try:
+                user = await bot.fetch_user(int(traders_missing[0]))
+                user_name = user.name
+            except discord.NotFound:
+                user_name = "Unknown User"
+            print(f"Trader {user_name}, has not traded all their gold yet.")
+            await ctx.send(f"Trader {user_name}, has not traded all their gold yet.")
+            return
+        else:
+            trader_names = []
+            for i, trader in enumerate(traders_missing):
+                # Fetch the user
+                try:
+                    user = await bot.fetch_user(int(traders_missing[i]))
+                    user_name = user.name
+                except discord.NotFound:
+                    user_name = "Unknown User"
+
+                trader_names.append(user_name)
+                
+            print(f"Traders {', '.join(trader_names)}, have not traded all their gold yet.")
+            await ctx.send(f"Traders {', '.join(trader_names)}, have not traded all their gold yet.")
+            return
+
+
+    # Check if the items are in escrow or not.
+    from helpers.other_trader_gold_left_in_escrow_check import has_other_trader_gold_left
+
+    if has_other_trader_gold_left(ctx.author.id, ctx.channel.id):
+        print("Other trader still has gold left to be claimed by trader.")
+        await ctx.send(
+            "Gold is ready to be sent! Hop into the bard trading channel to collect your gold."
+        )
+    else:
+        await ctx.send(
+            "No more gold available to claim. If you want to claim your items then write: ´claim-items {In-game player name}´"
+        )
+        return
+
+    try:
+        print(
+            f"http://127.0.0.1:8051/gold_claim/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+        )
+        # Construct the API endpoint URL
+        api_endpoint = f"http://127.0.0.1:8051/trade_collect/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+
+        # Make the API request
+        response = requests.get(api_endpoint)
+        print("response:", response.status_code)
+        print(response.status_code == 200)
+        print("response:", response.text)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            data = response.text
+            if "TradeBot ready" == data:
+                await ctx.send(
+                    'Going into "The Bard' + "'s" + 'Theater #1"'
+                )  # Send the message from the API response, if provided
+            else:
+                await ctx.send(
+                    "TradeBot is not ready. Wait 3 minutes and try again. Message @asdgew if this problem persists."
+                )
+        else:
+            await ctx.send(
+                f"Failed to complete the trade. Trading bot is not online. Please message @asdgew."
+            )
+            # Remove later. For debugging only
+            await ctx.send(
+                f"Failed to complete the trade. Error {response.status_code}: {response.text}"
+            )
+
+    except Exception as e:
+        print(e)
+        await ctx.send(f"Unexpected error occurred. Please message @asdgew")
+        # await ctx.send(f"Unexpected error occurred: {str(e)}")
+
+
 bot.run(TOKEN)
