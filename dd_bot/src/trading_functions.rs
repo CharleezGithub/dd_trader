@@ -1933,6 +1933,10 @@ fn click_pouches(
     mut clicked_pouches: i32,
     max_clicked: i32,
 ) -> i32 {
+    if coords_pouches == "Could not detect" {
+        return clicked_pouches;
+    }
+
     let mut enigo = Enigo::new();
 
     let coords: Vec<&str> = coords_pouches.split('\n').collect();
