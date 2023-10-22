@@ -1538,10 +1538,10 @@ pub fn claim_gold(
             println!("Successfully clicked button!");
             // Does not update database
             // This will subtract the gold just traded from the total
-            match database_functions::add_gold_to_trader(
+            match database_functions::subtract_gold_from_trader(
                 &trader.discord_channel_id,
                 &other_trader.unwrap().discord_id,
-                -gold,
+                gold,
             ) {
                 Ok(_) => {
                     return_to_lobby();
