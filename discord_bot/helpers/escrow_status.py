@@ -20,7 +20,7 @@ def check_all_items_in_escrow(channel_id):
         statuses = cursor.fetchall()
 
         # Check if all item statuses in the trade are "in escrow"
-        return all(status[0] == "in escrow" for status in statuses)
+        return all(status[0] == "in escrow" or "traded" for status in statuses)
     except sqlite3.Error as e:
         print(f"An error occurred: {e}")
         return False
