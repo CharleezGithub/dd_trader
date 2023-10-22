@@ -1253,14 +1253,16 @@ pub fn claim_gold(
 
     // Get the amount of 50g and 35g pouches from both the inventory and the stash, while in the trading window.
     let output_50g_inv = Command::new("python")
-        .arg("python_helpers/obj_detection.py")
+        .arg("python_helpers/multi_obj_detection.py")
         .arg("images/50_gold_pouch.png")
         .arg("F")
         .output()
         .expect("Failed to execute command");
 
+    sleep(Duration::from_millis(500));
+
     let output_35g_inv = Command::new("python")
-        .arg("python_helpers/obj_detection.py")
+        .arg("python_helpers/mutli_obj_detection.py")
         .arg("images/35_gold_pouch.png")
         .arg("F")
         .output()
@@ -1288,15 +1290,19 @@ pub fn claim_gold(
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
 
+    sleep(Duration::from_millis(500));
+
     let output_50g_stash = Command::new("python")
-        .arg("python_helpers/obj_detection.py")
+        .arg("python_helpers/mutli_obj_detection.py")
         .arg("images/50_gold_pouch.png")
         .arg("F")
         .output()
         .expect("Failed to execute command");
 
+    sleep(Duration::from_millis(500));
+
     let output_35g_stash = Command::new("python")
-        .arg("python_helpers/obj_detection.py")
+        .arg("python_helpers/multi_obj_detection.py")
         .arg("images/35_gold_pouch.png")
         .arg("F")
         .output()
@@ -1336,6 +1342,12 @@ pub fn claim_gold(
     // We also have all the coordiantes for the different pouches in both the inventory and stash.
     // And we know that the bot has sufficient funds
     // Run the pouch calculator algorithim to calculate how many and where those pouches should come from
+
+    println!(
+        "{} {} {} {}",
+        pouch_count_50g_inv, pouch_count_50g_stash, pouch_count_35g_inv, pouch_count_35g_stash
+    );
+
     let (inv_50, stash_50, inv_35, stash_35) = calculate_pouches(
         other_trader_gold,
         pouch_count_50g_inv,
@@ -1920,6 +1932,7 @@ fn click_pouches(
 
     let coords: Vec<&str> = coords_pouches.split('\n').collect();
 
+    println!("coords: {:?}", coords);
     // Now, coords contains each of the coordinates
     for (i, coord_str) in coords.iter().enumerate() {
         // Check if no pouches should be used before clicking on them
