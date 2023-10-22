@@ -13,7 +13,7 @@ use reqwest;
 
 use enigo::*;
 use rand::Rng;
-use rocket::State;
+use rocket::{data, State};
 
 use crate::TradersContainer;
 use crate::{database_functions, ReadyState, TradeBotInfo};
@@ -1377,12 +1377,151 @@ pub fn claim_gold(
     }
 
     // Now all the gold is in the trading window.
-    // Wait for the trader to click accept and then click it as well. (This is so that we can be certain that the trader also clicked accept)
-    // Then inspect all the items and again wait for the trader to click accept.
-    // Read the total amount of gold from the Total gold section of the trade.
-    // If it went through, subtract the total amount of gold from the trader_gold_traded and return Ok(String::from("Successfully went through")).
+    // Wait for the trader to be ready and then accept the trade
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/trader_ready.png")
+        .output();
 
-    Ok(String::from("Test"))
+    match output {
+        Ok(_) => println!("User did accept the trade"),
+        Err(_) => {
+            println!("User did not accept trade");
+            return_to_lobby();
+            return Err(String::from("User did not accept trade"));
+        }
+    }
+
+    // Click the checkbox
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/trade_checkbox.png")
+        .output()
+        .expect("Failed to execute command");
+
+    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    // Wait for trading window to popup before running inspect_items.py
+    sleep(Duration::from_millis(300));
+
+    // Click the magnifying glasses on top of the items
+    let output = Command::new("python")
+        .arg("python_helpers/inspect_items.py")
+        .output()
+        .expect("Failed to execute command");
+
+    // Convert the output bytes to a string
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    println!("coords: {}", output_str);
+    // Split the string on newlines to get the list of coordinates
+    let coords: Vec<&str> = output_str.split('\n').collect();
+
+    // Now, coords contains each of the coordinates
+    for coord_str in coords.iter() {
+        let coord: Vec<i32> = coord_str
+            .split_whitespace()
+            .map(|s| s.parse().expect("Failed to parse coordinate"))
+            .collect();
+
+        if coord.len() == 4 {
+            let (x1, y1, x2, y2) = (coord[0], coord[1], coord[2], coord[3]);
+
+            let mut rng = rand::thread_rng();
+
+            // Salt the pixels so that it does not click the same pixel every time.
+            let salt = rng.gen_range(-9..9);
+
+            // Gets the middle of the detected play button and clicks it
+            let middle_point_x = ((x2 - x1) / 2) + x1 + salt;
+            let middle_point_y = ((y2 - y1) / 2) + y1 + salt;
+
+            match enigo_functions::click_buton_direct(
+                &mut enigo,
+                middle_point_x,
+                middle_point_y,
+                true,
+                false,
+                0,
+                0,
+            ) {
+                Ok(_) => println!("Successfully clicked button!"),
+                Err(err) => println!("Got error while trying to click button: {:?}", err),
+            }
+        }
+    }
+
+    // Read the total amount of gold from the Total gold section of the trade.
+    // Get the amount of gold in the trade
+    let output = Command::new("python")
+        .arg("python_helpers/total_gold.py")
+        .output();
+
+    // Match the output of the gold detector and assigns the amount of gold put in by the trader to the gold variable
+    let gold: i32 = match output {
+        Ok(out) => {
+            let output_str = str::from_utf8(&out.stdout).unwrap().trim();
+            if output_str == "No text detected" || output_str == "0" {
+                0
+            } else {
+                output_str.parse().unwrap()
+            }
+        }
+        Err(_) => 0,
+    };
+
+    // Wait for trader to click the checkbox again before finishing the trade
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/trader_ready.png")
+        .output();
+
+    match output {
+        Ok(_) => println!("User did accept the trade"),
+        Err(_) => {
+            println!("User did not accept trade");
+            return_to_lobby();
+            return Err(String::from("User did not accept trade"));
+        }
+    }
+
+    // Click the checkbox
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/trade_checkbox.png")
+        .output()
+        .expect("Failed to execute command");
+
+    // If it went through, subtract the total amount of gold from the trader_gold_traded and return Ok(String::from("Successfully went through")).
+    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+        Ok(_) => {
+            println!("Successfully clicked button!");
+            // This will subtract the gold just traded from the total
+            match database_functions::add_gold_to_trader(
+                &trader.discord_channel_id,
+                &other_trader.unwrap().discord_id,
+                -gold,
+            ) {
+                Ok(_) => {
+                    return_to_lobby();
+                    return Ok(String::from("Successfully went through"));
+                }
+                Err(err) => {
+                    println!("Error subtracting gold from trader. \nError:\n{}", err);
+                    return_to_lobby();
+                    return Err(String::from("Error subtracting gold from trader"));
+                }
+            }
+        }
+        Err(err) => {
+            println!("Got error while trying to click button: {:?}", err);
+            return_to_lobby();
+            return Err(String::from("Error while trying to click button"));
+        }
+    }
 }
 
 fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
