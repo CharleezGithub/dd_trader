@@ -1258,11 +1258,11 @@ pub fn claim_gold(
         .arg("F")
         .output()
         .expect("Failed to execute command");
-
+    
     sleep(Duration::from_millis(500));
-
+    
     let output_35g_inv = Command::new("python")
-        .arg("python_helpers/mutli_obj_detection.py")
+        .arg("python_helpers/multi_obj_detection.py")
         .arg("images/35_gold_pouch.png")
         .arg("F")
         .output()
@@ -1271,6 +1271,10 @@ pub fn claim_gold(
     // Convert the output bytes to a String
     let coords_50g_pouch_inv = str::from_utf8(&output_50g_inv.stdout).unwrap().trim();
     let coords_35g_pouch_inv = str::from_utf8(&output_35g_inv.stdout).unwrap().trim();
+
+    println!("coord 35: {}", coords_35g_pouch_inv);
+    println!("coord 35: {}", coords_50g_pouch_inv);
+    println!("coord test");
 
     // Split the string by lines and count them
     let pouch_count_50g_inv = coords_50g_pouch_inv.lines().count() as i32;
@@ -1293,7 +1297,7 @@ pub fn claim_gold(
     sleep(Duration::from_millis(500));
 
     let output_50g_stash = Command::new("python")
-        .arg("python_helpers/mutli_obj_detection.py")
+        .arg("python_helpers/multi_obj_detection.py")
         .arg("images/50_gold_pouch.png")
         .arg("F")
         .output()
@@ -1532,6 +1536,7 @@ pub fn claim_gold(
     match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
         Ok(_) => {
             println!("Successfully clicked button!");
+            // Does not update database
             // This will subtract the gold just traded from the total
             match database_functions::add_gold_to_trader(
                 &trader.discord_channel_id,
