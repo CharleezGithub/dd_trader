@@ -679,7 +679,15 @@ async def claim_items(ctx, in_game_id: str):
             print(f"Traders {', '.join(trader_names)}, have not traded all their gold yet.")
             await ctx.send(f"Traders {', '.join(trader_names)}, have not traded all their gold yet.")
             return
+    from helpers.escrow_status import all_items_traded
 
+    if all_items_traded(ctx.channel.id):
+        print("All items are either traded or in escrow")
+    else:
+        await ctx.send(
+            "Trade is not ready. Some items in the trade have not been traded to the bot yet."
+        )
+        return
 
     # Check if there are any items from the oppisite trader with status "in escrow"
     from helpers.escrow_status import has_other_trader_escrow_items

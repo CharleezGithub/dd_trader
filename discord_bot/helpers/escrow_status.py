@@ -81,3 +81,29 @@ def has_untraded_items(discord_id: str, channel_id: str) -> bool:
 
     # Return True if there are untraded items, otherwise return False
     return len(items) > 0
+
+def all_items_traded(channel_id: str) -> bool:
+    # Connect to the database
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    # Retrieve the trade ID with the given channel ID
+    cursor.execute("SELECT id FROM trades WHERE channel_id=?", (channel_id,))
+    trade_id = cursor.fetchone()
+
+    # If no trade exists for the given channel, return False
+    if not trade_id:
+        conn.close()
+        return False
+
+    trade_id = trade_id[0]  # get the actual trade ID value
+
+    # Check for items with the status "not traded" linked with the trade
+    cursor.execute("SELECT id FROM items WHERE trade_id=? AND status='not traded'", (trade_id,))
+    items = cursor.fetchall()
+
+    # Close the connection to the database
+    conn.close()
+
+    # If any item has the status "not traded", return False, otherwise return True
+    return len(items) == 0
