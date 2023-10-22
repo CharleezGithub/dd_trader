@@ -148,6 +148,7 @@ pub fn collect_gold_fee(
     match send_trade_request(in_game_id) {
         Ok(_) => println!("Player accepted trade request"),
         Err(_) => {
+            return_to_lobby();
             println!("Player declined request. Going back to lobby.");
         }
     }
