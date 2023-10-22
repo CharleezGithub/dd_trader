@@ -597,7 +597,7 @@ async def deposit(ctx, in_game_id: str):
         print("There are items tagged 'not traded'.")
     else:
         await ctx.send(
-            "All current items have been traded to the bot. Do ´add-items´ if you wish to add more items to the trade."
+            "All current items have been traded to the bot. Do `add-items` if you wish to add more items to the trade."
         )
         return
 
@@ -708,7 +708,7 @@ async def claim_items(ctx, in_game_id: str):
             "Items are ready to be sent! Hop into the bard trading channel to collect your items."
         )
     else:
-        await ctx.send("There are no more items to claim.")
+        await ctx.send("There are no more items to claim. If you want to claim your gold then write: `claim-gold {In-game player name}`")
         return
 
     try:
@@ -824,7 +824,7 @@ async def claim_gold(ctx, in_game_id: str):
         )
     else:
         await ctx.send(
-            "No more gold available to claim. If you want to claim your items then write: ´claim-items {In-game player name}´"
+            "No more gold available to claim. If you want to claim your items then write: `claim-items {In-game player name}`"
         )
         return
 
