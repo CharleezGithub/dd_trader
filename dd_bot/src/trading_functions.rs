@@ -677,7 +677,7 @@ pub fn complete_trade(
         }
         Err(err) => {
             return_to_lobby();
-            return Err(err)
+            return Err(err);
         }
     }
 }
@@ -1644,6 +1644,22 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
 fn return_to_lobby() {
     let mut enigo = Enigo::new();
 
+    // Check if bot is already in the play tab
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/in_play_tab.png")
+        .arg("F")
+        .arg("C")
+        .output()
+        .expect("Failed to execute command");
+
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    if output_str != "Could not detect" {
+        println!("Already in play tab");
+        return;
+    }
+
     // Try looking for play tab
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
@@ -1664,118 +1680,91 @@ fn return_to_lobby() {
         }
     }
 
-    // Try looking for Leave Channel button if play tab could not be found.
+    // If play tab could not be found press escape key and then yes
+    enigo.key_click(Key::Escape);
+
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
-        .arg("images/leave_channel.png")
+        .arg("images/leave_post.png")
         .arg("F")
+        .arg("C")
         .output()
         .expect("Failed to execute command");
 
     let output_str = str::from_utf8(&output.stdout).unwrap().trim();
 
-    // If a match has been found, click the button and then search after the "yes" confirmation button
     if output_str != "Could not detect" {
         match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
-            Ok(_) => println!("Successfully clicked button!"),
-            Err(err) => println!("Got error while trying to click button: {:?}", err),
-        }
+            Ok(_) => {
+                println!("Successfully clicked button!");
 
-        let output = Command::new("python")
-            .arg("python_helpers/obj_detection.py")
-            .arg("images/leave_post.png")
-            .arg("F")
-            .output()
-            .expect("Failed to execute command");
+                // Check if we can go to play tab now
+                // Try looking for play tab
+                let output = Command::new("python")
+                    .arg("python_helpers/obj_detection.py")
+                    .arg("images/play_tab.png")
+                    .arg("F")
+                    .output()
+                    .expect("Failed to execute command");
 
-        let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+                let output_str = str::from_utf8(&output.stdout).unwrap().trim();
 
-        if output_str != "Could not detect" {
-            match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
-                Ok(_) => {
-                    println!("Successfully clicked button!");
-
-                    // If we are in the trading window it will only get out to the trading channel again
-                    // The bot needs to press leave channel once again.
-                    let output = Command::new("python")
-                        .arg("python_helpers/obj_detection.py")
-                        .arg("images/leave_channel.png")
-                        .arg("F")
-                        .output()
-                        .expect("Failed to execute command");
-
-                    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
-
-                    // If a match has been found, click the button and then search after the "yes" confirmation button
-                    if output_str != "Could not detect" {
-                        match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
-                            Ok(_) => println!("Successfully clicked button!"),
-                            Err(err) => {
-                                println!("Got error while trying to click button: {:?}", err)
-                            }
+                if output_str != "Could not detect" {
+                    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+                        Ok(_) => {
+                            println!("Successfully clicked button!");
+                            return;
                         }
-
-                        let output = Command::new("python")
-                            .arg("python_helpers/obj_detection.py")
-                            .arg("images/leave_post.png")
-                            .arg("F")
-                            .output()
-                            .expect("Failed to execute command");
-                        match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
-                            Ok(_) => println!("Successfully clicked button!"),
-                            Err(err) => {
-                                println!("Got error while trying to click button: {:?}", err)
-                            }
-                        }
-                        // Try looking for play tab
-                        let output = Command::new("python")
-                            .arg("python_helpers/obj_detection.py")
-                            .arg("images/play_tab.png")
-                            .arg("F")
-                            .output()
-                            .expect("Failed to execute command");
-
-                        let output_str = str::from_utf8(&output.stdout).unwrap().trim();
-
-                        if output_str != "Could not detect" {
-                            match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
-                                Ok(_) => {
-                                    println!("Successfully clicked button!");
-                                    return;
-                                }
-                                Err(err) => {
-                                    println!("Got error while trying to click button: {:?}", err)
-                                }
-                            }
-                        }
+                        Err(err) => println!("Got error while trying to click button: {:?}", err),
                     }
-                    // Try looking for play tab
-                    let output = Command::new("python")
-                        .arg("python_helpers/obj_detection.py")
-                        .arg("images/play_tab.png")
-                        .arg("F")
-                        .output()
-                        .expect("Failed to execute command");
+                }
+                // If we are in the trading window it will only get out to the trading channel again
+                // The bot needs to press leave channel once again.
+                enigo.key_click(Key::Escape);
 
-                    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+                let output = Command::new("python")
+                    .arg("python_helpers/obj_detection.py")
+                    .arg("images/leave_channel.png")
+                    .arg("F")
+                    .output()
+                    .expect("Failed to execute command");
 
-                    if output_str != "Could not detect" {
-                        match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
-                            Ok(_) => {
-                                println!("Successfully clicked button!");
-                                return;
-                            }
-                            Err(err) => {
-                                println!("Got error while trying to click button: {:?}", err)
-                            }
+                let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+                // If a match has been found, click the button and then search after the "yes" confirmation button
+                if output_str != "Could not detect" {
+                    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+                        Ok(_) => println!("Successfully clicked button!"),
+                        Err(err) => {
+                            println!("Got error while trying to click button: {:?}", err)
                         }
                     }
                 }
-                Err(err) => println!("Got error while trying to click button: {:?}", err),
+                // Try looking for play tab
+                let output = Command::new("python")
+                    .arg("python_helpers/obj_detection.py")
+                    .arg("images/play_tab.png")
+                    .arg("F")
+                    .output()
+                    .expect("Failed to execute command");
+
+                let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+                if output_str != "Could not detect" {
+                    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+                        Ok(_) => {
+                            println!("Successfully clicked button!");
+                            return;
+                        }
+                        Err(err) => {
+                            println!("Got error while trying to click button: {:?}", err)
+                        }
+                    }
+                }
             }
+            Err(err) => println!("Got error while trying to click button: {:?}", err),
         }
     }
-    return;
 }
 
 fn download_image(url: &str, save_path: &str) -> Result<(), Box<dyn std::error::Error>> {
