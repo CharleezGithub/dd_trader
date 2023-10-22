@@ -671,7 +671,7 @@ pub fn complete_trade(
                     enigo.mouse_click(MouseButton::Left);
                 }
             }
-
+            return_to_lobby();
             return Ok(String::from("Trade successful"));
         }
         Err(err) => {
@@ -1235,7 +1235,7 @@ pub fn claim_gold(
     let other_trader_gold = other_trader.unwrap().gold;
 
     if other_trader_gold < 30 {
-        return Ok(String::from(
+        return Err(String::from(
             "User did not have enough gold left for a trade",
         ));
     }
