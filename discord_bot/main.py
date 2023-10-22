@@ -290,7 +290,7 @@ async def add_gold(ctx, gold: int):
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
-    
+
     if gold % 50 != 0:
         await ctx.send("Gold has to be in increments of 50!")
         return
@@ -533,6 +533,7 @@ async def pay_fee(ctx, in_game_id: str):
         )
         return
     from helpers.has_paid_gold_fee import has_user_paid_fee
+
     if has_user_paid_fee(ctx.author.id, ctx.channel.id):
         await ctx.send("You have already paid the gold fee.")
         return
@@ -582,10 +583,13 @@ async def deposit(ctx, in_game_id: str):
         )
         return
     from helpers.has_paid_gold_fee import has_user_paid_fee
+
     if not has_user_paid_fee(ctx.author.id, ctx.channel.id):
-        await ctx.send("You have not paid the gold fee yet. Do !pay-fee to pay the trading fee.")
+        await ctx.send(
+            "You have not paid the gold fee yet. Do !pay-fee to pay the trading fee."
+        )
         return
-    
+
     # Check if there are still items marked as "not traded"
     from helpers.escrow_status import has_untraded_items
 
@@ -645,6 +649,7 @@ async def claim_items(ctx, in_game_id: str):
 
     # Check if all the gold in the trade has been traded to the bot.
     from helpers.traded_gold_match import check_gold
+
     result = check_gold(ctx.channel.id)
     # Check the status of the result
     has_enough_gold, traders_missing = result
@@ -675,10 +680,15 @@ async def claim_items(ctx, in_game_id: str):
                     user_name = "Unknown User"
 
                 trader_names.append(user_name)
-                
-            print(f"Traders {', '.join(trader_names)}, have not traded all their gold yet.")
-            await ctx.send(f"Traders {', '.join(trader_names)}, have not traded all their gold yet.")
+
+            print(
+                f"Traders {', '.join(trader_names)}, have not traded all their gold yet."
+            )
+            await ctx.send(
+                f"Traders {', '.join(trader_names)}, have not traded all their gold yet."
+            )
             return
+
     from helpers.escrow_status import all_items_traded
 
     if all_items_traded(ctx.channel.id):
@@ -698,9 +708,7 @@ async def claim_items(ctx, in_game_id: str):
             "Items are ready to be sent! Hop into the bard trading channel to collect your items."
         )
     else:
-        await ctx.send(
-            "Trade is not ready. Some items in the trade have not been traded to the bot yet."
-        )
+        await ctx.send("There are no more items to claim.")
         return
 
     try:
@@ -752,6 +760,7 @@ async def claim_gold(ctx, in_game_id: str):
 
     # Check if all the gold in the trade has been traded
     from helpers.traded_gold_match import check_gold
+
     result = check_gold(ctx.channel.id)
     # Check the status of the result
     has_enough_gold, traders_missing = result
@@ -782,14 +791,31 @@ async def claim_gold(ctx, in_game_id: str):
                     user_name = "Unknown User"
 
                 trader_names.append(user_name)
-                
-            print(f"Traders {', '.join(trader_names)}, have not traded all their gold yet.")
-            await ctx.send(f"Traders {', '.join(trader_names)}, have not traded all their gold yet.")
+
+            print(
+                f"Traders {', '.join(trader_names)}, have not traded all their gold yet."
+            )
+            await ctx.send(
+                f"Traders {', '.join(trader_names)}, have not traded all their gold yet."
+            )
             return
 
+    # Check if there are any items with status "not traded"
+    # If so then you cannot collect your gold before that
+    from helpers.escrow_status import all_items_traded
 
-    # Check if the items are in escrow or not.
-    from helpers.other_trader_gold_left_in_escrow_check import has_other_trader_gold_left
+    if all_items_traded(ctx.channel.id):
+        print("All items are either traded or in escrow")
+    else:
+        await ctx.send(
+            "Trade is not ready. Some items in the trade have not been traded to the bot yet."
+        )
+        return
+
+    # Check if the gold is in escrow or not.
+    from helpers.other_trader_gold_left_in_escrow_check import (
+        has_other_trader_gold_left,
+    )
 
     if has_other_trader_gold_left(ctx.author.id, ctx.channel.id):
         print("Other trader still has gold left to be claimed by trader.")
