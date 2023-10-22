@@ -643,7 +643,7 @@ async def claim_items(ctx, in_game_id: str):
         )
         return
 
-    # Check if all the gold in the trade has been traded
+    # Check if all the gold in the trade has been traded to the bot.
     from helpers.traded_gold_match import check_gold
     result = check_gold(ctx.channel.id)
     # Check the status of the result
@@ -681,10 +681,10 @@ async def claim_items(ctx, in_game_id: str):
             return
 
 
-    # Check if the items are in escrow or not.
-    from helpers.escrow_status import check_all_items_in_escrow
+    # Check if there are any items from the oppisite trader with status "in escrow"
+    from helpers.escrow_status import has_other_trader_escrow_items
 
-    if check_all_items_in_escrow(ctx.channel.id):
+    if has_other_trader_escrow_items(ctx.author.id, ctx.channel.id):
         print("All items are in escrow.")
         await ctx.send(
             "Items are ready to be sent! Hop into the bard trading channel to collect your items."
