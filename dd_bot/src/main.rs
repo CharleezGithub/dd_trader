@@ -225,8 +225,6 @@ fn claim_items(
         traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id, discord_channel_id);
     }
 
-    let should_break = Arc::new(AtomicBool::new(false));
-
     // Dereference `State` and clone the inner `Arc`.
     let enigo_cloned = enigo.inner().clone();
     let bot_info_cloned = bot_info.inner().clone();
@@ -292,8 +290,6 @@ fn claim_gold(
         let mut traders = traders_container.lock().unwrap();
         traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id, discord_channel_id);
     }
-
-    let should_break = Arc::new(AtomicBool::new(false));
 
     let enigo_cloned = enigo.inner().clone();
     let bot_info_cloned = bot_info.inner().clone();

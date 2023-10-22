@@ -1255,12 +1255,14 @@ pub fn claim_gold(
     let output_50g_inv = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/50_gold_pouch.png")
+        .arg("F")
         .output()
         .expect("Failed to execute command");
 
     let output_35g_inv = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/35_gold_pouch.png")
+        .arg("F")
         .output()
         .expect("Failed to execute command");
 
@@ -1276,6 +1278,8 @@ pub fn claim_gold(
     let stash_output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/stash.png")
+        .arg("F")
+        .arg("C")
         .output()
         .expect("Failed to execute command");
 
@@ -1287,12 +1291,14 @@ pub fn claim_gold(
     let output_50g_stash = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/50_gold_pouch.png")
+        .arg("F")
         .output()
         .expect("Failed to execute command");
 
     let output_35g_stash = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/35_gold_pouch.png")
+        .arg("F")
         .output()
         .expect("Failed to execute command");
 
@@ -1308,6 +1314,8 @@ pub fn claim_gold(
     let stash_output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/inventory.png")
+        .arg("F")
+        .arg("C")
         .output()
         .expect("Failed to execute command");
 
@@ -1575,7 +1583,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
         .expect("Failed to execute command");
 
     // Search after the trader in the trade tab
-    match enigo_functions::click_buton(&mut enigo, output, true, 0, 30) {
+    match enigo_functions::click_buton(&mut enigo, output, true, 0, -30) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
