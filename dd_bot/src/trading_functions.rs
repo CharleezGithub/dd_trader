@@ -1508,7 +1508,7 @@ pub fn claim_gold(
     // Read the total amount of gold from the Total gold section of the trade.
     // Get the amount of gold in the trade
     let output = Command::new("python")
-        .arg("python_helpers/total_gold.py")
+        .arg("python_helpers/total_bot_gold.py")
         .output();
 
     // Match the output of the gold detector and assigns the amount of gold put in by the trader to the gold variable
@@ -1997,6 +1997,8 @@ fn click_pouches(
                 Err(err) => println!("Got error while trying to move cursor: {:?}", err),
             }
             // Now we are hovering over a money pouch, click on it to add it to the trade
+            // Adding delay here else game might not be able to keep up with clicking so fast
+            sleep(Duration::from_millis(300));
             enigo.mouse_click(MouseButton::Left);
             clicked_pouches += 1;
         }
