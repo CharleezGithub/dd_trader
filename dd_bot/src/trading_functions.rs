@@ -1277,8 +1277,15 @@ pub fn claim_gold(
     println!("coord test");
 
     // Split the string by lines and count them
-    let pouch_count_50g_inv = coords_50g_pouch_inv.lines().count() as i32;
-    let pouch_count_35g_inv = coords_35g_pouch_inv.lines().count() as i32;
+    let mut pouch_count_50g_inv = 0;
+    if coords_50g_pouch_inv != "Could not detect" {
+        pouch_count_50g_inv = coords_50g_pouch_inv.lines().count() as i32;
+    }
+
+    let mut pouch_count_35g_inv = 0;
+    if coords_35g_pouch_inv != "Could not detect" {
+        pouch_count_35g_inv = coords_35g_pouch_inv.lines().count() as i32;
+    }
 
     // Now go to the stash and count those as well
     let stash_output = Command::new("python")
@@ -1317,8 +1324,15 @@ pub fn claim_gold(
     let coords_35g_pouch_stash = str::from_utf8(&output_35g_stash.stdout).unwrap().trim();
 
     // Split the string by lines and count them
-    let pouch_count_50g_stash = coords_50g_pouch_stash.lines().count() as i32;
-    let pouch_count_35g_stash = coords_35g_pouch_stash.lines().count() as i32;
+    let mut pouch_count_50g_stash = 0;
+    if coords_50g_pouch_stash != "Could not detect" {
+        pouch_count_50g_stash = coords_50g_pouch_stash.lines().count() as i32;
+    }
+
+    let mut pouch_count_35g_stash = 0;
+    if coords_35g_pouch_stash != "Could not detect" {
+        pouch_count_35g_stash = coords_35g_pouch_stash.lines().count() as i32;
+    }
 
     // Going back to inventory screen
     let stash_output = Command::new("python")
