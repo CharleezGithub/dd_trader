@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from PIL import ImageGrab
+from PIL import ImageGrab, Image
 import time
 import sys
 from imutils.object_detection import non_max_suppression
@@ -22,7 +22,7 @@ elif len(sys.argv) > 2:
         elif arg.strip() == "F":
             fast = True
 else:
-    image_name = "temp_images/item/image.png"
+    image_name = "images/35_gold_pouch.png"
 
 max_val = 0.00
 
@@ -48,7 +48,12 @@ x_start, x_end = (
 # Preprocessing function
 def preprocess(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    return gray
+
+
+    blurred = cv2.GaussianBlur(gray, (3,3), 0)
+
+
+    return blurred
 
 try:
     while max_val < limit:
@@ -71,8 +76,13 @@ try:
         result = cv2.matchTemplate(main_image, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
 
+        print(max_val)
+
+        #pil = Image.fromarray(main_image)
+        #pil.show()
         tries += 1
         time.sleep(1)
+
 
     if tries < max_tries:
         threshold = limit
