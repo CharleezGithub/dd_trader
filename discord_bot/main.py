@@ -446,6 +446,9 @@ async def show_trade(ctx):
         user_gold = trade[3] if trade[1] != str(ctx.author.id) else trade[4]
         other_user_gold = trade[4] if trade[1] != str(ctx.author.id) else trade[3]
 
+        traded_gold = trade[5] if trade[1] != str(ctx.author.id) else trade[6]
+        other_traded_gold = trade[6] if trade[1] != str(ctx.author.id) else trade[5]
+
         # Use JOIN to get the discord_id along with trader_id and info_image_url.
         cursor.execute(
             """
@@ -503,12 +506,12 @@ async def show_trade(ctx):
 
         embed.add_field(
             name=f"{user_name}'s Items and Gold",
-            value=f"{user_items_value}\nGold: {user_gold}",
+            value=f"{user_items_value}\nGold: {user_gold}\nTraded Gold: {traded_gold}",
             inline=True,
         )
         embed.add_field(
             name=f"{other_user_name}'s Items and Gold",
-            value=f"{other_user_items_value}\nGold: {other_user_gold}",
+            value=f"{other_user_items_value}\nGold: {other_user_gold}\nTraded Gold: {other_traded_gold}",
             inline=True,
         )
 
