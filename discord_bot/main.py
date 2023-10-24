@@ -506,12 +506,12 @@ async def show_trade(ctx):
 
         embed.add_field(
             name=f"{user_name}'s Items and Gold",
-            value=f"{user_items_value}\nGold: {user_gold}\nTraded Gold: {traded_gold}",
+            value=f"{user_items_value}\nGold: {user_gold}\nClaimed Gold: {traded_gold}",
             inline=True,
         )
         embed.add_field(
             name=f"{other_user_name}'s Items and Gold",
-            value=f"{other_user_items_value}\nGold: {other_user_gold}\nTraded Gold: {other_traded_gold}",
+            value=f"{other_user_items_value}\nGold: {other_user_gold}\nClaimed Gold: {other_traded_gold}",
             inline=True,
         )
 
