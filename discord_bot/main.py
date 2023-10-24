@@ -466,9 +466,9 @@ async def show_trade(ctx):
         # Green: traded
         # Yellow: in escrow
         # Red: not traded
-        greenCircle = '<:greencircle:ID>'
-        redCircle = '<:redcircle:ID>'
-        yellowCircle = '<:yellowcircle:ID>'
+        greenCircle = '🟢'
+        yellowCircle = '🟡'
+        redCircle = '🔴'
 
         trade_data = {}
         for discord_id, info_image_url, status in rows:
