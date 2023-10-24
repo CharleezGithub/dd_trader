@@ -497,7 +497,7 @@ async def show_trade(ctx):
 
         embed = discord.Embed(
             title="Items and Gold for Trade",
-            description=f"Trade between {user_name} and {other_user_name}",
+            description=f"Trade between {user_name} and {other_user_name}\n{redCircle}: Not traded yet\n{yellowCircle}: In escrow\n{greenCircle}: Traded",
             color=0x55A7F7,
         )
 
