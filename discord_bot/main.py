@@ -479,8 +479,8 @@ async def show_trade(ctx):
             trade_data[discord_id].append((info_image_url, emoji_status))
 
         # Now, when you access trade_data, use discord_id
-        user_items = trade_data.get(str(user_discord_id), [])[0]
-        other_user_items = trade_data.get(str(other_user_discord_id), [])[0]
+        user_items = trade_data.get(str(user_discord_id), [])
+        other_user_items = trade_data.get(str(other_user_discord_id), [])
 
         # Fetch the user
         try:
