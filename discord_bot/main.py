@@ -452,7 +452,7 @@ async def show_trade(ctx):
         # Use JOIN to get the discord_id along with trader_id and info_image_url.
         cursor.execute(
             """
-            SELECT t.discord_id, i.info_image_url 
+            SELECT t.discord_id, i.info_image_url, i.status
             FROM items i
             JOIN traders t ON i.trader_id = t.id
             WHERE i.trade_id = ?
@@ -462,15 +462,25 @@ async def show_trade(ctx):
 
         rows = cursor.fetchall()
 
+        # The emoji IDs can be found by typing \:emojiName: in Discord chat.
+        # Green: traded
+        # Yellow: in escrow
+        # Red: not traded
+        greenCircle = '<:greencircle:ID>'
+        redCircle = '<:redcircle:ID>'
+        yellowCircle = '<:yellowcircle:ID>'
+
         trade_data = {}
-        for discord_id, info_image_url in rows:
+        for discord_id, info_image_url, status in rows:
             if discord_id not in trade_data:
                 trade_data[discord_id] = []
-            trade_data[discord_id].append(info_image_url)
+            
+            emoji_status = greenCircle if status == "traded" else (yellowCircle if status == "in escrow" else redCircle)
+            trade_data[discord_id].append((info_image_url, emoji_status))
 
         # Now, when you access trade_data, use discord_id
-        user_items = trade_data.get(str(user_discord_id), [])
-        other_user_items = trade_data.get(str(other_user_discord_id), [])
+        user_items = trade_data.get(str(user_discord_id), [])[0]
+        other_user_items = trade_data.get(str(other_user_discord_id), [])[0]
 
         # Fetch the user
         try:
@@ -492,14 +502,12 @@ async def show_trade(ctx):
         )
 
         user_items_value = (
-            "\n".join([f"[Item {i + 1}]({link})" for i, link in enumerate(user_items)])
+            "\n".join([f"{status} [Item {i + 1}]({link})" for i, (link, status) in enumerate(user_items)])
             if user_items
             else "No items added."
         )
         other_user_items_value = (
-            "\n".join(
-                [f"[Item {i + 1}]({link})" for i, link in enumerate(other_user_items)]
-            )
+            "\n".join([f"{status} [Item {i + 1}]({link})" for i, (link, status) in enumerate(other_user_items)])
             if other_user_items
             else "No items added."
         )
