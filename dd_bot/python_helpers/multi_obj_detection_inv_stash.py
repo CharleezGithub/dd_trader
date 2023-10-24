@@ -45,10 +45,28 @@ x_start, x_end = (
     1880,
 )  # Define the width interval where you want to perform template matching
 
+
 # Preprocessing function
 def preprocess(image):
+    # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    return gray
+
+    # Enhance contrast via histogram equalization
+    equalized = cv2.equalizeHist(gray)
+
+    # Edge detection using Canny
+    edges = cv2.Canny(equalized, 50, 150)
+
+    # Adaptive thresholding
+    thresh = cv2.adaptiveThreshold(
+        equalized, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+    )
+
+    # Combine edges and thresholded image
+    combined = cv2.bitwise_or(edges, thresh)
+
+    return combined
+
 
 try:
     while max_val < limit:
