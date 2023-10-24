@@ -1253,7 +1253,7 @@ pub fn claim_gold(
 
     // Get the amount of 50g and 35g pouches from both the inventory and the stash, while in the trading window.
     let output_50g_inv = Command::new("python")
-        .arg("python_helpers/multi_obj_detection.py")
+        .arg("python_helpers/multi_obj_detection_inv_stash.py")
         .arg("images/50_gold_pouch.png")
         .arg("F")
         .output()
@@ -1262,7 +1262,7 @@ pub fn claim_gold(
     sleep(Duration::from_millis(500));
     
     let output_35g_inv = Command::new("python")
-        .arg("python_helpers/multi_obj_detection.py")
+        .arg("python_helpers/multi_obj_detection_inv_stash.py")
         .arg("images/35_gold_pouch.png")
         .arg("F")
         .output()
@@ -1304,7 +1304,7 @@ pub fn claim_gold(
     sleep(Duration::from_millis(500));
 
     let output_50g_stash = Command::new("python")
-        .arg("python_helpers/multi_obj_detection.py")
+        .arg("python_helpers/multi_obj_detection_inv_stash.py")
         .arg("images/50_gold_pouch.png")
         .arg("F")
         .output()
@@ -1313,7 +1313,7 @@ pub fn claim_gold(
     sleep(Duration::from_millis(500));
 
     let output_35g_stash = Command::new("python")
-        .arg("python_helpers/multi_obj_detection.py")
+        .arg("python_helpers/multi_obj_detection_inv_stash.py")
         .arg("images/35_gold_pouch.png")
         .arg("F")
         .output()
