@@ -78,8 +78,6 @@ try:
         result = cv2.matchTemplate(main_image, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
 
-        print(max_val)
-
         #pil = Image.fromarray(main_image)
         #pil.show()
         tries += 1
