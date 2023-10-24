@@ -7,10 +7,11 @@ from io import BytesIO
 async def stitch_images(user1_urls, user2_urls):
     """Stitch together images from the provided URLs for both users."""
     user1_images = [
-        Image.open(BytesIO(requests.get(url).content)) for url in user1_urls
+        Image.open(BytesIO(requests.get(url).content)) for url, _ in user1_urls
     ]
+
     user2_images = [
-        Image.open(BytesIO(requests.get(url).content)) for url in user2_urls
+        Image.open(BytesIO(requests.get(url).content)) for url, _ in user2_urls
     ]
 
     # Padding values (change these to adjust the space)
