@@ -45,8 +45,10 @@ x_start, x_end = (
     1880,
 )  # Define the width interval where you want to perform template matching
 
+
 # Preprocessing function
 def preprocess(image):
+    # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 
