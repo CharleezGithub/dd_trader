@@ -1991,7 +1991,7 @@ fn click_pouches(
                 &mut enigo,
                 middle_point_x,
                 middle_point_y,
-                true,
+                false,
             ) {
                 Ok(_) => println!("Successfully moved to this location!"),
                 Err(err) => println!("Got error while trying to move cursor: {:?}", err),
