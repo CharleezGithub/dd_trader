@@ -45,6 +45,11 @@ x_start, x_end = (
     1880,
 )  # Define the width interval where you want to perform template matching
 
+# Preprocessing function
+def preprocess(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    return gray
+
 try:
     while max_val < limit:
         if tries > max_tries:
@@ -58,7 +63,10 @@ try:
             :, x_start:x_end
         ]  # Crop the image within the width interval
 
+        main_image = preprocess(main_image)
+
         template = cv2.imread(image_name, cv2.IMREAD_COLOR)
+        template = preprocess(template)
 
         result = cv2.matchTemplate(main_image, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
