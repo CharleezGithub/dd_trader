@@ -86,6 +86,12 @@ async def custom_help(ctx, *, command_name=None):
             # value="Collect the items that you traded for.",
             inline=False,
         )
+        embed.add_field(
+            name="!close-trade",
+            value="This will close a trade. It will delete the channel and wrap up the trade. Usecases are when the trade is complete or if the trade is cancelled.",
+            # value="Collect the items that you traded for.",
+            inline=False,
+        )
 
         embed.add_field(
             name="!help [command]",
@@ -876,6 +882,30 @@ async def claim_gold(ctx, in_game_id: str):
         print(e)
         await ctx.send(f"Unexpected error occurred. Please message @asdgew")
         # await ctx.send(f"Unexpected error occurred: {str(e)}")
+
+# Deletes all records that have anything to do with that channel. (Keeps users)
+def delete_records_by_channel(channel_id):
+    # Connect to the database
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    # First, fetch the trade id(s) for the given channel_id
+    cursor.execute("SELECT id FROM trades WHERE channel_id=?", (channel_id,))
+    trade_ids = cursor.fetchall()
+
+    # Delete records in items table that match the trade_id(s)
+    for trade_id in trade_ids:
+        cursor.execute("DELETE FROM items WHERE trade_id=?", (trade_id[0],))
+
+    # Delete records in trades table that match the channel_id
+    cursor.execute("DELETE FROM trades WHERE channel_id=?", (channel_id,))
+
+    # Commit changes and close the connection
+    conn.commit()
+    conn.close()
+
+    print(f"Records associated with channel_id {channel_id} deleted successfully!")
+
 
 
 bot.run(TOKEN)
