@@ -278,6 +278,8 @@ pub fn collect_gold_fee(
     let trader_discord_id = trader.unwrap().discord_id.as_str();
     let trader_discord_id_copy: String = String::from(trader_discord_id);
     traders.update_gold_fee_status(trader_discord_id_copy.as_str(), true);
+
+    return_to_lobby();
 }
 
 pub fn complete_trade(
@@ -1628,7 +1630,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
         .expect("Failed to execute command");
 
     // Search after the trader in the trade tab
-    match enigo_functions::click_buton(&mut enigo, output, true, 0, -30) {
+    match enigo_functions::click_buton(&mut enigo, output, true, 0, -33) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
     }
