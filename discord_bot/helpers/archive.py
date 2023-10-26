@@ -105,8 +105,8 @@ def archive_trades_by_channel(channel_id, archive_db_name="trading_bot_archive.d
     for trade in trades_data:
         archive_cursor.execute(
             """
-            INSERT INTO trades (trader1_id, trader2_id, channel_id, trader1_gold, trader2_gold, trader1_gold_traded, trader2_gold_traded, trader1_paid, trader2_paid, status) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            INSERT INTO trades (trader1_id, trader2_id, channel_id, trader1_gold, trader2_gold, trader1_gold_traded, trader2_gold_traded, trader1_gold_received, trader2_gold_received, trader1_paid, trader2_paid, status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             trade[1:11],
         )
 
