@@ -432,7 +432,7 @@ async def show_trade(ctx):
         # Fetch the trade details and traders' Discord IDs
         cursor.execute(
             """
-            SELECT trades.id, t1.discord_id, t2.discord_id, trader1_gold, trader2_gold, trader1_gold_traded, trader2_gold_traded
+            SELECT trades.id, t1.discord_id, t2.discord_id, trader1_gold, trader2_gold, trader1_gold_received, trader2_gold_received
             FROM trades 
             JOIN traders t1 ON trades.trader1_id = t1.id
             JOIN traders t2 ON trades.trader2_id = t2.id
@@ -664,7 +664,7 @@ async def claim_items(ctx, in_game_id: str):
         )
         return
 
-    # Check if all the gold in the trade has been traded to the bot.
+    # Check if all the gold in the trade has been traded to the bot or claimed by trader.
     from helpers.traded_gold_match import check_gold
 
     result = check_gold(ctx.channel.id)

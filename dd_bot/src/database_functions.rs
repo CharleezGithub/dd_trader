@@ -354,7 +354,7 @@ pub fn add_gold_to_trader(channel_id: &String, discord_id: &String, gold_to_add:
     }
 }
 
-pub fn subtract_gold_from_trader(channel_id: &String, discord_id: &String, gold_to_subtract: i32) -> Result<()> {
+pub fn add_gold_received_to_trader(channel_id: &String, discord_id: &String, gold_to_add: i32) -> Result<()> {
     let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
     // Determine whether the user is trader1 or trader2 in the channel
@@ -375,19 +375,19 @@ pub fn subtract_gold_from_trader(channel_id: &String, discord_id: &String, gold_
         Ok(role) => {
             // Determine which trader's gold needs to be updated (trader1_gold_traded or trader2_gold_traded)
             let gold_column = if &role == "trader1" {
-                "trader1_gold_traded"
+                "trader1_gold_received"
             } else {
-                "trader2_gold_traded"
+                "trader2_gold_received"
             };
 
             conn.execute(
                 &format!(
                     "UPDATE trades 
-                    SET {} = {} - ?1 
+                    SET {} = {} + ?1 
                     WHERE channel_id = ?2",
                     gold_column, gold_column
                 ),
-                params![gold_to_subtract, channel_id],
+                params![gold_to_add, channel_id],
             )?;
 
             Ok(())
