@@ -30,7 +30,7 @@ elif len(sys.argv) > 2:
         elif arg.strip() == "L":
             longer = True
 else:
-    image_name = "temp_images/info/image.png"
+    image_name = "images/present_trader.png"
 
 max_val = 0.00
 

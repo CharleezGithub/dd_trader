@@ -1258,9 +1258,9 @@ pub fn claim_gold(
         .arg("F")
         .output()
         .expect("Failed to execute command");
-    
+
     sleep(Duration::from_millis(500));
-    
+
     let output_35g_inv = Command::new("python")
         .arg("python_helpers/multi_obj_detection_inv_stash.py")
         .arg("images/35_gold_pouch.png")
@@ -1604,6 +1604,20 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
         Ok(_) => println!("Successfully clicked button!"),
         Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    // Check if the player is in the bard trading channel
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/present_trader.png")
+        .arg("F")
+        .output()
+        .expect("Failed to execute command");
+
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    if output_str == "Could not detect" {
+        return Err("Trader was not present in trading channel")
     }
 
     //It now sends a trade to the player
