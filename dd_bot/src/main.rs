@@ -123,24 +123,22 @@ fn gold_fee(
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) -> String {
     {
-        let info = bot_info.lock().unwrap();
-        match info.ready {
-            ReadyState::False => return String::from("TradeBot not ready"),
-            ReadyState::Starting => {
-                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
-            }
-            ReadyState::True => println!("Going into trade!"),
-        }
-    } // Lock is released here as the MutexGuard goes out of scope
-
-    {
         let mut traders = traders_container.lock().unwrap();
         traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
     }
 
     trading_functions::collect_gold_fee(enigo, bot_info, in_game_id, traders_container);
 
-    format!("TradeBot ready\n{}", bot_info.lock().unwrap().id)
+    {
+        let info = bot_info.lock().unwrap();
+        match info.ready {
+            ReadyState::False => return String::from("TradeBot not ready"),
+            ReadyState::Starting => {
+                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
+            }
+            ReadyState::True => return String::from("Going into trade!"),
+        }
+    } // Lock is released here as the MutexGuard goes out of scope
 }
 
 #[get("/trade_request/<in_game_id>/<discord_channel_id>/<discord_id>")]
@@ -210,17 +208,6 @@ fn claim_items(
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) -> String {
     {
-        let info = bot_info.lock().unwrap();
-        match info.ready {
-            ReadyState::False => return String::from("TradeBot not ready"),
-            ReadyState::Starting => {
-                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
-            }
-            ReadyState::True => println!("Going into trade!"),
-        }
-    } // Lock is released here as the MutexGuard goes out of scope
-
-    {
         let mut traders = traders_container.lock().unwrap();
         traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id, discord_channel_id);
     }
@@ -262,8 +249,16 @@ fn claim_items(
             Err(e) => eprintln!("Trade error: {:?}", e),
         }
     });
-    // Does not account for failure
-    String::from("Trade complete")
+    {
+        let info = bot_info.lock().unwrap();
+        match info.ready {
+            ReadyState::False => return String::from("TradeBot not ready"),
+            ReadyState::Starting => {
+                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
+            }
+            ReadyState::True => return String::from("Going into trade!"),
+        }
+    } // Lock is released here as the MutexGuard goes out of scope
 }
 
 #[get("/claim_gold/<in_game_id>/<discord_channel_id>/<discord_id>")]
@@ -275,16 +270,7 @@ fn claim_gold(
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) -> String {
-    {
-        let info = bot_info.lock().unwrap();
-        match info.ready {
-            ReadyState::False => return String::from("TradeBot not ready"),
-            ReadyState::Starting => {
-                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
-            }
-            ReadyState::True => println!("Going into trade!"),
-        }
-    } // Lock is released here as the MutexGuard goes out of scope
+
 
     {
         let mut traders = traders_container.lock().unwrap();
@@ -328,8 +314,16 @@ fn claim_gold(
         }
     });
 
-    // Does not account for failure
-    String::from("Trade complete")
+    {
+        let info = bot_info.lock().unwrap();
+        match info.ready {
+            ReadyState::False => return String::from("TradeBot not ready"),
+            ReadyState::Starting => {
+                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
+            }
+            ReadyState::True => return String::from("Going into trade!"),
+        }
+    } // Lock is released here as the MutexGuard goes out of scope
 }
 
 fn rocket() -> rocket::Rocket<rocket::Build> {
