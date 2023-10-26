@@ -1617,7 +1617,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     let output_str = str::from_utf8(&output.stdout).unwrap().trim();
 
     if output_str == "Could not detect" {
-        return Err("Trader was not present in trading channel")
+        return Err("Trader was not present in trading channel");
     }
 
     //It now sends a trade to the player
