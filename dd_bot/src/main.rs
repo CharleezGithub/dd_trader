@@ -136,7 +136,7 @@ fn gold_fee(
             ReadyState::Starting => {
                 return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
             }
-            ReadyState::True => return String::from("Going into trade!"),
+            ReadyState::True => return String::from("TradeBot ready"),
         }
     } // Lock is released here as the MutexGuard goes out of scope
 }
@@ -150,17 +150,6 @@ fn trade_request(
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) -> String {
-    {
-        let info = bot_info.lock().unwrap();
-        match info.ready {
-            ReadyState::False => return String::from("TradeBot not ready"),
-            ReadyState::Starting => {
-                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
-            }
-            ReadyState::True => println!("Going into trade!"),
-        }
-    } // Lock is released here as the MutexGuard goes out of scope
-
     {
         let mut traders = traders_container.lock().unwrap();
         traders.set_in_game_id_by_discord_info(&in_game_id, &discord_id, &discord_channel_id);
@@ -194,8 +183,16 @@ fn trade_request(
         }
     });
 
-    // Immediately return a response. May consider an alternative method to inform clients about the outcome.
-    String::from("Trade request received. Processing...")
+    {
+        let info = bot_info.lock().unwrap();
+        match info.ready {
+            ReadyState::False => return String::from("TradeBot not ready"),
+            ReadyState::Starting => {
+                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
+            }
+            ReadyState::True => return String::from("TradeBot ready"),
+        }
+    } // Lock is released here as the MutexGuard goes out of scope
 }
 
 #[get("/claim_items/<in_game_id>/<discord_channel_id>/<discord_id>")]
@@ -256,7 +253,7 @@ fn claim_items(
             ReadyState::Starting => {
                 return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
             }
-            ReadyState::True => return String::from("Going into trade!"),
+            ReadyState::True => return String::from("TradeBot ready"),
         }
     } // Lock is released here as the MutexGuard goes out of scope
 }
@@ -321,7 +318,7 @@ fn claim_gold(
             ReadyState::Starting => {
                 return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
             }
-            ReadyState::True => return String::from("Going into trade!"),
+            ReadyState::True => return String::from("TradeBot ready"),
         }
     } // Lock is released here as the MutexGuard goes out of scope
 }
