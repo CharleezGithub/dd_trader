@@ -19,7 +19,7 @@ def check_gold(channel_id):
     insufficient_traders = []
 
     # Check trader1's gold
-    if trade["trader1_gold"] > trade["trader1_gold_traded"]:
+    if int(trade["trader1_gold"]) > int(trade["trader1_gold_traded"]) - 30:
         cursor.execute(
             "SELECT discord_id FROM traders WHERE id=?", (trade["trader1_id"],)
         )
@@ -27,7 +27,7 @@ def check_gold(channel_id):
         insufficient_traders.append(trader1_discord["discord_id"])
 
     # Check trader2's gold
-    if trade["trader2_gold"] > trade["trader2_gold_traded"]:
+    if int(trade["trader2_gold"]) > int(trade["trader2_gold_traded"]) - 30:
         cursor.execute(
             "SELECT discord_id FROM traders WHERE id=?", (trade["trader2_id"],)
         )
