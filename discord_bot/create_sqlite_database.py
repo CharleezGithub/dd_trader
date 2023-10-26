@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS trades (
     trader2_gold INTEGER DEFAULT 0,
     trader1_gold_traded INTEGER DEFAULT 0,
     trader2_gold_traded INTEGER DEFAULT 0,
+    trader1_gold_received INTEGER DEFAULT 0,
+    trader2_gold_received INTEGER DEFAULT 0,
     trader1_paid BOOLEAN DEFAULT 0,
     trader2_paid BOOLEAN DEFAULT 0,
     status TEXT DEFAULT 'ongoing',
