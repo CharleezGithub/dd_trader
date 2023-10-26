@@ -432,7 +432,7 @@ async def show_trade(ctx):
         # Fetch the trade details and traders' Discord IDs
         cursor.execute(
             """
-            SELECT trades.id, t1.discord_id, t2.discord_id, trader1_gold, trader2_gold, trader1_gold_received, trader2_gold_received
+            SELECT trades.id, t1.discord_id, t2.discord_id, trader1_gold, trader2_gold, trader1_gold_traded, trader2_gold_traded, trader1_gold_received, trader2_gold_received
             FROM trades 
             JOIN traders t1 ON trades.trader1_id = t1.id
             JOIN traders t2 ON trades.trader2_id = t2.id
@@ -454,6 +454,9 @@ async def show_trade(ctx):
 
         traded_gold = trade[5] if trade[1] != str(ctx.author.id) else trade[6]
         other_traded_gold = trade[6] if trade[1] != str(ctx.author.id) else trade[5]
+
+        received_gold = trade[7] if trade[1] != str(ctx.author.id) else trade[8]
+        other_received_gold = trade[8] if trade[1] != str(ctx.author.id) else trade[7]
 
         # Use JOIN to get the discord_id along with trader_id and info_image_url.
         cursor.execute(
@@ -520,12 +523,12 @@ async def show_trade(ctx):
 
         embed.add_field(
             name=f"{user_name}'s Items and Gold",
-            value=f"{user_items_value}\nGold: {user_gold}\nClaimed Gold: {traded_gold}",
+            value=f"{user_items_value}\nGold: {user_gold}\nGold in escrow: {traded_gold}\nClaimed Gold: {received_gold}",
             inline=True,
         )
         embed.add_field(
             name=f"{other_user_name}'s Items and Gold",
-            value=f"{other_user_items_value}\nGold: {other_user_gold}\nClaimed Gold: {other_traded_gold}",
+            value=f"{other_user_items_value}\nGold: {other_user_gold}\nGold in escrow: {other_traded_gold}\nClaimed Gold: {other_received_gold}",
             inline=True,
         )
 
