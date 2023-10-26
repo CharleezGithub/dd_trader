@@ -12,6 +12,7 @@ sensitive = False
 cool = False
 
 fast = False
+super_fast = False
 
 # If we want to wait longer before returning then use the "L" argument. Good for waiting for updates.
 longer = False
@@ -27,6 +28,8 @@ elif len(sys.argv) > 2:
             cool = True
         elif arg.strip() == "F":
             fast = True
+        elif arg.strip() == "SF":
+            super_fast = True
         elif arg.strip() == "L":
             longer = True
 else:
@@ -45,6 +48,8 @@ else:
 
 if fast:
     max_tries = 5
+elif super_fast:
+    max_tries = 2
 elif longer:
     max_tries = 600
 else:
