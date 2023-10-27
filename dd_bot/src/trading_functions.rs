@@ -1075,6 +1075,16 @@ pub fn claim_items(
                             match output {
                                 Ok(_) => {
                                     println!("Found match!");
+                                    // Moving away from items for obj detection purposes.
+                                    match enigo_functions::move_to_location_fast(
+                                        &mut enigo,
+                                        rng.gen_range(25..50),
+                                        rng.gen_range(25..50),
+                                        true,
+                                    ) {
+                                        Ok(_) => println!("Successfully moved to this location!"),
+                                        Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+                                    }
                                 }
                                 // Might not work...
                                 Err(_) => {
