@@ -1,11 +1,17 @@
+import requests
+
+from io import BytesIO
+
+import sqlite3
+
+import queue
+import asyncio
+
 import discord
 from discord.ext import commands
-import sqlite3
 
 from PIL import Image
 from PIL import ImageDraw, ImageFont
-import requests
-from io import BytesIO
 
 from helpers.stitching import stitch_images
 
@@ -20,6 +26,9 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 # Dictionary to store trade requests. Format: {requester_id: requestee_id}
 trade_requests = {}
 
+# Instantiate the queue
+task_queue = queue.Queue()
+
 
 @bot.event
 async def on_ready():
@@ -29,6 +38,12 @@ async def on_ready():
             name="!help - Keeping the trading community happy and healthy"
         )
     )
+    # This endless loop runs the functions in the que with a first in first out principle. In the future there will be priority que for paying members hopefully.
+    while True:
+        if not task_queue.empty():
+            task = task_queue.get()
+            await task  # Await the coroutine object directly
+        await asyncio.sleep(1)  # Use asyncio.sleep to not block the event loop
 
 
 # Disable the default help command
@@ -475,16 +490,20 @@ async def show_trade(ctx):
         # Green: traded
         # Yellow: in escrow
         # Red: not traded
-        greenCircle = '🟢'
-        yellowCircle = '🟡'
-        redCircle = '🔴'
+        greenCircle = "🟢"
+        yellowCircle = "🟡"
+        redCircle = "🔴"
 
         trade_data = {}
         for discord_id, info_image_url, status in rows:
             if discord_id not in trade_data:
                 trade_data[discord_id] = []
-            
-            emoji_status = greenCircle if status == "traded" else (yellowCircle if status == "in escrow" else redCircle)
+
+            emoji_status = (
+                greenCircle
+                if status == "traded"
+                else (yellowCircle if status == "in escrow" else redCircle)
+            )
             trade_data[discord_id].append((info_image_url, emoji_status))
 
         # Now, when you access trade_data, use discord_id
@@ -511,12 +530,22 @@ async def show_trade(ctx):
         )
 
         user_items_value = (
-            "\n".join([f"{status} [Item {i + 1}]({link})" for i, (link, status) in enumerate(user_items)])
+            "\n".join(
+                [
+                    f"{status} [Item {i + 1}]({link})"
+                    for i, (link, status) in enumerate(user_items)
+                ]
+            )
             if user_items
             else "No items added."
         )
         other_user_items_value = (
-            "\n".join([f"{status} [Item {i + 1}]({link})" for i, (link, status) in enumerate(other_user_items)])
+            "\n".join(
+                [
+                    f"{status} [Item {i + 1}]({link})"
+                    for i, (link, status) in enumerate(other_user_items)
+                ]
+            )
             if other_user_items
             else "No items added."
         )
@@ -728,7 +757,9 @@ async def claim_items(ctx, in_game_id: str):
             "Items are ready to be sent! Hop into the bard trading channel to collect your items."
         )
     else:
-        await ctx.send("There are no more items to claim. If you want to claim your gold then write: `claim-gold {In-game player name}`")
+        await ctx.send(
+            "There are no more items to claim. If you want to claim your gold then write: `claim-gold {In-game player name}`"
+        )
         return
 
     try:
@@ -886,6 +917,7 @@ async def claim_gold(ctx, in_game_id: str):
         await ctx.send(f"Unexpected error occurred. Please message @asdgew")
         # await ctx.send(f"Unexpected error occurred: {str(e)}")
 
+
 # Deletes all records that have anything to do with that channel. (Keeps users)
 def delete_records_by_channel(channel_id):
     # Connect to the database
@@ -908,7 +940,6 @@ def delete_records_by_channel(channel_id):
     conn.close()
 
     print(f"Records associated with channel_id {channel_id} deleted successfully!")
-
 
 
 bot.run(TOKEN)
