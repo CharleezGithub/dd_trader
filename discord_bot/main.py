@@ -27,7 +27,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 trade_requests = {}
 
 # Instantiate the queue
-task_queue = queue.Queue()
+trade_queue = queue.Queue()
 
 
 @bot.event
@@ -40,8 +40,8 @@ async def on_ready():
     )
     # This endless loop runs the functions in the que with a first in first out principle. In the future there will be priority que for paying members hopefully.
     while True:
-        if not task_queue.empty():
-            task = task_queue.get()
+        if not trade_queue.empty():
+            task = trade_queue.get()
             await task  # Await the coroutine object directly
         await asyncio.sleep(1)  # Use asyncio.sleep to not block the event loop
 
@@ -301,133 +301,6 @@ async def trade_accept(ctx, user: discord.Member):
         )
 
 
-@bot.command(name="add-gold")
-async def add_gold(ctx, gold: int):
-    """Add gold to a specific trade."""
-
-    # Ensure the command is used in the "Middleman Trades" category
-    if ctx.channel.category.name != "Middleman Trades":
-        await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
-        )
-        return
-
-    if gold % 50 != 0:
-        await ctx.send("Gold has to be in increments of 50!")
-        return
-
-    discord_id = str(ctx.author.id)  # Get user ID from context
-    channel_id = str(ctx.channel.id)  # Get channel ID from context
-
-    conn = sqlite3.connect("trading_bot.db")
-    cursor = conn.cursor()
-
-    try:
-        # Fetch the trader's ID from the database using the Discord ID
-        cursor.execute("SELECT id FROM traders WHERE discord_id = ?", (discord_id,))
-        trader = cursor.fetchone()
-
-        if not trader:
-            await ctx.send("You are not registered as a trader.")
-            return
-
-        trader_id = trader[0]
-
-        # Fetch the ongoing trade from the database using the unique channel ID
-        cursor.execute(
-            "SELECT id, trader1_id, trader2_id FROM trades WHERE channel_id = ? AND status = 'ongoing'",
-            (channel_id,),
-        )
-        trade = cursor.fetchone()
-
-        if not trade:
-            await ctx.send("No ongoing trade found in this channel.")
-            return
-
-        # Update the appropriate gold amount
-        if trade[1] == trader_id:  # If the trader is trader1
-            cursor.execute(
-                "UPDATE trades SET trader1_gold = trader1_gold + ? WHERE id = ?",
-                (gold, trade[0]),
-            )
-        elif trade[2] == trader_id:  # If the trader is trader2
-            cursor.execute(
-                "UPDATE trades SET trader2_gold = trader2_gold + ? WHERE id = ?",
-                (gold, trade[0]),
-            )
-        else:
-            await ctx.send("You are not part of the trade in this channel.")
-            return
-
-        conn.commit()
-        await ctx.send(f"Successfully added {gold} gold to the trade in this channel.")
-
-    except sqlite3.Error as e:
-        await ctx.send(f"An error occurred: {e}")
-    finally:
-        conn.close()
-
-
-@bot.command(name="add-items")
-async def add_items(ctx, *args: str):
-    """Add item image links to a specific trade."""
-
-    # Ensure the command is used in the "Middleman Trades" category
-    if ctx.channel.category.name != "Middleman Trades":
-        await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
-        )
-        return
-
-    # Ensure the user provided pairs of links
-    if len(args) % 2 != 0:
-        await ctx.send("Please provide pairs of item_image_url and info_image_url!")
-        return
-
-    # Validate links
-    for link in args:
-        if not link.startswith("http"):
-            await ctx.send(
-                f"The link `{link}` seems invalid. Make sure to provide valid URLs!"
-            )
-            return
-
-    conn = sqlite3.connect("trading_bot.db")
-    cursor = conn.cursor()
-
-    # Fetch the trade_id for the current channel from the trades table
-    cursor.execute("SELECT id FROM trades WHERE channel_id=?", (str(ctx.channel.id),))
-    trade_id = cursor.fetchone()
-    if not trade_id:
-        await ctx.send("No trade associated with this channel!")
-        conn.close()
-        return
-    trade_id = trade_id[0]
-
-    # Fetch the trader_id from the traders table
-    cursor.execute("SELECT id FROM traders WHERE discord_id=?", (str(ctx.author.id),))
-    trader_id = cursor.fetchone()
-    if not trader_id:
-        await ctx.send("No trader associated with this user!")
-        conn.close()
-        return
-    trader_id = trader_id[0]
-
-    # Inserting the items into the items table
-    for i in range(0, len(args), 2):
-        item_image_url = args[i]
-        info_image_url = args[i + 1]
-        cursor.execute(
-            "INSERT INTO items (trade_id, trader_id, item_image_url, info_image_url) VALUES (?, ?, ?, ?)",
-            (trade_id, trader_id, item_image_url, info_image_url),
-        )
-
-    conn.commit()
-    conn.close()
-
-    await ctx.send(f"Added {len(args)//2} item(s) to this trade!")
-
-
 @bot.command(name="show-trade")
 async def show_trade(ctx):
     """Display the items and gold for both users in a specific trade."""
@@ -574,8 +447,146 @@ async def show_trade(ctx):
         conn.close()
 
 
+@bot.command(name="add-gold")
+async def add_gold(ctx, gold: int):
+    trade_queue.put(add_gold_real(ctx, gold))
+
+
+async def add_gold_real(ctx, gold: int):
+    """Add gold to a specific trade."""
+
+    # Ensure the command is used in the "Middleman Trades" category
+    if ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+
+    if gold % 50 != 0:
+        await ctx.send("Gold has to be in increments of 50!")
+        return
+
+    discord_id = str(ctx.author.id)  # Get user ID from context
+    channel_id = str(ctx.channel.id)  # Get channel ID from context
+
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    try:
+        # Fetch the trader's ID from the database using the Discord ID
+        cursor.execute("SELECT id FROM traders WHERE discord_id = ?", (discord_id,))
+        trader = cursor.fetchone()
+
+        if not trader:
+            await ctx.send("You are not registered as a trader.")
+            return
+
+        trader_id = trader[0]
+
+        # Fetch the ongoing trade from the database using the unique channel ID
+        cursor.execute(
+            "SELECT id, trader1_id, trader2_id FROM trades WHERE channel_id = ? AND status = 'ongoing'",
+            (channel_id,),
+        )
+        trade = cursor.fetchone()
+
+        if not trade:
+            await ctx.send("No ongoing trade found in this channel.")
+            return
+
+        # Update the appropriate gold amount
+        if trade[1] == trader_id:  # If the trader is trader1
+            cursor.execute(
+                "UPDATE trades SET trader1_gold = trader1_gold + ? WHERE id = ?",
+                (gold, trade[0]),
+            )
+        elif trade[2] == trader_id:  # If the trader is trader2
+            cursor.execute(
+                "UPDATE trades SET trader2_gold = trader2_gold + ? WHERE id = ?",
+                (gold, trade[0]),
+            )
+        else:
+            await ctx.send("You are not part of the trade in this channel.")
+            return
+
+        conn.commit()
+        await ctx.send(f"Successfully added {gold} gold to the trade in this channel.")
+
+    except sqlite3.Error as e:
+        await ctx.send(f"An error occurred: {e}")
+    finally:
+        conn.close()
+
+
+@bot.command(name="add-items")
+async def add_items(ctx, *args: str):
+    trade_queue(add_items_real(ctx, *args))
+
+
+async def add_items_real(ctx, *args: str):
+    """Add item image links to a specific trade."""
+
+    # Ensure the command is used in the "Middleman Trades" category
+    if ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+
+    # Ensure the user provided pairs of links
+    if len(args) % 2 != 0:
+        await ctx.send("Please provide pairs of item_image_url and info_image_url!")
+        return
+
+    # Validate links
+    for link in args:
+        if not link.startswith("http"):
+            await ctx.send(
+                f"The link `{link}` seems invalid. Make sure to provide valid URLs!"
+            )
+            return
+
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    # Fetch the trade_id for the current channel from the trades table
+    cursor.execute("SELECT id FROM trades WHERE channel_id=?", (str(ctx.channel.id),))
+    trade_id = cursor.fetchone()
+    if not trade_id:
+        await ctx.send("No trade associated with this channel!")
+        conn.close()
+        return
+    trade_id = trade_id[0]
+
+    # Fetch the trader_id from the traders table
+    cursor.execute("SELECT id FROM traders WHERE discord_id=?", (str(ctx.author.id),))
+    trader_id = cursor.fetchone()
+    if not trader_id:
+        await ctx.send("No trader associated with this user!")
+        conn.close()
+        return
+    trader_id = trader_id[0]
+
+    # Inserting the items into the items table
+    for i in range(0, len(args), 2):
+        item_image_url = args[i]
+        info_image_url = args[i + 1]
+        cursor.execute(
+            "INSERT INTO items (trade_id, trader_id, item_image_url, info_image_url) VALUES (?, ?, ?, ?)",
+            (trade_id, trader_id, item_image_url, info_image_url),
+        )
+
+    conn.commit()
+    conn.close()
+
+    await ctx.send(f"Added {len(args)//2} item(s) to this trade!")
+
+
 @bot.command(name="pay-fee")
 async def pay_fee(ctx, in_game_id: str):
+    trade_queue(pay_fee_real(ctx, in_game_id))
+
+async def pay_fee_real(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
             "This command can only be used within the 'Middleman Trades' category!"
@@ -626,6 +637,9 @@ async def pay_fee(ctx, in_game_id: str):
 
 @bot.command(name="deposit")
 async def deposit(ctx, in_game_id: str):
+    trade_queue(deposit_real(ctx, in_game_id))
+
+async def deposit_real(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
             "This command can only be used within the 'Middleman Trades' category!"
@@ -690,6 +704,9 @@ async def deposit(ctx, in_game_id: str):
 
 @bot.command(name="claim-items")
 async def claim_items(ctx, in_game_id: str):
+    trade_queue(claim_items_real(ctx, in_game_id))
+
+async def claim_items_real(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
             "This command can only be used within the 'Middleman Trades' category!"
@@ -803,6 +820,9 @@ async def claim_items(ctx, in_game_id: str):
 
 @bot.command(name="claim-gold")
 async def claim_gold(ctx, in_game_id: str):
+    trade_queue(claim_gold_real(ctx, in_game_id))
+
+async def claim_gold_real(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
             "This command can only be used within the 'Middleman Trades' category!"
