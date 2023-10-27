@@ -1195,6 +1195,8 @@ pub fn claim_items(
         }
     }
     println!("Test44");
+
+    return_to_lobby();
     Ok(String::from("Trade successful"))
 }
 
