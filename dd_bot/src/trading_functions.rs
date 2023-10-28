@@ -1577,7 +1577,7 @@ pub fn claim_gold(
             ) {
                 Ok(_) => {
                     return_to_lobby();
-                    return Ok(String::from("Successfully went through"));
+                    return Ok(String::from("Trade successful"));
                 }
                 Err(err) => {
                     println!("Error subtracting gold from trader. \nError:\n{}", err);

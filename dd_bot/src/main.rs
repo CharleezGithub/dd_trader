@@ -1,7 +1,7 @@
 use std::fmt::format;
 use std::iter::once;
-use std::str;
 use std::sync::{Arc, Mutex};
+use std::{result, str};
 
 use enigo::*;
 
@@ -139,19 +139,20 @@ fn gold_fee(
             let info = bot_info.lock().unwrap();
             match info.ready {
                 ReadyState::False => Event::data("TradeBot not ready"),
-                ReadyState::Starting => {
-                    Event::data("TradeBot is starting. Please wait 2 minutes.")
-                }
+                ReadyState::Starting => Event::data("TradeBot is starting. Please wait 2 minutes."),
                 ReadyState::True => Event::data("TradeBot ready"),
             }
         },
         // Second stream
         {
-            match trading_functions::collect_gold_fee(enigo, bot_info, in_game_id, traders_container) {
+            match trading_functions::collect_gold_fee(
+                enigo,
+                bot_info,
+                in_game_id,
+                traders_container,
+            ) {
                 Ok(message) => Event::data(message),
-                Err(err) => {
-                    Event::data(err)
-                }
+                Err(err) => Event::data(err),
             }
         },
     ]);
@@ -159,58 +160,71 @@ fn gold_fee(
     EventStream::from(stream)
 }
 
-#[get("/trade_request/<in_game_id>/<discord_channel_id>/<discord_id>")]
-fn trade_request(
+#[get("/deposit/<in_game_id>/<discord_channel_id>/<discord_id>")]
+fn deposit(
     in_game_id: String,
     discord_channel_id: String,
     discord_id: String,
     enigo: &State<Arc<Mutex<Enigo>>>,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
-) -> String {
+) -> EventStream![] {
     {
         let mut traders = traders_container.lock().unwrap();
         traders.set_in_game_id_by_discord_info(&in_game_id, &discord_id, &discord_channel_id);
     }
 
-    // Dereference `State` and clone the inner `Arc`.
-    let enigo_cloned = enigo.inner().clone();
-    let bot_info_cloned = bot_info.inner().clone();
-    let traders_container_cloned = traders_container.inner().clone();
-
-    // Spawning a new asynchronous task
-    tokio::spawn(async move {
-        // Using spawn_blocking to handle potential blocking/synchronous code
-        let result = tokio::task::spawn_blocking(move || {
-            match trading_functions::complete_trade(
-                (&enigo_cloned).into(),
-                (&bot_info_cloned).into(),
-                &in_game_id,
-                (&traders_container_cloned).into(),
-            ) {
-                Ok(_) => String::from("Trade successful!"),
-                Err(err) => err,
+    let stream = iter(vec![
+        // First stream
+        {
+            let info = bot_info.lock().unwrap();
+            match info.ready {
+                ReadyState::False => Event::data("TradeBot not ready"),
+                ReadyState::Starting => Event::data("TradeBot is starting. Please wait 2 minutes."),
+                ReadyState::True => Event::data("TradeBot ready"),
             }
-        })
-        .await;
+        },
+        {
+            // Dereference `State` and clone the inner `Arc`.
+            let enigo_cloned = enigo.inner().clone();
+            let bot_info_cloned = bot_info.inner().clone();
+            let traders_container_cloned = traders_container.inner().clone();
 
-        // Log the result or handle it further, based on requirements
-        match result {
-            Ok(s) => println!("Trade result: {}", s),
-            Err(e) => eprintln!("Trade error: {:?}", e),
-        }
-    });
+            let result = tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let inner_result = tokio::spawn(async move {
+                    // Handle potential blocking/synchronous code
+                    let blocking_result =
+                        tokio::task::spawn_blocking(
+                            move || match trading_functions::deposit(
+                                (&enigo_cloned).into(),
+                                (&bot_info_cloned).into(),
+                                &in_game_id,
+                                (&traders_container_cloned).into(),
+                            ) {
+                                Ok(_) => Ok(String::from("Trade successful!")),
+                                Err(err) => Err(String::from(err)),
+                            },
+                        )
+                        .await;
 
-    {
-        let info = bot_info.lock().unwrap();
-        match info.ready {
-            ReadyState::False => return String::from("TradeBot not ready"),
-            ReadyState::Starting => {
-                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
+                    // Propagate the result of the blocking operation
+                    match blocking_result {
+                        Ok(Ok(s)) => Ok(s),
+                        Ok(Err(e)) => Err(e),
+                        Err(_) => Err("Task failed".to_string()),
+                    }
+                })
+                .await;
+                inner_result
+            });
+            match result {
+                Ok(Ok(s)) => Event::data(s),
+                Ok(Err(e)) => Event::data(e),
+                Err(_) => Event::data("Task failed".to_string()),
             }
-            ReadyState::True => return String::from("TradeBot ready"),
-        }
-    } // Lock is released here as the MutexGuard goes out of scope
+        },
+    ]);
+    EventStream::from(stream)
 }
 
 #[get("/claim_items/<in_game_id>/<discord_channel_id>/<discord_id>")]
@@ -371,7 +385,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
         .manage(traders_container) // Add the traders_container as managed state
         .mount(
             "/",
-            routes![gold_fee, trade_request, claim_items, claim_gold],
+            routes![gold_fee, deposit, claim_items, claim_gold],
         )
 }
 

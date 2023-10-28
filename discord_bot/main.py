@@ -520,10 +520,6 @@ async def add_gold_real(ctx, gold: int):
 
 @bot.command(name="add-items")
 async def add_items(ctx, *args: str):
-    trade_queue(add_items_real(ctx, *args))
-
-
-async def add_items_real(ctx, *args: str):
     """Add item image links to a specific trade."""
 
     # Ensure the command is used in the "Middleman Trades" category
@@ -611,7 +607,7 @@ async def pay_fee_real(ctx, in_game_id: str):
         for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
             # Check if the request was successful
             if response.status_code == 200:
-                data = response.text
+                data = chunk
                 if "TradeBot ready" == data:
                     await ctx.send(
                         "Sending",
@@ -619,15 +615,16 @@ async def pay_fee_real(ctx, in_game_id: str):
                         'a trade request in "`The Bard'
                         + "'s"
                         + 'Theater #1`" trading channel',
-                    )  # Send the message from the API response, if provided
+                    )
                 elif "TradeBot is starting. Please wait 2 minutes." == data:
                     await ctx.send(
                         "TradeBot is starting. Please wait 2 minutes. Message @asdgew if this problem persists."
                     )
                 elif "Successfully collected fee!":
                     await ctx.send(
-                        f"TradeBot Successfully collected fee from {in_game_id}!"
+                        f"TradeBot successfully collected fee from {in_game_id}!"
                     )
+                    return
                 else:
                     await ctx.send(data)
                     return
@@ -683,29 +680,39 @@ async def deposit_real(ctx, in_game_id: str):
         api_endpoint = f"http://127.0.0.1:8051/deposit/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
 
         # Make the API request
-        response = requests.get(api_endpoint)
-        print("response:", response.status_code)
-        print(response.status_code == 200)
-        print("response:", response.text)
+        response = requests.get(api_endpoint, stream=True)
 
-        # Check if the request was successful
-        if response.status_code == 200:
-            data = response.text
-            if "TradeBot ready" == data:
-                await ctx.send(
-                    'Going into "The Bard' + "'s" + 'Theater #1"'
-                )  # Send the message from the API response, if provided
+        for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
+            # Check if the request was successful
+            if response.status_code == 200:
+                data = chunk
+                if "TradeBot ready" == data:
+                    await ctx.send(
+                        "Sending",
+                        in_game_id,
+                        'a trade request in "`The Bard'
+                        + "'s"
+                        + 'Theater #1`" trading channel',
+                    )
+                elif "TradeBot is starting. Please wait 2 minutes." == data:
+                    await ctx.send(
+                        "TradeBot is starting. Please wait 2 minutes. Message @asdgew if this problem persists."
+                    )
+                elif "Trade successful":
+                    await ctx.send(
+                        f"Items from trader {ctx.author.name}, are now stored!"
+                    )
+                    return
+                else:
+                    await ctx.send(data)
+                    return
             else:
                 await ctx.send(
-                    "TradeBot is not ready. Wait 3 minutes and try again. Message @asdgew if this problem persists."
+                    f"Failed to complete the trade. Trading bot is not online. Please message @asdgew."
                 )
-        else:
-            await ctx.send(
-                f"Failed to complete the trade. Trading bot is not online. Please message @asdgew."
-            )
-            await ctx.send(
-                f"Failed to complete the trade. Error {response.status_code}: {response.text}"
-            )
+                await ctx.send(
+                    f"Failed to complete the trade. Error {response.status_code}: {response.text}"
+                )
 
     except Exception as e:
         print(e)
@@ -799,30 +806,40 @@ async def claim_items_real(ctx, in_game_id: str):
         api_endpoint = f"http://127.0.0.1:8051/claim_items/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
 
         # Make the API request
-        response = requests.get(api_endpoint)
-        print("response:", response.status_code)
-        print(response.status_code == 200)
-        print("response:", response.text)
+        response = requests.get(api_endpoint, stream=True)
 
-        # Check if the request was successful
-        if response.status_code == 200:
-            data = response.text
-            if "TradeBot ready" == data:
-                await ctx.send(
-                    'Going into "The Bard' + "'s" + 'Theater #1"'
-                )  # Send the message from the API response, if provided
+        for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
+            # Check if the request was successful
+            if response.status_code == 200:
+                data = chunk
+                if "TradeBot ready" == data:
+                    await ctx.send(
+                        "Sending",
+                        in_game_id,
+                        'a trade request in "`The Bard'
+                        + "'s"
+                        + 'Theater #1`" trading channel',
+                    )
+                elif "TradeBot is starting. Please wait 2 minutes." == data:
+                    await ctx.send(
+                        "TradeBot is starting. Please wait 2 minutes. Message @asdgew if this problem persists."
+                    )
+                elif "Trade successful":
+                    await ctx.send(
+                        f"TradeBot successfully traded items to {ctx.author.name}!"
+                    )
+                    return
+                else:
+                    await ctx.send(data)
+                    return
             else:
                 await ctx.send(
-                    "TradeBot is not ready. Wait 3 minutes and try again. Message @asdgew if this problem persists."
+                    f"Failed to complete the trade. Trading bot is not online. Please message @asdgew."
                 )
-        else:
-            await ctx.send(
-                f"Failed to complete the trade. Trading bot is not online. Please message @asdgew."
-            )
-            # Remove later. For debugging only
-            await ctx.send(
-                f"Failed to complete the trade. Error {response.status_code}: {response.text}"
-            )
+                # Remove later. For debugging only
+                await ctx.send(
+                    f"Failed to complete the trade. Error {response.status_code}: {response.text}"
+                )
 
     except Exception as e:
         print(e)
@@ -920,30 +937,32 @@ async def claim_gold_real(ctx, in_game_id: str):
         api_endpoint = f"http://127.0.0.1:8051/claim_gold/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
 
         # Make the API request
-        response = requests.get(api_endpoint)
-        print("response:", response.status_code)
-        print(response.status_code == 200)
-        print("response:", response.text)
+        response = requests.get(api_endpoint, stream=True)
 
-        # Check if the request was successful
-        if response.status_code == 200:
-            data = response.text
-            if "TradeBot ready" == data:
-                await ctx.send(
-                    'Going into "The Bard' + "'s" + 'Theater #1"'
-                )  # Send the message from the API response, if provided
-            else:
-                await ctx.send(
-                    "TradeBot is not ready. Wait 3 minutes and try again. Message @asdgew if this problem persists."
-                )
-        else:
-            await ctx.send(
-                f"Failed to complete the trade. Trading bot is not online. Please message @asdgew."
-            )
-            # Remove later. For debugging only
-            await ctx.send(
-                f"Failed to complete the trade. Error {response.status_code}: {response.text}"
-            )
+        for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
+            # Check if the request was successful
+            if response.status_code == 200:
+                data = chunk
+                if "TradeBot ready" == data:
+                    await ctx.send(
+                        "Sending",
+                        in_game_id,
+                        'a trade request in "`The Bard'
+                        + "'s"
+                        + 'Theater #1`" trading channel',
+                    )
+                elif "TradeBot is starting. Please wait 2 minutes." == data:
+                    await ctx.send(
+                        "TradeBot is starting. Please wait 2 minutes. Message @asdgew if this problem persists."
+                    )
+                elif "Trade successful":
+                    await ctx.send(
+                        f"TradeBot successfully traded gold to {ctx.author.name}!"
+                    )
+                    return
+                else:
+                    await ctx.send(data)
+                    return
 
     except Exception as e:
         print(e)
