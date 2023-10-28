@@ -280,7 +280,7 @@ pub fn collect_gold_fee(
     traders.update_gold_fee_status(trader_discord_id_copy.as_str(), true);
 
     return_to_lobby();
-    return Ok(String::from("Successfully collected fee"));
+    return Ok(String::from("Successfully collected fee!"));
 }
 
 pub fn complete_trade(
