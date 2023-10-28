@@ -9,8 +9,9 @@ extern crate rocket;
 use rocket::State;
 
 use rocket::futures::stream::iter;
-use rocket::response::stream::Event;
 use rocket::response::stream::EventStream;
+
+use rocket::response::stream::Event;
 
 mod database_functions;
 mod enigo_functions;
