@@ -13,7 +13,7 @@ use reqwest;
 
 use enigo::*;
 use rand::Rng;
-use rocket::{data, State};
+use rocket::State;
 
 use crate::TradersContainer;
 use crate::{database_functions, ReadyState, TradeBotInfo};
