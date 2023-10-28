@@ -122,7 +122,7 @@ pub fn collect_gold_fee(
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     in_game_id: &str,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
-) {
+) -> Result<String, String> {
     let mut enigo = enigo.lock().unwrap();
 
     let info = bot_info.lock().unwrap();
@@ -149,7 +149,7 @@ pub fn collect_gold_fee(
         Ok(_) => println!("Player accepted trade request"),
         Err(_) => {
             return_to_lobby();
-            println!("Player declined request. Going back to lobby.");
+            return Err(String::from("Player declined request"));
         }
     }
 
@@ -165,7 +165,7 @@ pub fn collect_gold_fee(
         Err(_) => {
             println!("User did not put in gold fee..");
             return_to_lobby();
-            return;
+            return Err(String::from("User did not put in gold fee"));
         }
     }
 
@@ -193,7 +193,7 @@ pub fn collect_gold_fee(
         Err(_) => {
             println!("User did not put in gold fee..");
             return_to_lobby();
-            return;
+            return Err(String::from("User did not put in gold fee"))
         }
     }
 
@@ -280,6 +280,7 @@ pub fn collect_gold_fee(
     traders.update_gold_fee_status(trader_discord_id_copy.as_str(), true);
 
     return_to_lobby();
+    return Ok(String::from("Successfully collected fee"));
 }
 
 pub fn complete_trade(
@@ -1083,7 +1084,10 @@ pub fn claim_items(
                                         true,
                                     ) {
                                         Ok(_) => println!("Successfully moved to this location!"),
-                                        Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+                                        Err(err) => println!(
+                                            "Got error while trying to move cursor: {:?}",
+                                            err
+                                        ),
                                     }
                                 }
                                 // Might not work...
