@@ -677,10 +677,10 @@ async def deposit_real(ctx, in_game_id: str):
 
     try:
         print(
-            f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+            f"http://127.0.0.1:8051/deposit/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
         )
         # Construct the API endpoint URL
-        api_endpoint = f"http://127.0.0.1:8051/trade_request/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+        api_endpoint = f"http://127.0.0.1:8051/deposit/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
 
         # Make the API request
         response = requests.get(api_endpoint)
