@@ -140,7 +140,7 @@ fn gold_fee(
             match info.ready {
                 ReadyState::False => Event::data("TradeBot not ready"),
                 ReadyState::Starting => {
-                    Event::data("TradeBot is starting. Please wait 2 minutes and try again.")
+                    Event::data("TradeBot is starting. Please wait 2 minutes.")
                 }
                 ReadyState::True => Event::data("TradeBot ready"),
             }
