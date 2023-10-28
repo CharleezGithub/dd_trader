@@ -51,75 +51,75 @@ bot.remove_command("help")
 
 
 @bot.command(name="help", aliases=["h"])
-async def custom_help(ctx, *, command_name=None):
+async def help_command(ctx, *, command_name=None):
     """Displays help information for available commands."""
 
     if command_name is None:
-        embed = discord.Embed(
-            title="Help", description="List of available commands:", color=0x55A7F7
-        )
+        embed = discord.Embed(title="DarkerBot Help", color=discord.Color.blue())
 
+        # Discord only commands
+        embed.add_field(
+            name="Discord Only Commands",
+            value="These commands are used only in Discord.",
+            inline=False,
+        )
+        embed.add_field(name="!help", value="Displays this help message.", inline=True)
         embed.add_field(
             name="!trade @user",
-            value="Send a trade request to a user. You cannot trade with bots or yourself.",
-            inline=False,
+            value="Sends a trade request to the specified player.",
+            inline=True,
         )
-
         embed.add_field(
             name="!trade-accept @user",
-            value="Accept a trade request from a user. You can only accept trade requests from users who have sent you a trade invitation.",
-            inline=False,
+            value="Accepts the trade request from the specified player.",
+            inline=True,
         )
-
-        embed.add_field(
-            name="!items-add [link 1] [link 2] [link 3]...",
-            value="Add the items that you want to trade for something else.",
-            inline=False,
-        )
-
         embed.add_field(
             name="!show-trade",
-            value="Shows a visualization of what the trade looks like",
-            inline=False,
+            value="Provides a visual representation of the current trade.",
+            inline=True,
         )
         embed.add_field(
-            name="!deposit [In-game player-id]",
-            value="TO DO!",
-            # value="Complete the trade by trading your items to the middleman bot in the game using this command. Once both players have traded their items to the middleman, the players can do !claim-gold and claim-items in order to collect the items they traded for.",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="!claim-items",
-            value="TO DO!",
-            # value="Collect the items that you traded for.",
-            inline=False,
+            name="!add-gold", value="Adds gold to the current trade.", inline=True
         )
         embed.add_field(
-            name="!claim-gold",
-            value="TO DO!",
-            # value="Collect the items that you traded for.",
-            inline=False,
-        )
-        embed.add_field(
-            name="!close-trade",
-            value="This will close a trade. It will delete the channel and wrap up the trade. Usecases are when the trade is complete or if the trade is cancelled.",
-            # value="Collect the items that you traded for.",
-            inline=False,
+            name="!add-items", value="Adds items to the current trade.", inline=True
         )
 
+        # Commands that interact with the game
         embed.add_field(
-            name="!help [command]",
-            value="Get detailed help on a specific command.",
+            name="In-game Interaction Commands",
+            value="These commands allow DarkerBot to interact with the game.",
             inline=False,
+        )
+        embed.add_field(
+            name="!pay-fee in_game_name",
+            value="Bot sends a trade request in-game to the specified player.",
+            inline=True,
+        )
+        embed.add_field(
+            name="!deposit in_game_name",
+            value="Deposit items/gold to the trading bot in-game.",
+            inline=True,
+        )
+        embed.add_field(
+            name="!claim-items in_game_name",
+            value="Claim items that you've traded for from the in-game bot.",
+            inline=True,
+        )
+        embed.add_field(
+            name="!claim-gold in_game_name",
+            value="Claim gold that you've traded for from the in-game bot.",
+            inline=True,
         )
 
         await ctx.send(embed=embed)
+
     else:
         if command_name.lower() in ["trade", "!trade"]:
             embed = discord.Embed(
                 title="!trade @user",
-                description="Send a trade request to a user.",
+                description="Initiates a trade with the specified Discord user. This sends them a trade request to commence the trading process.",
                 color=0x55A7F7,
             )
             embed.add_field(name="Usage", value="!trade @user")
@@ -127,61 +127,104 @@ async def custom_help(ctx, *, command_name=None):
                 name="Notes", value="You cannot trade with bots or yourself."
             )
             await ctx.send(embed=embed)
+
         elif command_name.lower() in ["trade-accept", "!trade-accept"]:
             embed = discord.Embed(
                 title="!trade-accept @user",
-                description="Accept a trade request from a user.",
+                description="Accepts a trade request from the specified Discord user, allowing the trade to proceed.",
                 color=0x55A7F7,
             )
             embed.add_field(name="Usage", value="!trade-accept @user")
             embed.add_field(
                 name="Notes",
-                value="You can only accept trade requests from users who have sent you a trade invitation.",
+                value="Ensure to verify the trade details before accepting.",
             )
             await ctx.send(embed=embed)
-        elif command_name.lower() in ["items-add", "!items-add"]:
+
+        elif command_name.lower() in ["show-trade", "!show-trade"]:
             embed = discord.Embed(
-                title="!items-add [link 1] [link 2] [link 3]...",
-                description="Add the items that you want to trade for something else.",
+                title="!show-trade",
+                description="Displays a visual representation of the current trade, detailing items and gold from both trading parties.",
                 color=0x55A7F7,
             )
-            embed.add_field(
-                name="Usage", value="!items-add [link 1] [link 2] [link 3]..."
+            embed.add_field(name="Usage", value="!show-trade")
+            await ctx.send(embed=embed)
+
+        elif command_name.lower() in ["add-gold", "!add-gold"]:
+            embed = discord.Embed(
+                title="!add-gold",
+                description="Add a specific amount of gold to the ongoing trade.",
+                color=0x55A7F7,
             )
+            embed.add_field(name="Usage", value="!add-gold [amount]")
+            embed.add_field(
+                name="Notes", value="Ensure you have enough gold before adding."
+            )
+            await ctx.send(embed=embed)
+        elif command_name.lower() in ["add-items", "!add-items"]:
+            embed = discord.Embed(
+                title="!add-items",
+                description="Contribute specific items from your inventory to the current trade. Make sure to specify which items you wish to add.",
+                color=0x55A7F7,
+            )
+            embed.add_field(name="Usage", value="!add-items [item1, item2, ...]")
             embed.add_field(
                 name="Notes",
-                value="This command allows you to add multiple item links that you are willing to trade. Ensure that the links provided are valid.",
+                value="Ensure to double-check the items you're adding to prevent mistakes.",
+            )
+            await ctx.send(embed=embed)
+
+        elif command_name.lower() in ["pay-fee", "!pay-fee"]:
+            embed = discord.Embed(
+                title="!pay-fee [in_game_name]",
+                description="Instructs DarkerBot to head over to the in-game trading channel and send a fee request to the specified player's in-game name.",
+                color=0x55A7F7,
+            )
+            embed.add_field(name="Usage", value="!pay-fee [in_game_name]")
+            embed.add_field(
+                name="Notes",
+                value="Ensure you have enough in-game currency to cover the fee.",
             )
             await ctx.send(embed=embed)
 
         elif command_name.lower() in ["deposit", "!deposit"]:
             embed = discord.Embed(
-                title="!deposit [In-game player-id]",
-                description="Trade your items to the middleman bot in the game.",
+                title="!deposit [in_game_name]",
+                description="Deposit specific in-game items or gold to DarkerBot's in-game counterpart. This is part of the escrow system during a trade.",
                 color=0x55A7F7,
             )
-            embed.add_field(name="Usage", value="!deposit [In-game player-id]")
+            embed.add_field(
+                name="Usage",
+                value="!deposit [in_game_name] [item1, item2, ... OR gold amount]",
+            )
             embed.add_field(
                 name="Notes",
-                value="Once both players have traded their items to the middleman bot, you and the other player can use the !claim-items and claim-gold command to retrieve the items you traded for.",
+                value="Ensure the in-game bot is available to receive the deposit.",
             )
             await ctx.send(embed=embed)
 
         elif command_name.lower() in ["claim-items", "!claim-items"]:
             embed = discord.Embed(
-                title="!claim-items",
-                description="Collect the items that you traded for.",
+                title="!claim-items [in_game_name]",
+                description="Retrieve items that you have acquired from a completed trade. The bot will transfer the items in-game to the specified player's account.",
                 color=0x55A7F7,
             )
-            embed.add_field(name="Usage", value="!claim-items")
-            embed.add_field(
-                name="Notes",
-                value="This command allows you to collect the items you've acquired after completing a trade. Both parties are required to trade their items with the middleman bot before being able to collect the items.",
+            embed.add_field(name="Usage", value="!claim-items [in_game_name]")
+            await ctx.send(embed=embed)
+
+        elif command_name.lower() in ["claim-gold", "!claim-gold"]:
+            embed = discord.Embed(
+                title="!claim-gold [in_game_name]",
+                description="Claim the gold you've accumulated from a trade. DarkerBot will transfer the gold to your in-game account.",
+                color=0x55A7F7,
             )
+            embed.add_field(name="Usage", value="!claim-gold [in_game_name]")
             await ctx.send(embed=embed)
 
         else:
-            await ctx.send(f"I couldn't find any help related to `{command_name}`.")
+            await ctx.send(
+                f"No help information found for '{command_name}'. Try using `!help` for a list of commands."
+            )
 
 
 import traceback
