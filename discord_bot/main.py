@@ -623,7 +623,7 @@ async def add_items(ctx, *args: str):
 
 @bot.command(name="pay-fee")
 async def pay_fee(ctx, in_game_id: str):
-    trade_queue(pay_fee_real(ctx, in_game_id))
+    trade_queue.put(pay_fee_real(ctx, in_game_id))
 
 
 async def pay_fee_real(ctx, in_game_id: str):
@@ -687,7 +687,7 @@ async def pay_fee_real(ctx, in_game_id: str):
 
 @bot.command(name="deposit")
 async def deposit(ctx, in_game_id: str):
-    trade_queue(deposit_real(ctx, in_game_id))
+    trade_queue.put(deposit_real(ctx, in_game_id))
 
 
 async def deposit_real(ctx, in_game_id: str):
@@ -765,7 +765,7 @@ async def deposit_real(ctx, in_game_id: str):
 
 @bot.command(name="claim-items")
 async def claim_items(ctx, in_game_id: str):
-    trade_queue(claim_items_real(ctx, in_game_id))
+    trade_queue.put(claim_items_real(ctx, in_game_id))
 
 
 async def claim_items_real(ctx, in_game_id: str):
@@ -892,7 +892,7 @@ async def claim_items_real(ctx, in_game_id: str):
 
 @bot.command(name="claim-gold")
 async def claim_gold(ctx, in_game_id: str):
-    trade_queue(claim_gold_real(ctx, in_game_id))
+    trade_queue.put(claim_gold_real(ctx, in_game_id))
 
 
 async def claim_gold_real(ctx, in_game_id: str):
