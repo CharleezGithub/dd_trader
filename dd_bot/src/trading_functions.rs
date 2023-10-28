@@ -283,7 +283,7 @@ pub fn collect_gold_fee(
     return Ok(String::from("Successfully collected fee!"));
 }
 
-pub fn complete_trade(
+pub fn deposit(
     enigo: &State<Arc<Mutex<Enigo>>>,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     in_game_id: &str,
