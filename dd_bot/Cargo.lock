@@ -215,6 +215,7 @@ dependencies = [
  "rocket",
  "rusqlite",
  "tokio",
+ "tokio-stream",
 ]
 
 [[package]]

@@ -1,7 +1,5 @@
-use std::fmt::format;
-use std::iter::once;
 use std::sync::{Arc, Mutex};
-use std::{result, str};
+use std::str;
 
 use enigo::*;
 
@@ -11,7 +9,6 @@ extern crate rocket;
 use rocket::State;
 
 use rocket::futures::stream::iter;
-use rocket::futures::stream::Stream;
 use rocket::response::stream::Event;
 use rocket::response::stream::EventStream;
 
@@ -133,9 +130,12 @@ fn gold_fee(
         traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
     }
 
+    println!("testing");
+    
     let stream = iter(vec![
         // First stream
         {
+            println!("testing1");
             let info = bot_info.lock().unwrap();
             match info.ready {
                 ReadyState::False => Event::data("TradeBot not ready"),
@@ -145,6 +145,7 @@ fn gold_fee(
         },
         // Second stream
         {
+            println!("testing3");
             match trading_functions::collect_gold_fee(
                 enigo,
                 bot_info,
