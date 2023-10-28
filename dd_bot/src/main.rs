@@ -1,3 +1,5 @@
+use std::fmt::format;
+use std::iter::once;
 use std::str;
 use std::sync::{Arc, Mutex};
 
@@ -7,6 +9,11 @@ use enigo::*;
 #[macro_use]
 extern crate rocket;
 use rocket::State;
+
+use rocket::futures::stream::iter;
+use rocket::futures::stream::Stream;
+use rocket::response::stream::Event;
+use rocket::response::stream::EventStream;
 
 mod database_functions;
 mod enigo_functions;
@@ -120,24 +127,36 @@ fn gold_fee(
     enigo: &State<Arc<Mutex<Enigo>>>,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
-) -> String {
+) -> EventStream![] {
     {
         let mut traders = traders_container.lock().unwrap();
         traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
     }
 
-    trading_functions::collect_gold_fee(enigo, bot_info, in_game_id, traders_container);
-
-    {
-        let info = bot_info.lock().unwrap();
-        match info.ready {
-            ReadyState::False => return String::from("TradeBot not ready"),
-            ReadyState::Starting => {
-                return String::from("TradeBot is starting. Please wait 2 minutes and try again.")
+    let stream = iter(vec![
+        // First stream
+        {
+            let info = bot_info.lock().unwrap();
+            match info.ready {
+                ReadyState::False => Event::data("TradeBot not ready"),
+                ReadyState::Starting => {
+                    Event::data("TradeBot is starting. Please wait 2 minutes and try again.")
+                }
+                ReadyState::True => Event::data("TradeBot ready"),
             }
-            ReadyState::True => return String::from("TradeBot ready"),
-        }
-    } // Lock is released here as the MutexGuard goes out of scope
+        },
+        // Second stream
+        {
+            match trading_functions::collect_gold_fee(enigo, bot_info, in_game_id, traders_container) {
+                Ok(message) => Event::data(message),
+                Err(err) => {
+                    Event::data(err)
+                }
+            }
+        },
+    ]);
+
+    EventStream::from(stream)
 }
 
 #[get("/trade_request/<in_game_id>/<discord_channel_id>/<discord_id>")]
@@ -266,8 +285,6 @@ fn claim_gold(
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) -> String {
-
-
     {
         let mut traders = traders_container.lock().unwrap();
         traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id, discord_channel_id);
@@ -352,7 +369,10 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
         .manage(enigo) // Add the enigo as managed state
         .manage(bot_info) // Add the bot_info as managed state
         .manage(traders_container) // Add the traders_container as managed state
-        .mount("/", routes![gold_fee, trade_request, claim_items, claim_gold])
+        .mount(
+            "/",
+            routes![gold_fee, trade_request, claim_items, claim_gold],
+        )
 }
 
 #[rocket::main]
