@@ -663,7 +663,7 @@ async def pay_fee_real(ctx, in_game_id: str):
                     await ctx.send(
                         "TradeBot is starting. Please wait 2 minutes. Message @asdgew if this problem persists."
                     )
-                elif "Successfully collected fee!":
+                elif "Successfully collected fee!" == data:
                     await ctx.send(
                         f"TradeBot successfully collected fee from {in_game_id}!"
                     )
