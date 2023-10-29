@@ -849,7 +849,7 @@ async def claim_items_real(ctx, in_game_id: str):
     if has_other_trader_escrow_items(ctx.author.id, ctx.channel.id):
         print("All items are in escrow.")
         await ctx.send(
-            "Items are ready to be sent! Hop into the bard trading channel to collect your items."
+            "Items are ready to be sent!"
         )
     else:
         await ctx.send(
