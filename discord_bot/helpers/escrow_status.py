@@ -80,7 +80,37 @@ def has_untraded_items(discord_id: str, channel_id: str) -> bool:
     conn.close()
 
     # Return True if there are untraded items, otherwise return False
-    return len(items) > 0
+    if len(items) > 0:
+        return len(items) > 0
+    
+    # IF there where no untraded items, then check if there is untraded gold
+    # Check if the trader is trader1 or trader2 in the channel
+    cursor.execute("""
+        SELECT trader1_id, trader2_id, trader1_gold, trader2_gold
+        FROM trades
+        INNER JOIN traders ON traders.id = trades.trader1_id OR traders.id = trades.trader2_id
+        WHERE traders.discord_id = ? AND trades.channel_id = ?
+    """, (discord_id, channel_id))
+    
+    result = cursor.fetchone()
+    
+    # Close the connection
+    conn.close()
+    
+    if result:
+        # Unpack the result
+        trader1_id, trader2_id, trader1_gold, trader2_gold = result
+        
+        # Check which trader the discord_id corresponds to and if their gold is greater than 0
+        if trader1_id and trader1_gold - 30 > 0:
+            return True
+        elif trader2_id and trader2_gold - 30 > 0:
+            return True
+        else:
+            return False
+    else:
+        return False
+
 
 def all_items_traded(channel_id: str) -> bool:
     # Connect to the database
