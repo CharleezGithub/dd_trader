@@ -183,59 +183,43 @@ fn deposit(
         traders.set_in_game_id_by_discord_info(&in_game_id, &discord_id, &discord_channel_id);
     }
 
+    // Check the bot status before proceeding
+    let info = bot_info.lock().unwrap();
+    match info.ready {
+        ReadyState::False => {
+            update_status("TradeBot not ready").unwrap();
+            return String::from("TradeBot not ready");
+        },
+        ReadyState::Starting => {
+            update_status("TradeBot is starting. Please wait 2 minutes.").unwrap();
+            return String::from("TradeBot is starting. Please wait 2 minutes.");
+        },
+        ReadyState::True => {
+            update_status("TradeBot ready").unwrap();
+        },
+    }
+
     // Dereference `State` and clone the inner `Arc`.
     let enigo_cloned = enigo.inner().clone();
     let bot_info_cloned = bot_info.inner().clone();
     let traders_container_cloned = traders_container.inner().clone();
     let in_game_id_cloned = in_game_id.clone();
 
-    let result = tokio::runtime::Runtime::new().unwrap().block_on(async {
-        let inner_result = tokio::spawn(async move {
-            // Handle potential blocking/synchronous code
-            let blocking_result = tokio::task::spawn_blocking(move || {
-                match trading_functions::deposit(
-                    (&enigo_cloned).into(),
-                    (&bot_info_cloned).into(),
-                    &in_game_id,
-                    (&traders_container_cloned).into(),
-                ) {
-                    Ok(_) => Ok(String::from("Trade successful!")),
-                    Err(err) => Err(String::from(err)),
-                }
-            })
-            .await;
-
-            // Propagate the result of the blocking operation
-            match blocking_result {
-                Ok(Ok(s)) => Ok(s),
-                Ok(Err(e)) => Err(e),
-                Err(_) => Err("Task failed".to_string()),
-            }
-        })
-        .await;
-        inner_result
+    // Spawn the trading function in a non-blocking way
+    tokio::spawn(async move {
+        // Any code that runs here is non-blocking to the main thread
+        let _ = tokio::task::spawn_blocking(move || {
+            trading_functions::deposit(
+                (&enigo_cloned).into(),
+                (&bot_info_cloned).into(),
+                &in_game_id_cloned,
+                (&traders_container_cloned).into(),
+            )
+        }).await.unwrap_or_else(|e| Err(e.to_string())); // Handle errors
     });
-    let _ = match result {
-        Ok(Ok(s)) => update_status(s.as_str()),
-        Ok(Err(e)) => update_status(e.as_str()),
-        Err(_) => update_status("Task failed"),
-    };
 
-    let info = bot_info.lock().unwrap();
-    let _ = match info.ready {
-        ReadyState::False => {
-            let _ = update_status("TradeBot not ready");
-            return String::from("TradeBot not ready");
-        },
-        ReadyState::Starting => {
-            let _ = update_status("TradeBot is starting. Please wait 2 minutes.");
-            return String::from("TradeBot is starting. Please wait 2 minutes.");
-        },
-        ReadyState::True => {
-            let _ = update_status("TradeBot ready");
-            return format!("Sending `{}` a trade request in `The Bard's Theater #1` trading channel", in_game_id_cloned);
-        },
-    };
+    // Return a response indicating the trade request is in progress
+    format!("Sending `{}` a trade request in `The Bard's Theater #1` trading channel", in_game_id)
 }
 
 #[get("/claim_items/<in_game_id>/<discord_channel_id>/<discord_id>")]
@@ -382,7 +366,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
 
     match database_functions::populate_traders_from_db(&traders_container) {
         Ok(_) => println!("Populated trades containter!"),
-        Err(_) => println!("Could not populate traders containter."),
+        Err(err) => println!("Could not populate traders containter. Error:\n{}", err),
     }
 
     // Clone the Arc for use in main_func
