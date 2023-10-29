@@ -236,12 +236,21 @@ fn claim_items(
         traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id, discord_channel_id);
     }
 
+    // Check the bot status before proceeding
     let info = bot_info.lock().unwrap();
-    let _ = match info.ready {
-        ReadyState::False => update_status("TradeBot not ready"),
-        ReadyState::Starting => update_status("TradeBot is starting. Please wait 2 minutes."),
-        ReadyState::True => update_status("TradeBot ready"),
-    };
+    match info.ready {
+        ReadyState::False => {
+            update_status("TradeBot not ready").unwrap();
+            return String::from("TradeBot not ready");
+        },
+        ReadyState::Starting => {
+            update_status("TradeBot is starting. Please wait 2 minutes.").unwrap();
+            return String::from("TradeBot is starting. Please wait 2 minutes.");
+        },
+        ReadyState::True => {
+            update_status("TradeBot ready").unwrap();
+        },
+    }
 
     // Dereference `State` and clone the inner `Arc`.
     let enigo_cloned = enigo.inner().clone();
@@ -285,7 +294,8 @@ fn claim_items(
         }
     });
 
-    String::from("Completed function")
+    // Return a response indicating the trade request is in progress
+    format!("Sending `{}` a trade request in `The Bard's Theater #1` trading channel", in_game_id)
 }
 
 #[get("/claim_gold/<in_game_id>/<discord_channel_id>/<discord_id>")]
