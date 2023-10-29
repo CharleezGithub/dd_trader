@@ -18,9 +18,6 @@ from PIL import ImageDraw, ImageFont
 
 from helpers.stitching import stitch_images
 
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-
 TOKEN = "MTE1MTQ0MTUwMjk1NDg0ODMwNw.GtRAIh.YBUChh8QJi3Cs8jeFbuE18kRJYrAwiCpcxcnz8"
 
 intents = discord.Intents.default()
@@ -37,9 +34,11 @@ trade_queue = queue.Queue()
 
 response_file_path = "shared/ipc_communication.txt"
 
+
 def read_file_contents(path):
-    with open(path, 'r') as file:
+    with open(path, "r") as file:
         return file.read()
+
 
 def file_has_changed(path, last_mod_time):
     try:
@@ -52,6 +51,7 @@ def file_has_changed(path, last_mod_time):
     except FileNotFoundError:
         return None, None, None  # Indicate the file is not accessible
 
+
 def monitor_file_changes(path_to_watch, interval=1):
     last_mod_time = os.stat(path_to_watch).st_mtime
 
@@ -63,6 +63,7 @@ def monitor_file_changes(path_to_watch, interval=1):
             yield contents  # Yield the new contents of the file
             last_mod_time = new_mod_time
         time.sleep(interval)
+
 
 @bot.event
 async def on_ready():
@@ -673,14 +674,18 @@ async def pay_fee_real(ctx, in_game_id: str):
         await ctx.send("You have already paid the gold fee.")
         return
     # Construct the API endpoint URL
-    api_endpoint = f"http://127.0.0.1:8051/gold_fee/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+    api_endpoint = (
+        f"http://127.0.0.1:8051/gold_fee/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+    )
 
     # Make the API request
     response = requests.get(api_endpoint)
     if response.status_code != 200:
-        await ctx.send(f"Failed to complete the trade. Error {response.status_code}: {response.text}")
+        await ctx.send(
+            f"Failed to complete the trade. Error {response.status_code}: {response.text}"
+        )
         return
-    
+
     await ctx.send(response.text)
 
     path_to_monitor = "shared/ipc_communication.txt"
@@ -692,7 +697,9 @@ async def pay_fee_real(ctx, in_game_id: str):
         try:
             print(data)
             if "Successfully collected fee!" == data:
-                await ctx.send(f"TradeBot successfully collected fee from {in_game_id}!")
+                await ctx.send(
+                    f"TradeBot successfully collected fee from {in_game_id}!"
+                )
                 return
             else:
                 await ctx.send(data)
@@ -703,6 +710,7 @@ async def pay_fee_real(ctx, in_game_id: str):
 
         print("Test6")
     return
+
 
 @bot.command(name="deposit")
 async def deposit(ctx, in_game_id: str):
@@ -734,16 +742,19 @@ async def deposit_real(ctx, in_game_id: str):
         )
         return
 
-
     # Construct the API endpoint URL
-    api_endpoint = f"http://127.0.0.1:8051/deposit/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+    api_endpoint = (
+        f"http://127.0.0.1:8051/deposit/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+    )
 
     # Make the API request
     response = requests.get(api_endpoint)
     if response.status_code != 200:
-        await ctx.send(f"Failed to complete the trade. Error {response.status_code}: {response.text}")
+        await ctx.send(
+            f"Failed to complete the trade. Error {response.status_code}: {response.text}"
+        )
         return
-    
+
     await ctx.send(response.text)
 
     path_to_monitor = "shared/ipc_communication.txt"
@@ -1046,7 +1057,7 @@ response_file_path = "shared/ipc_communication.txt"
 
 
 # Clear the contents of the file
-with open(response_file_path, 'w'):
+with open(response_file_path, "w"):
     pass
 
 
