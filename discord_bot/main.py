@@ -856,54 +856,43 @@ async def claim_items_real(ctx, in_game_id: str):
             "There are no more items to claim. If you want to claim your gold then write: `claim-gold {In-game player name}`"
         )
         return
+    # Construct the API endpoint URL
+    api_endpoint = (
+        f"http://127.0.0.1:8051/claim_items/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+    )
 
-    try:
-        print(
-            f"http://127.0.0.1:8051/claim_items/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+    # Make the API request
+    response = requests.get(api_endpoint)
+    if response.status_code != 200:
+        await ctx.send(
+            f"Failed to complete the trade. Error {response.status_code}: {response.text}"
         )
-        # Construct the API endpoint URL
-        api_endpoint = f"http://127.0.0.1:8051/claim_items/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+        return
 
-        # Make the API request
-        response = requests.get(api_endpoint, stream=True)
+    await ctx.send(response.text)
 
-        for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
-            # Check if the request was successful
-            if response.status_code == 200:
-                data = chunk
-                if "TradeBot ready" == data:
-                    await ctx.send(
-                        "Sending",
-                        in_game_id,
-                        'a trade request in "`The Bard'
-                        + "'s"
-                        + 'Theater #1`" trading channel',
-                    )
-                elif "TradeBot is starting. Please wait 2 minutes." == data:
-                    await ctx.send(
-                        "TradeBot is starting. Please wait 2 minutes. Message @asdgew if this problem persists."
-                    )
-                elif "Trade successful":
-                    await ctx.send(
-                        f"TradeBot successfully traded items to {ctx.author.name}!"
-                    )
-                    return
-                else:
-                    await ctx.send(data)
-                    return
+    path_to_monitor = "shared/ipc_communication.txt"
+    polling_interval = 1  # seconds
+    # Every time the data in ipc_communication.txt is changed this will run again.
+    # It will run forever untill stopped.
+    for data in monitor_file_changes(path_to_monitor, polling_interval):
+        try:
+            print(data)
+            if "Trade successful" == data:
+                await ctx.send(
+                    f"TradeBot successfully traded items to {ctx.author.name}!"
+                )
+                return
             else:
-                await ctx.send(
-                    f"Failed to complete the trade. Trading bot is not online. Please message @asdgew."
-                )
-                # Remove later. For debugging only
-                await ctx.send(
-                    f"Failed to complete the trade. Error {response.status_code}: {response.text}"
-                )
+                await ctx.send(data)
+                return
+        except Exception as e:
+            print(e)
+            await ctx.send("Unexpected error occurred. Please message @asdgew")
 
-    except Exception as e:
-        print(e)
-        await ctx.send(f"Unexpected error occurred. Please message @asdgew")
-        # await ctx.send(f"Unexpected error occurred: {str(e)}")
+        print("Test6")
+    return
+
 
 
 @bot.command(name="claim-gold")
