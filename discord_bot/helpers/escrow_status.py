@@ -76,11 +76,11 @@ def has_untraded_items(discord_id: str, channel_id: str) -> bool:
     )
     items = cursor.fetchall()
 
-    # Close the connection to the database
-    conn.close()
 
     # Return True if there are untraded items, otherwise return False
     if len(items) > 0:
+        # Close the connection to the database
+        conn.close()
         return len(items) > 0
     
     # IF there where no untraded items, then check if there is untraded gold
