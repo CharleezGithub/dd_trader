@@ -1,5 +1,6 @@
 use std::str;
 use std::sync::{Arc, Mutex};
+use std::thread::sleep;
 
 use enigo::*;
 
@@ -12,6 +13,7 @@ use rocket::futures::stream::iter;
 use rocket::response::stream::EventStream;
 
 use rocket::response::stream::Event;
+use rocket::time::Duration;
 
 mod database_functions;
 mod enigo_functions;
@@ -122,7 +124,7 @@ impl TradersContainer {
 
 #[get("/gold_fee/<in_game_id>/<discord_channel_id>/<discord_id>")]
 fn gold_fee(
-    in_game_id: &str,
+    in_game_id: String,
     discord_channel_id: &str,
     discord_id: &str,
     enigo: &State<Arc<Mutex<Enigo>>>,
@@ -131,23 +133,40 @@ fn gold_fee(
 ) -> String {
     {
         let mut traders = traders_container.lock().unwrap();
-        traders.set_in_game_id_by_discord_info(in_game_id, discord_id, discord_channel_id);
+        traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id, discord_channel_id);
     }
 
+    
+    // Dereference `State` and clone the inner `Arc`.
+    let enigo_cloned = enigo.inner().clone();
+    let bot_info_cloned = bot_info.inner().clone();
+    let traders_container_cloned = traders_container.inner().clone();
+    let in_game_id_clone = in_game_id.clone();
+    
+    tokio::task::spawn_blocking(move || {
+        let _ = trading_functions::collect_gold_fee(
+            (&enigo_cloned).into(),
+            (&bot_info_cloned).into(),
+            &in_game_id_clone,
+            (&traders_container_cloned).into(),
+        );
+    });
+    
     let info = bot_info.lock().unwrap();
     let _ = match info.ready {
-        ReadyState::False => update_status("TradeBot not ready"),
-        ReadyState::Starting => update_status("TradeBot is starting. Please wait 2 minutes."),
-        ReadyState::True => update_status("TradeBot ready"),
+        ReadyState::False => {
+            let _ = update_status("TradeBot not ready");
+            return String::from("TradeBot not ready");
+        },
+        ReadyState::Starting => {
+            let _ = update_status("TradeBot is starting. Please wait 2 minutes.");
+            return String::from("TradeBot is starting. Please wait 2 minutes.");
+        },
+        ReadyState::True => {
+            let _ = update_status("TradeBot ready");
+            return format!("Sending `{}` a trade request in `The Bard's Theater #1` trading channel", in_game_id);
+        },
     };
-
-    let _ =
-        match trading_functions::collect_gold_fee(enigo, bot_info, in_game_id, traders_container) {
-            Ok(message) => update_status(message.as_str()),
-            Err(err) => update_status(err.as_str()),
-        };
-
-    String::from("Completed function")
 }
 
 #[get("/deposit/<in_game_id>/<discord_channel_id>/<discord_id>")]
@@ -164,17 +183,11 @@ fn deposit(
         traders.set_in_game_id_by_discord_info(&in_game_id, &discord_id, &discord_channel_id);
     }
 
-    let info = bot_info.lock().unwrap();
-    let _ = match info.ready {
-        ReadyState::False => update_status("TradeBot not ready"),
-        ReadyState::Starting => update_status("TradeBot is starting. Please wait 2 minutes."),
-        ReadyState::True => update_status("TradeBot ready"),
-    };
-
     // Dereference `State` and clone the inner `Arc`.
     let enigo_cloned = enigo.inner().clone();
     let bot_info_cloned = bot_info.inner().clone();
     let traders_container_cloned = traders_container.inner().clone();
+    let in_game_id_cloned = in_game_id.clone();
 
     let result = tokio::runtime::Runtime::new().unwrap().block_on(async {
         let inner_result = tokio::spawn(async move {
@@ -208,7 +221,21 @@ fn deposit(
         Err(_) => update_status("Task failed"),
     };
 
-    String::from("Completed function")
+    let info = bot_info.lock().unwrap();
+    let _ = match info.ready {
+        ReadyState::False => {
+            let _ = update_status("TradeBot not ready");
+            return String::from("TradeBot not ready");
+        },
+        ReadyState::Starting => {
+            let _ = update_status("TradeBot is starting. Please wait 2 minutes.");
+            return String::from("TradeBot is starting. Please wait 2 minutes.");
+        },
+        ReadyState::True => {
+            let _ = update_status("TradeBot ready");
+            return format!("Sending `{}` a trade request in `The Bard's Theater #1` trading channel", in_game_id_cloned);
+        },
+    };
 }
 
 #[get("/claim_items/<in_game_id>/<discord_channel_id>/<discord_id>")]

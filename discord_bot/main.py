@@ -1,4 +1,7 @@
 import requests
+import threading
+import os
+import time
 
 from io import BytesIO
 
@@ -15,6 +18,9 @@ from PIL import ImageDraw, ImageFont
 
 from helpers.stitching import stitch_images
 
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
 TOKEN = "MTE1MTQ0MTUwMjk1NDg0ODMwNw.GtRAIh.YBUChh8QJi3Cs8jeFbuE18kRJYrAwiCpcxcnz8"
 
 intents = discord.Intents.default()
@@ -29,6 +35,34 @@ trade_requests = {}
 # Instantiate the queue
 trade_queue = queue.Queue()
 
+response_file_path = "shared/ipc_communication.txt"
+
+def read_file_contents(path):
+    with open(path, 'r') as file:
+        return file.read()
+
+def file_has_changed(path, last_mod_time):
+    try:
+        current_mod_time = os.stat(path).st_mtime
+        if current_mod_time != last_mod_time:
+            contents = read_file_contents(path)
+            return True, current_mod_time, contents
+        else:
+            return False, current_mod_time, None
+    except FileNotFoundError:
+        return None, None, None  # Indicate the file is not accessible
+
+def monitor_file_changes(path_to_watch, interval=1):
+    last_mod_time = os.stat(path_to_watch).st_mtime
+
+    while True:
+        changed, new_mod_time, contents = file_has_changed(path_to_watch, last_mod_time)
+        if changed is None:  # File not found or inaccessible
+            return  # Stop the generator
+        if changed:
+            yield contents  # Yield the new contents of the file
+            last_mod_time = new_mod_time
+        time.sleep(interval)
 
 @bot.event
 async def on_ready():
@@ -632,58 +666,43 @@ async def pay_fee_real(ctx, in_game_id: str):
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
+
     from helpers.has_paid_gold_fee import has_user_paid_fee
 
     if has_user_paid_fee(ctx.author.id, ctx.channel.id):
         await ctx.send("You have already paid the gold fee.")
         return
-    try:
-        print(
-            f"http://127.0.0.1:8051/gold_fee/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
-        )
-        # Construct the API endpoint URL
-        api_endpoint = f"http://127.0.0.1:8051/gold_fee/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+    # Construct the API endpoint URL
+    api_endpoint = f"http://127.0.0.1:8051/gold_fee/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
 
-        # Make the API request
-        response = requests.get(api_endpoint, stream=True)
+    # Make the API request
+    response = requests.get(api_endpoint)
+    if response.status_code != 200:
+        await ctx.send(f"Failed to complete the trade. Error {response.status_code}: {response.text}")
+        return
+    
+    await ctx.send(response.text)
 
-        for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
-            # Check if the request was successful
-            if response.status_code == 200:
-                data = chunk
-                if "TradeBot ready" == data:
-                    await ctx.send(
-                        "Sending",
-                        in_game_id,
-                        'a trade request in "`The Bard'
-                        + "'s"
-                        + 'Theater #1`" trading channel',
-                    )
-                elif "TradeBot is starting. Please wait 2 minutes." == data:
-                    await ctx.send(
-                        "TradeBot is starting. Please wait 2 minutes. Message @asdgew if this problem persists."
-                    )
-                elif "Successfully collected fee!" == data:
-                    await ctx.send(
-                        f"TradeBot successfully collected fee from {in_game_id}!"
-                    )
-                    return
-                else:
-                    await ctx.send(data)
-                    return
+    path_to_monitor = "shared/ipc_communication.txt"
+    polling_interval = 1  # seconds
+
+    # Every time the data in ipc_communication.txt is changed this will run again.
+    # It will run forever untill stopped.
+    for data in monitor_file_changes(path_to_monitor, polling_interval):
+        try:
+            print(data)
+            if "Successfully collected fee!" == data:
+                await ctx.send(f"TradeBot successfully collected fee from {in_game_id}!")
+                return
             else:
-                await ctx.send(
-                    f"Failed to complete the trade. Trading bot is not online. Please message @asdgew."
-                )
-                await ctx.send(
-                    f"Failed to complete the trade. Error {response.status_code}: {response.text}"
-                )
+                await ctx.send(data)
+                return
+        except Exception as e:
+            print(e)
+            await ctx.send("Unexpected error occurred. Please message @asdgew")
 
-    except Exception as e:
-        print(e)
-        await ctx.send(f"Unexpected error occurred. Please message @asdgew")
-        # await ctx.send(f"Unexpected error occurred: {str(e)}")
-
+        print("Test6")
+    return
 
 @bot.command(name="deposit")
 async def deposit(ctx, in_game_id: str):
@@ -715,52 +734,38 @@ async def deposit_real(ctx, in_game_id: str):
         )
         return
 
-    try:
-        print(
-            f"http://127.0.0.1:8051/deposit/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
-        )
-        # Construct the API endpoint URL
-        api_endpoint = f"http://127.0.0.1:8051/deposit/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
 
-        # Make the API request
-        response = requests.get(api_endpoint, stream=True)
+    # Construct the API endpoint URL
+    api_endpoint = f"http://127.0.0.1:8051/deposit/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
 
-        for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
-            # Check if the request was successful
-            if response.status_code == 200:
-                data = chunk
-                if "TradeBot ready" == data:
-                    await ctx.send(
-                        "Sending",
-                        in_game_id,
-                        'a trade request in "`The Bard'
-                        + "'s"
-                        + 'Theater #1`" trading channel',
-                    )
-                elif "TradeBot is starting. Please wait 2 minutes." == data:
-                    await ctx.send(
-                        "TradeBot is starting. Please wait 2 minutes. Message @asdgew if this problem persists."
-                    )
-                elif "Trade successful":
-                    await ctx.send(
-                        f"Items from trader {ctx.author.name}, are now stored!"
-                    )
-                    return
-                else:
-                    await ctx.send(data)
-                    return
+    # Make the API request
+    response = requests.get(api_endpoint)
+    if response.status_code != 200:
+        await ctx.send(f"Failed to complete the trade. Error {response.status_code}: {response.text}")
+        return
+    
+    await ctx.send(response.text)
+
+    path_to_monitor = "shared/ipc_communication.txt"
+    polling_interval = 1  # seconds
+
+    # Every time the data in ipc_communication.txt is changed this will run again.
+    # It will run forever untill stopped.
+    for data in monitor_file_changes(path_to_monitor, polling_interval):
+        try:
+            print(data)
+            if "Trade successful" == data:
+                await ctx.send(f"Items from trader {ctx.author.name}, are now stored!")
+                return
             else:
-                await ctx.send(
-                    f"Failed to complete the trade. Trading bot is not online. Please message @asdgew."
-                )
-                await ctx.send(
-                    f"Failed to complete the trade. Error {response.status_code}: {response.text}"
-                )
+                await ctx.send(data)
+                return
+        except Exception as e:
+            print(e)
+            await ctx.send("Unexpected error occurred. Please message @asdgew")
 
-    except Exception as e:
-        print(e)
-        await ctx.send(f"Unexpected error occurred. Please message @asdgew")
-        # await ctx.send(f"Unexpected error occurred: {str(e)}")
+        print("Test6")
+    return
 
 
 @bot.command(name="claim-items")
@@ -1035,6 +1040,14 @@ def delete_records_by_channel(channel_id):
     conn.close()
 
     print(f"Records associated with channel_id {channel_id} deleted successfully!")
+
+
+response_file_path = "shared/ipc_communication.txt"
+
+
+# Clear the contents of the file
+with open(response_file_path, 'w'):
+    pass
 
 
 bot.run(TOKEN)
