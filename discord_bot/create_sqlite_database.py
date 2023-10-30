@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS trades (
     trader1_paid BOOLEAN DEFAULT 0,
     trader2_paid BOOLEAN DEFAULT 0,
     status TEXT DEFAULT 'ongoing',
+    locked BOOLEAN DEFAULT 0,
     FOREIGN KEY (trader1_id) REFERENCES traders(id),
     FOREIGN KEY (trader2_id) REFERENCES traders(id)
 );
