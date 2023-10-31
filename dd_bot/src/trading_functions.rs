@@ -1564,12 +1564,12 @@ pub fn claim_gold(
         .output()
         .expect("Failed to execute command");
 
-    // If it went through, subtract the total amount of gold from the trader_gold_traded and return Ok(String::from("Successfully went through")).
+    // If it went through, add the total amount of gold to the trader_gold_received and return Ok(String::from("Successfully went through")).
     match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
         Ok(_) => {
             println!("Successfully clicked button!");
             // Does not update database
-            // This will subtract the gold just traded from the total
+            // This will add the gold just traded to the total received
             match database_functions::add_gold_received_to_trader(
                 &trader.discord_channel_id,
                 &other_trader.unwrap().discord_id,
@@ -1580,9 +1580,9 @@ pub fn claim_gold(
                     return Ok(String::from("Trade successful"));
                 }
                 Err(err) => {
-                    println!("Error subtracting gold from trader. \nError:\n{}", err);
+                    println!("Error adding gold for trader. \nError:\n{}", err);
                     return_to_lobby();
-                    return Err(String::from("Error subtracting gold from trader"));
+                    return Err(String::from("Error adding gold for trader"));
                 }
             }
         }
@@ -1951,12 +1951,12 @@ pub fn return_gold(
         .output()
         .expect("Failed to execute command");
 
-    // If it went through, subtract the total amount of gold from the trader_gold_traded and return Ok(String::from("Successfully went through")).
+    // If it went through, add the total amount of gold to the trader_gold_received and return Ok(String::from("Successfully went through")).
     match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
         Ok(_) => {
             println!("Successfully clicked button!");
             // Does not update database
-            // This will subtract the gold just traded from the total
+            // This will add the gold just traded to the total received
             match database_functions::add_gold_received_to_trader(
                 &trader.discord_channel_id,
                 &trader.discord_id,
@@ -1967,9 +1967,9 @@ pub fn return_gold(
                     return Ok(String::from("Trade successful"));
                 }
                 Err(err) => {
-                    println!("Error subtracting gold from trader. \nError:\n{}", err);
+                    println!("Error adding gold for trader. \nError:\n{}", err);
                     return_to_lobby();
-                    return Err(String::from("Error subtracting gold from trader"));
+                    return Err(String::from("Error adding gold for trader"));
                 }
             }
         }
