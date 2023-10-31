@@ -90,6 +90,7 @@ pub fn has_paid_fee(channel_id: &str, user_id: &str) -> Result<bool> {
     Ok(false)
 }
 
+// Returns true if the trade can be canceled, return false if not
 pub fn cancel_trade_check(discord_id: &str, channel_id: &str) -> Result<bool> {
     let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
