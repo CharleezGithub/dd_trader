@@ -2505,7 +2505,7 @@ pub fn return_items(
         println!("Test43");
         println!("Changing the items statuses from 'in escrow' to 'traded'!");
         for (info_url, item_url) in in_window_items {
-            match database_functions::set_item_status_by_urls(item_url, info_url, "traded") {
+            match database_functions::set_item_status_by_urls(item_url, info_url, "returned") {
                 Ok(_) => println!("Changed the item status for 1 item!"),
                 Err(err) => println!("Got error while changing item status. Error: \n{}", err),
             }
