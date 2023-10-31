@@ -21,7 +21,7 @@ pub fn get_links_for_user(channel_id: &str, user_id: &str) -> Result<(Vec<String
     } else {
         return Err(rusqlite::Error::QueryReturnedNoRows); // Or consider providing a custom error message
     };
-    
+
     // Fetch item and info links using trader_id
     let mut stmt = conn.prepare(
         "
@@ -49,7 +49,6 @@ pub fn get_links_for_user(channel_id: &str, user_id: &str) -> Result<(Vec<String
     Ok((item_links, info_links))
 }
 
-
 pub fn has_paid_fee(channel_id: &str, user_id: &str) -> Result<bool> {
     let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
@@ -68,7 +67,7 @@ pub fn has_paid_fee(channel_id: &str, user_id: &str) -> Result<bool> {
     } else {
         return Ok(false); // Or consider Err to indicate that user is not found
     };
-    
+
     // Check the paid status in trades using trader_id
     let mut stmt = conn.prepare(
         "
@@ -77,7 +76,7 @@ pub fn has_paid_fee(channel_id: &str, user_id: &str) -> Result<bool> {
         WHERE channel_id = ?1 AND (trader1_id = ?2 OR trader2_id = ?2)
         ",
     )?;
-    
+
     let mut rows = stmt.query(params![channel_id, trader_id])?;
 
     if let Some(row) = rows.next()? {
@@ -91,6 +90,156 @@ pub fn has_paid_fee(channel_id: &str, user_id: &str) -> Result<bool> {
     Ok(false)
 }
 
+pub fn cancel_trade_check(discord_id: &str, channel_id: &str) -> Result<bool> {
+    let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
+
+    // True if trader1, false if trader2
+    let mut trader_1_or_2 = true;
+
+    let mut gold_in_escrow = false;
+
+    let mut items_in_escrow = false;
+
+    // Find out if trader_id is trader1 or trader2
+    // Get trader's internal ID using discord_id (user_id)
+    let trader_id: i32 = conn.query_row(
+        "
+        SELECT id
+        FROM traders
+        WHERE discord_id = ?1
+        ",
+        params![discord_id],
+        |row| row.get(0),
+    )?;
+    let mut stmt = conn.prepare(
+        "
+        SELECT trader1_id, trader2_id
+        FROM trades
+        WHERE channel_id = ?1
+        ",
+    )?;
+
+    let mut rows = stmt.query(params![channel_id])?;
+    
+    if let Some(row) = rows.next()? {
+        let (trader1_id, trader2_id): (i32, i32) = (row.get(0)?, row.get(1)?);
+
+        if trader_id == trader1_id {
+            trader_1_or_2 = true;
+        }
+        else if trader_id == trader2_id {
+            trader_1_or_2 = false;
+            
+        }
+    }
+
+    
+    // Check if any gold has been claimed and
+    // Check if there is any gold left to 
+    let mut stmt = conn.prepare(
+        "
+        SELECT trader1_gold_received, trader2_gold_received, trader1_gold_traded, trader2_gold_traded
+        FROM trades
+        WHERE channel_id = ?1
+        ",
+    )?;
+
+    let mut rows = stmt.query(params![channel_id])?;
+
+    if let Some(row) = rows.next()? {
+        let (trader1_gold_claimed, trader2_gold_claimed, trader1_gold_traded, trader2_gold_traded): (i32, i32, i32, i32) = (row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?);
+
+        if trader_1_or_2 || trader1_gold_traded > 30 {
+            gold_in_escrow = true;
+        }
+        else if !trader_1_or_2 || trader2_gold_traded > 30 {
+            gold_in_escrow = true;
+        }
+
+        if trader1_gold_claimed > 30 || trader2_gold_claimed > 30 {
+            return Ok(false);
+        }
+    }
+
+    // Check if any items have been claimed
+    // Get trader1_id and trader2_id
+    let mut stmt = conn.prepare(
+        "
+        SELECT trader1_id, trader2_id
+        FROM trades
+        WHERE channel_id = ?1
+        ",
+    )?;
+
+    let mut rows = stmt.query(params![channel_id])?;
+
+    if let Some(row) = rows.next()? {
+        let (trader1_id, trader2_id): (i32, i32) = (row.get(0)?, row.get(1)?);
+
+        // Check if at least one item or over 30 gold have been traded to the bot
+        // Else there is no reason to send anything back because there is nothing to send
+        let trader1_item_escorw_count: i32 = conn.query_row(
+            "SELECT COUNT(*)
+        FROM items
+        JOIN trades ON items.trade_id = trades.id
+        JOIN traders ON items.trader_id = traders.id
+        WHERE items.status = 'in_escrow'
+        AND trades.channel_id = ?1
+        AND traders.discord_id = ?2",
+            params![channel_id, trader1_id],
+            |row| row.get(0),
+        )?;
+        let trader2_item_escorw_count: i32 = conn.query_row(
+            "SELECT COUNT(*)
+        FROM items
+        JOIN trades ON items.trade_id = trades.id
+        JOIN traders ON items.trader_id = traders.id
+        WHERE items.status = 'in_escrow'
+        AND trades.channel_id = ?1
+        AND traders.discord_id = ?2",
+            params![channel_id, trader2_id],
+            |row| row.get(0),
+        )?;
+
+        if trader_1_or_2 || trader1_item_escorw_count > 0 {
+            items_in_escrow = true;
+        }
+        else if !trader_1_or_2 || trader2_item_escorw_count > 0 {
+            items_in_escrow = true;
+        }
+
+
+        let trader1_count: i32 = conn.query_row(
+            "SELECT COUNT(*)
+            FROM items
+            JOIN trades ON items.trade_id = trades.id
+            JOIN traders ON items.trader_id = traders.id
+            WHERE items.status = 'traded'
+            AND trades.channel_id = ?1
+            AND traders.discord_id = ?2",
+            params![channel_id, trader1_id],
+            |row| row.get(0),
+        )?;
+        let trader2_count: i32 = conn.query_row(
+            "SELECT COUNT(*)
+            FROM items
+            JOIN trades ON items.trade_id = trades.id
+            JOIN traders ON items.trader_id = traders.id
+            WHERE items.status = 'traded'
+            AND trades.channel_id = ?1
+            AND traders.discord_id = ?2",
+            params![channel_id, trader2_id],
+            |row| row.get(0),
+        )?;
+        if trader1_count > 0 || trader2_count > 0 {
+            return Ok(false);
+        }
+    }
+    if !gold_in_escrow || !items_in_escrow{
+        return Ok(false);
+    }
+    Ok(true)
+}
 
 pub fn get_gold_for_user(channel_id: &str, user_id: &str) -> Result<i32> {
     let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
@@ -134,8 +283,11 @@ pub fn get_gold_for_user(channel_id: &str, user_id: &str) -> Result<i32> {
     Err(rusqlite::Error::QueryReturnedNoRows)
 }
 
-
-pub fn set_gold_fee_status(channel_id: &str, user_id: &str, has_paid: bool) -> Result<(), rusqlite::Error> {
+pub fn set_gold_fee_status(
+    channel_id: &str,
+    user_id: &str,
+    has_paid: bool,
+) -> Result<(), rusqlite::Error> {
     let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
     // Identify the trader id for the user
@@ -147,7 +299,7 @@ pub fn set_gold_fee_status(channel_id: &str, user_id: &str, has_paid: bool) -> R
         ",
     )?;
     let mut rows = stmt.query(params![user_id])?;
-    
+
     let trader_id: i64 = if let Some(row) = rows.next()? {
         row.get(0)?
     } else {
@@ -163,7 +315,7 @@ pub fn set_gold_fee_status(channel_id: &str, user_id: &str, has_paid: bool) -> R
         ",
     )?;
     let mut rows = stmt.query(params![channel_id])?;
-    
+
     if let Some(row) = rows.next()? {
         let (trader1_id, trader2_id): (i64, i64) = (row.get(0)?, row.get(1)?);
 
@@ -312,7 +464,11 @@ pub fn items_in_escrow_count(trader: &Trader) -> Result<i32> {
     Ok(count)
 }
 
-pub fn add_gold_to_trader(channel_id: &String, discord_id: &String, gold_to_add: i32) -> Result<()> {
+pub fn add_gold_to_trader(
+    channel_id: &String,
+    discord_id: &String,
+    gold_to_add: i32,
+) -> Result<()> {
     let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
     // Determine whether the user is trader1 or trader2 in the channel
@@ -354,7 +510,11 @@ pub fn add_gold_to_trader(channel_id: &String, discord_id: &String, gold_to_add:
     }
 }
 
-pub fn add_gold_received_to_trader(channel_id: &String, discord_id: &String, gold_to_add: i32) -> Result<()> {
+pub fn add_gold_received_to_trader(
+    channel_id: &String,
+    discord_id: &String,
+    gold_to_add: i32,
+) -> Result<()> {
     let conn = Connection::open("C:/Users/Alex/Desktop/VSCode/dd_trader/trading_bot.db")?;
 
     // Determine whether the user is trader1 or trader2 in the channel
