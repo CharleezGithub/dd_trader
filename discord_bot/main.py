@@ -535,18 +535,25 @@ async def cancel_trade(ctx):
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
-    
+
     check = cancel_trade_check(ctx.author.id, ctx.channel.id)
 
     if not check:
-        await ctx.send(
-            "This trade is not eligable for cancellation at this time."
-        )
-        await ctx.send(
-            "Message @asdgew if there has been a mistake."
-        )
+        await ctx.send("This trade is not eligable for cancellation at this time.")
+        await ctx.send("Message @asdgew if there has been a mistake.")
         return
 
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE trades
+        SET status = 'canceled'
+        WHERE channel_id = ?
+        """,
+        (ctx.channel.id,),
+    )
 
 
 @bot.command(name="add-gold")
