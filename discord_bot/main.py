@@ -120,6 +120,9 @@ async def help_command(ctx, *, command_name=None):
         embed.add_field(
             name="!add-items", value="Adds items to the current trade.", inline=True
         )
+        embed.add_field(
+            name="!cancel-trade", value="Cancel the current trade.", inline=True
+        )
 
         # Commands that interact with the game
         embed.add_field(
@@ -140,6 +143,11 @@ async def help_command(ctx, *, command_name=None):
         embed.add_field(
             name="!claim-items in_game_name",
             value="Claim items that you've traded for from the in-game bot.",
+            inline=True,
+        )
+        embed.add_field(
+            name="!claim-gold in_game_name",
+            value="Claim gold that you've traded for from the in-game bot.",
             inline=True,
         )
         embed.add_field(
@@ -251,6 +259,14 @@ async def help_command(ctx, *, command_name=None):
             embed = discord.Embed(
                 title="!claim-gold [in_game_name]",
                 description="Claim the gold you've accumulated from a trade. DarkerBot will transfer the gold to your in-game account.",
+                color=0x55A7F7,
+            )
+            embed.add_field(name="Usage", value="!claim-gold [in_game_name]")
+            await ctx.send(embed=embed)
+        elif command_name.lower() in ["cancel-trade", "!cancel-trade"]:
+            embed = discord.Embed(
+                title="!cancel-trade",
+                description="Cancel the trade. You can only cancel the trade if no items or gold have been claimed by either trader.\nAfter canceling the trade do !return-items [in_game_name] and or !return-gold [in_game_name]",
                 color=0x55A7F7,
             )
             embed.add_field(name="Usage", value="!claim-gold [in_game_name]")
@@ -1047,53 +1063,29 @@ async def return_gold_real(ctx, in_game_id: str):
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
-
-    # Check if all the gold in the trade has been traded
-    from helpers.traded_gold_match import check_gold
-
-    result = check_gold(ctx.channel.id)
-    # Check the status of the result
-    has_enough_gold, traders_missing = result
-
-    if traders_missing is None:
-        print("Both traders have paid.")
-    elif isinstance(traders_missing, str):  # It's an error message
-        print(traders_missing)
-    else:  # It's a list of discord IDs
-        if len(traders_missing) == 1:
-            # Fetch the user
-            try:
-                user = await bot.fetch_user(int(traders_missing[0]))
-                user_name = user.name
-            except discord.NotFound:
-                user_name = "Unknown User"
-            print(f"Trader {user_name}, has not traded all their gold yet.")
-            await ctx.send(f"Trader {user_name}, has not traded all their gold yet.")
-            return
-        else:
-            trader_names = []
-            for i, trader in enumerate(traders_missing):
-                # Fetch the user
-                try:
-                    user = await bot.fetch_user(int(traders_missing[i]))
-                    user_name = user.name
-                except discord.NotFound:
-                    user_name = "Unknown User"
-
-                trader_names.append(user_name)
-
-            print(
-                f"Traders {', '.join(trader_names)}, have not traded all their gold yet."
-            )
-            await ctx.send(
-                f"Traders {', '.join(trader_names)}, have not traded all their gold yet."
-            )
-            return
-
     # Check if the trade is canceled
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT status
+        FROM trades
+        WHERE channel_id = ?
+        """,
+        (ctx.channel.id)
+        )
+    
+    status = cursor.fetchone()
+
+    if status != "canceled":
+        await ctx.send(
+            "The trade has not yet been canceled. Do !cancel-trade first and try again."
+        )
+        return
 
     # Construct the API endpoint URL
-    api_endpoint = f"http://127.0.0.1:8051/claim_gold/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+    api_endpoint = f"http://127.0.0.1:8051/return_gold/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
 
     # Make the API request
     response = requests.get(api_endpoint)
@@ -1115,7 +1107,7 @@ async def return_gold_real(ctx, in_game_id: str):
             print(data)
             if "Trade successful" == data:
                 await ctx.send(
-                    f"TradeBot successfully traded gold to {ctx.author.name}!"
+                    f"TradeBot successfully returned gold to {ctx.author.name}!"
                 )
                 return
             else:
@@ -1126,6 +1118,73 @@ async def return_gold_real(ctx, in_game_id: str):
             await ctx.send("Unexpected error occurred. Please message @asdgew")
 
         print("Test6")
+    return
+
+
+@bot.command(name="return-items")
+async def return_items(ctx, in_game_id: str):
+    trade_queue.put(return_items_real(ctx, in_game_id))
+
+
+async def return_items_real(ctx, in_game_id: str):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+    # Check if the trade is canceled
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT status
+        FROM trades
+        WHERE channel_id = ?
+        """,
+        (ctx.channel.id)
+        )
+    
+    status = cursor.fetchone()
+
+    if status != "canceled":
+        await ctx.send(
+            "The trade has not yet been canceled. Do !cancel-trade first and try again."
+        )
+        return
+
+    # Construct the API endpoint URL
+    api_endpoint = f"http://127.0.0.1:8051/return_items/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+
+    # Make the API request
+    response = requests.get(api_endpoint)
+    if response.status_code != 200:
+        await ctx.send(
+            f"Failed to complete the trade. Error {response.status_code}: {response.text}"
+        )
+        return
+
+    await ctx.send(response.text)
+
+    path_to_monitor = "shared/ipc_communication.txt"
+    polling_interval = 1  # seconds
+
+    # Every time the data in ipc_communication.txt is changed this will run again.
+    # It will run forever untill stopped.
+    for data in monitor_file_changes(path_to_monitor, polling_interval):
+        try:
+            print(data)
+            if "Trade successful" == data:
+                await ctx.send(
+                    f"TradeBot successfully returned items to {ctx.author.name}!"
+                )
+                return
+            else:
+                await ctx.send(data)
+                return
+        except Exception as e:
+            print(e)
+            await ctx.send("Unexpected error occurred. Please message @asdgew")
     return
 
 
