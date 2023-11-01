@@ -345,8 +345,159 @@ fn claim_gold(
             ) {
                 Ok(_) => return String::from("Trade successful!"),
                 Err(err) => {
+                    if err == String::from("No gold left in escrow") {
+                        return String::from("All gold traded");
+                    }
+                    return err;
+                }
+            }
+        })
+        .await;
+
+        tokio::task::yield_now().await;
+
+        // Log the result or handle it further, based on requirements
+        match result {
+            Ok(s) => {
+                let _ = update_status(s.as_str());
+                println!("Trade result: {}", s);
+            }
+            Err(e) => {
+                let _ = update_status(format!("{:?}", e).as_str());
+                eprintln!("Trade error: {:?}", e)
+            }
+        }
+    });
+
+    // Return a response indicating the trade request is in progress
+    format!("Sending `{}` a trade request in `The Bard's Theater #1` trading channel", in_game_id)
+}
+
+#[get("/return_items/<in_game_id>/<discord_channel_id>/<discord_id>")]
+fn return_items(
+    in_game_id: String,
+    discord_channel_id: &str,
+    discord_id: &str,
+    enigo: &State<Arc<Mutex<Enigo>>>,
+    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
+    traders_container: &State<Arc<Mutex<TradersContainer>>>,
+) -> String {
+    {
+        let mut traders = traders_container.lock().unwrap();
+        traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id, discord_channel_id);
+    }
+
+    // Check the bot status before proceeding
+    let info = bot_info.lock().unwrap();
+    match info.ready {
+        ReadyState::False => {
+            update_status("TradeBot not ready").unwrap();
+            return String::from("TradeBot not ready");
+        },
+        ReadyState::Starting => {
+            update_status("TradeBot is starting. Please wait 2 minutes.").unwrap();
+            return String::from("TradeBot is starting. Please wait 2 minutes.");
+        },
+        ReadyState::True => {
+            update_status("TradeBot ready").unwrap();
+        },
+    }
+
+    // Dereference `State` and clone the inner `Arc`.
+    let enigo_cloned = enigo.inner().clone();
+    let bot_info_cloned = bot_info.inner().clone();
+    let traders_container_cloned = traders_container.inner().clone();
+    let in_game_id_cloned = in_game_id.clone();
+
+    // Spawning a new asynchronous task
+    tokio::spawn(async move {
+        // Using spawn_blocking to handle potential blocking/synchronous code
+        let result = tokio::task::spawn_blocking(move || {
+            match trading_functions::return_items(
+                enigo_cloned,
+                bot_info_cloned,
+                in_game_id_cloned.as_ref(),
+                traders_container_cloned,
+            ) {
+                Ok(_) => return String::from("Trade successful!"),
+                Err(err) => {
                     if err == String::from("No items left in escrow") {
                         return String::from("All items traded");
+                    }
+                    return err;
+                }
+            }
+        })
+        .await;
+
+        tokio::task::yield_now().await;
+
+        // Log the result or handle it further, based on requirements
+        match result {
+            Ok(s) => {
+                let _ = update_status(s.as_str());
+                println!("Trade result: {}", s);
+            }
+            Err(e) => {
+                let _ = update_status(format!("{:?}", e).as_str());
+                eprintln!("Trade error: {:?}", e)
+            }
+        }
+    });
+
+    // Return a response indicating the trade request is in progress
+    format!("Sending `{}` a trade request in `The Bard's Theater #1` trading channel", in_game_id)
+}
+
+#[get("/return_gold/<in_game_id>/<discord_channel_id>/<discord_id>")]
+fn return_gold(
+    in_game_id: String,
+    discord_channel_id: &str,
+    discord_id: &str,
+    enigo: &State<Arc<Mutex<Enigo>>>,
+    bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
+    traders_container: &State<Arc<Mutex<TradersContainer>>>,
+) -> String {
+    {
+        let mut traders = traders_container.lock().unwrap();
+        traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id, discord_channel_id);
+    }
+
+    // Check the bot status before proceeding
+    let info = bot_info.lock().unwrap();
+    match info.ready {
+        ReadyState::False => {
+            update_status("TradeBot not ready").unwrap();
+            return String::from("TradeBot not ready");
+        },
+        ReadyState::Starting => {
+            update_status("TradeBot is starting. Please wait 2 minutes.").unwrap();
+            return String::from("TradeBot is starting. Please wait 2 minutes.");
+        },
+        ReadyState::True => {
+            update_status("TradeBot ready").unwrap();
+        },
+    }
+
+    let enigo_cloned = enigo.inner().clone();
+    let bot_info_cloned = bot_info.inner().clone();
+    let traders_container_cloned = traders_container.inner().clone();
+    let in_game_id_cloned = in_game_id.clone();
+
+    // Spawning a new asynchronous task
+    tokio::spawn(async move {
+        // Using spawn_blocking to handle potential blocking/synchronous code
+        let result = tokio::task::spawn_blocking(move || {
+            match trading_functions::return_gold(
+                enigo_cloned,
+                bot_info_cloned,
+                in_game_id_cloned.as_ref(),
+                traders_container_cloned,
+            ) {
+                Ok(_) => return String::from("Trade successful!"),
+                Err(err) => {
+                    if err == String::from("No gold left in escrow") {
+                        return String::from("All gold traded");
                     }
                     return err;
                 }
@@ -403,7 +554,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
         .manage(enigo) // Add the enigo as managed state
         .manage(bot_info) // Add the bot_info as managed state
         .manage(traders_container) // Add the traders_container as managed state
-        .mount("/", routes![gold_fee, deposit, claim_items, claim_gold])
+        .mount("/", routes![gold_fee, deposit, claim_items, claim_gold, return_items, return_gold])
 }
 
 #[rocket::main]
