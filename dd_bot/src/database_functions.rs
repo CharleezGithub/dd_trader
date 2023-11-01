@@ -179,7 +179,7 @@ pub fn cancel_trade_check(discord_id: &str, channel_id: &str) -> Result<bool> {
 
         // Check if at least one item or over 30 gold have been traded to the bot
         // Else there is no reason to send anything back because there is nothing to send
-        let trader1_item_escorw_count: i32 = conn.query_row(
+        let trader1_item_escrow_count: i32 = conn.query_row(
             "SELECT COUNT(*)
         FROM items
         JOIN trades ON items.trade_id = trades.id
@@ -190,7 +190,7 @@ pub fn cancel_trade_check(discord_id: &str, channel_id: &str) -> Result<bool> {
             params![channel_id, trader1_id],
             |row| row.get(0),
         )?;
-        let trader2_item_escorw_count: i32 = conn.query_row(
+        let trader2_item_escrow_count: i32 = conn.query_row(
             "SELECT COUNT(*)
         FROM items
         JOIN trades ON items.trade_id = trades.id
@@ -202,10 +202,10 @@ pub fn cancel_trade_check(discord_id: &str, channel_id: &str) -> Result<bool> {
             |row| row.get(0),
         )?;
 
-        if trader_1_or_2 || trader1_item_escorw_count > 0 {
+        if trader_1_or_2 && trader1_item_escrow_count > 0 {
             items_in_escrow = true;
         }
-        else if !trader_1_or_2 || trader2_item_escorw_count > 0 {
+        else if !trader_1_or_2 && trader2_item_escrow_count > 0 {
             items_in_escrow = true;
         }
 
