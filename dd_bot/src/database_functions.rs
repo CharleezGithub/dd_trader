@@ -150,10 +150,10 @@ pub fn cancel_trade_check(discord_id: &str, channel_id: &str) -> Result<bool> {
     if let Some(row) = rows.next()? {
         let (trader1_gold_claimed, trader2_gold_claimed, trader1_gold_traded, trader2_gold_traded): (i32, i32, i32, i32) = (row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?);
 
-        if trader_1_or_2 || trader1_gold_traded > 30 {
+        if trader_1_or_2 && trader1_gold_traded > 30 {
             gold_in_escrow = true;
         }
-        else if !trader_1_or_2 || trader2_gold_traded > 30 {
+        else if !trader_1_or_2 && trader2_gold_traded > 30 {
             gold_in_escrow = true;
         }
 
