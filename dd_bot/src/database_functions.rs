@@ -136,7 +136,7 @@ pub fn cancel_trade_check(discord_id: &str, channel_id: &str) -> Result<bool> {
 
     
     // Check if any gold has been claimed and
-    // Check if there is any gold left to 
+    // Check if there is any gold left to
     let mut stmt = conn.prepare(
         "
         SELECT trader1_gold_received, trader2_gold_received, trader1_gold_traded, trader2_gold_traded

@@ -1009,6 +1009,234 @@ async def claim_gold_real(ctx, in_game_id: str):
     return
 
 
+@bot.command(name="return-gold")
+async def return_gold(ctx, in_game_id: str):
+    trade_queue.put(return_gold_real(ctx, in_game_id))
+
+
+async def return_gold_real(ctx, in_game_id: str):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+
+    # Check if all the gold in the trade has been traded
+    from helpers.traded_gold_match import check_gold
+
+    result = check_gold(ctx.channel.id)
+    # Check the status of the result
+    has_enough_gold, traders_missing = result
+
+    if traders_missing is None:
+        print("Both traders have paid.")
+    elif isinstance(traders_missing, str):  # It's an error message
+        print(traders_missing)
+    else:  # It's a list of discord IDs
+        if len(traders_missing) == 1:
+            # Fetch the user
+            try:
+                user = await bot.fetch_user(int(traders_missing[0]))
+                user_name = user.name
+            except discord.NotFound:
+                user_name = "Unknown User"
+            print(f"Trader {user_name}, has not traded all their gold yet.")
+            await ctx.send(f"Trader {user_name}, has not traded all their gold yet.")
+            return
+        else:
+            trader_names = []
+            for i, trader in enumerate(traders_missing):
+                # Fetch the user
+                try:
+                    user = await bot.fetch_user(int(traders_missing[i]))
+                    user_name = user.name
+                except discord.NotFound:
+                    user_name = "Unknown User"
+
+                trader_names.append(user_name)
+
+            print(
+                f"Traders {', '.join(trader_names)}, have not traded all their gold yet."
+            )
+            await ctx.send(
+                f"Traders {', '.join(trader_names)}, have not traded all their gold yet."
+            )
+            return
+
+    # Check if the trade is canceled
+
+    # Construct the API endpoint URL
+    api_endpoint = f"http://127.0.0.1:8051/claim_gold/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
+
+    # Make the API request
+    response = requests.get(api_endpoint)
+    if response.status_code != 200:
+        await ctx.send(
+            f"Failed to complete the trade. Error {response.status_code}: {response.text}"
+        )
+        return
+
+    await ctx.send(response.text)
+
+    path_to_monitor = "shared/ipc_communication.txt"
+    polling_interval = 1  # seconds
+
+    # Every time the data in ipc_communication.txt is changed this will run again.
+    # It will run forever untill stopped.
+    for data in monitor_file_changes(path_to_monitor, polling_interval):
+        try:
+            print(data)
+            if "Trade successful" == data:
+                await ctx.send(
+                    f"TradeBot successfully traded gold to {ctx.author.name}!"
+                )
+                return
+            else:
+                await ctx.send(data)
+                return
+        except Exception as e:
+            print(e)
+            await ctx.send("Unexpected error occurred. Please message @asdgew")
+
+        print("Test6")
+    return
+
+
+# Returns true if the trade can be canceled, return false if not
+def cancel_trade_check(discord_id, channel_id) -> bool:
+    trader_1_or_2 = True
+
+    gold_in_escrow = False
+    items_in_escrow = False
+
+    # Connect to the database
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    # Find out if trader_id is trader1 or trader2
+    # Get trader's internal ID using discord_id (user_id)
+    cursor.execute(
+        """
+        SELECT id
+        FROM traders
+        WHERE discord_id = ?
+        """,
+        (discord_id,),
+    )
+    trader_id = cursor.fetchone()
+
+    cursor.execute(
+        """
+        SELECT trader1_id, trader2_id
+        FROM trades
+        WHERE channel_id = ?
+    """,
+        (channel_id,),
+    )
+
+    trader1_id, trader2_id = cursor.fetchall()
+
+    if trader_id == trader1_id:
+        trader_1_or_2 = True
+    elif trader_id == trader2_id:
+        trader_1_or_2 = False
+
+    # Check if any gold has been claimed and
+    # Check if there is any gold left to
+    cursor.execute(
+        """
+        SELECT trader1_gold_received, trader2_gold_received, trader1_gold_traded, trader2_gold_traded
+        FROM trades
+        WHERE channel_id = ?
+        """,
+        (channel_id,),
+    )
+
+    (
+        trader1_gold_claimed,
+        trader2_gold_claimed,
+        trader1_gold_traded,
+        trader2_gold_traded,
+    ) = cursor.fetchall()
+
+    if trader_1_or_2 and trader1_gold_traded > 30:
+        gold_in_escrow = True
+    elif not trader_1_or_2 and trader2_gold_traded > 30:
+        gold_in_escrow = True
+
+    if trader1_gold_claimed > 30 or trader2_gold_claimed > 30:
+        return False
+
+    # Check if at least one item or over 30 gold have been traded to the bot
+    # Else there is no reason to send anything back because there is nothing to send
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM items
+        JOIN trades ON items.trade_id = trades.id
+        JOIN traders ON items.trader_id = traders.id
+        WHERE items.status = 'in_escrow'
+        AND trades.channel_id = ?1
+        AND traders.discord_id = ?2,
+        """,
+        (channel_id, trader1_id),
+    )
+    trader1_item_escrow_count = cursor.fetchall()
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM items
+        JOIN trades ON items.trade_id = trades.id
+        JOIN traders ON items.trader_id = traders.id
+        WHERE items.status = 'in_escrow'
+        AND trades.channel_id = ?1
+        AND traders.discord_id = ?2,
+        """,
+        (channel_id, trader2_id),
+    )
+    trader2_item_escrow_count = cursor.fetchall()
+
+    if trader_1_or_2 and trader1_item_escrow_count > 0:
+        items_in_escrow = True
+    elif not trader_1_or_2 and trader2_item_escrow_count > 0:
+        items_in_escrow = True
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM items
+        JOIN trades ON items.trade_id = trades.id
+        JOIN traders ON items.trader_id = traders.id
+        WHERE items.status = 'traded'
+        AND trades.channel_id = ?1
+        AND traders.discord_id = ?2,
+        """,
+        (channel_id, trader1_id),
+    )
+    trader1_count = cursor.fetchall()
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM items
+        JOIN trades ON items.trade_id = trades.id
+        JOIN traders ON items.trader_id = traders.id
+        WHERE items.status = 'traded'
+        AND trades.channel_id = ?1
+        AND traders.discord_id = ?2,
+        """,
+        (channel_id, trader2_id),
+    )
+    trader2_count = cursor.fetchall()
+    if trader1_count > 0 or trader2_count > 0:
+        return False
+
+    if not gold_in_escrow or not items_in_escrow:
+        return False
+    return True
+
+
 # Deletes all records that have anything to do with that channel. (Keeps users)
 def delete_records_by_channel(channel_id):
     # Connect to the database
