@@ -525,12 +525,32 @@ async def show_trade(ctx):
         conn.close()
 
 
+@bot.command(name="cancel-trade")
+async def cancel_trade(ctx):
+    """Cancel a trade"""
+
+    # Ensure the command is used in the "Middleman Trades" category
+    if ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+    
+    check = cancel_trade_check(ctx.author.id, ctx.channel.id)
+
+    if not check:
+        await ctx.send(
+            "This trade is not eligable for cancellation at this time."
+        )
+        await ctx.send(
+            "Message @asdgew if there has been a mistake."
+        )
+        return
+
+
+
 @bot.command(name="add-gold")
 async def add_gold(ctx, gold: int):
-    trade_queue.put(add_gold_real(ctx, gold))
-
-
-async def add_gold_real(ctx, gold: int):
     """Add gold to a specific trade."""
 
     # Ensure the command is used in the "Middleman Trades" category
