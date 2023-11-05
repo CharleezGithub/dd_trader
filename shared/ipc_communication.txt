@@ -1,1 +1,1 @@
-TradeBot ready
+JoinError::Panic(Id(54), ...)
