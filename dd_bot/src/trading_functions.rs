@@ -563,7 +563,6 @@ pub fn deposit(
         Ok(_) => {
             println!("Trader accepted the trade!")
         }
-        // Might not work...
         Err(_) => {
             println!("User did not accept trade.");
             // GO TO LOBBY
