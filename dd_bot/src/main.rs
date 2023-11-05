@@ -1,4 +1,4 @@
-use std::str;
+use std::{str, result};
 use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 
@@ -208,7 +208,7 @@ fn deposit(
     // Spawn the trading function in a non-blocking way
     tokio::spawn(async move {
         // Any code that runs here is non-blocking to the main thread
-        let _ = tokio::task::spawn_blocking(move || {
+        let result = tokio::task::spawn_blocking(move || {
             trading_functions::deposit(
                 (&enigo_cloned).into(),
                 (&bot_info_cloned).into(),
@@ -216,6 +216,20 @@ fn deposit(
                 (&traders_container_cloned).into(),
             )
         }).await.unwrap_or_else(|e| Err(e.to_string())); // Handle errors
+
+        tokio::task::yield_now().await;
+
+        // Log the result or handle it further, based on requirements
+        match result {
+            Ok(s) => {
+                let _ = update_status(s.as_str());
+                println!("Trade result: {}", s);
+            }
+            Err(e) => {
+                let _ = update_status(format!("{:?}", e).as_str());
+                eprintln!("Trade error: {:?}", e)
+            }
+        }
     });
 
     // Return a response indicating the trade request is in progress
