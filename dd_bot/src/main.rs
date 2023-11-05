@@ -61,7 +61,7 @@ impl TradersContainer {
         match self {
             TradersContainer::ActiveTraders(traders) => traders
                 .iter()
-                .find(|trader| trader.in_game_id == in_game_id),
+                .find(|trader| trader.in_game_id.to_lowercase() == in_game_id.to_lowercase()),
         }
     }
 
