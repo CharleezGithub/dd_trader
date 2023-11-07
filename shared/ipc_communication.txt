@@ -1,1 +1,1 @@
-JoinError::Panic(Id(54), ...)
+Trade successful
