@@ -699,6 +699,51 @@ async def add_items(ctx, *args: str):
     await ctx.send(f"Added {len(args)//2} item(s) to this trade!")
 
 
+@bot.command(name="lock-trade")
+async def lock_trade(ctx):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+
+    # Check if the trade is canceled
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT status, locked
+        FROM trades
+        WHERE channel_id = ?
+        """,
+        (ctx.channel.id),
+    )
+    (status, locked) = cursor.fetchall()
+
+    if status == "canceled":
+        await ctx.send("The trade been canceled.")
+        return
+    elif locked:
+        await ctx.send(
+            "The trade is already locked."
+        )
+        return
+    
+    cursor.execute(
+        """
+        UPDATE trades
+        SET locked = 1
+        WHERE channel_id = ?
+        """,
+        (ctx.channel.id),
+    )
+    await ctx.send(
+        "Trade has been locked!"
+    )
+    return
+
+
 @bot.command(name="pay-fee")
 async def pay_fee(ctx, in_game_id: str):
     trade_queue.put(pay_fee_real(ctx, in_game_id))
@@ -731,7 +776,7 @@ async def pay_fee_real(ctx, in_game_id: str):
         return
     elif not locked:
         await ctx.send(
-            "The trade is not locked. In order to continue the trade a trader has to do !lock in order for the trade to continue."
+            "The trade is not locked. In order to continue the trade a trader has to do !lock-trade in order for the trade to continue."
         )
         return
 
@@ -811,7 +856,7 @@ async def deposit_real(ctx, in_game_id: str):
         return
     elif not locked:
         await ctx.send(
-            "The trade is not locked. In order to continue the trade a trader has to do !lock in order for the trade to continue."
+            "The trade is not locked. In order to continue the trade a trader has to do !lock-trade in order for the trade to continue."
         )
         return
 
@@ -903,7 +948,7 @@ async def claim_items_real(ctx, in_game_id: str):
         return
     elif not locked:
         await ctx.send(
-            "The trade is not locked. In order to continue the trade a trader has to do !lock in order for the trade to continue."
+            "The trade is not locked. In order to continue the trade a trader has to do !lock-trade in order for the trade to continue."
         )
         return
 
@@ -1038,7 +1083,7 @@ async def claim_gold_real(ctx, in_game_id: str):
         return
     elif not locked:
         await ctx.send(
-            "The trade is not locked. In order to continue the trade a trader has to do !lock in order for the trade to continue."
+            "The trade is not locked. In order to continue the trade a trader has to do !lock-trade in order for the trade to continue."
         )
         return
 
