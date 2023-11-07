@@ -766,6 +766,26 @@ async def deposit_real(ctx, in_game_id: str):
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
+
+    # Check if the trade is canceled
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT status
+        FROM trades
+        WHERE channel_id = ?
+        """,
+        (ctx.channel.id),
+    )
+
+    status = cursor.fetchone()
+
+    if status == "canceled":
+        await ctx.send("The trade been canceled.")
+        return
+
     from helpers.has_paid_gold_fee import has_user_paid_fee
 
     if not has_user_paid_fee(ctx.author.id, ctx.channel.id):
@@ -832,6 +852,25 @@ async def claim_items_real(ctx, in_game_id: str):
         await ctx.send(
             "This command can only be used within the 'Middleman Trades' category!"
         )
+        return
+
+    # Check if the trade is canceled
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT status
+        FROM trades
+        WHERE channel_id = ?
+        """,
+        (ctx.channel.id),
+    )
+
+    status = cursor.fetchone()
+
+    if status == "canceled":
+        await ctx.send("The trade been canceled.")
         return
 
     # Check if all the gold in the trade has been traded to the bot or claimed by trader.
@@ -943,6 +982,25 @@ async def claim_gold_real(ctx, in_game_id: str):
         await ctx.send(
             "This command can only be used within the 'Middleman Trades' category!"
         )
+        return
+
+    # Check if the trade is canceled
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT status
+        FROM trades
+        WHERE channel_id = ?
+        """,
+        (ctx.channel.id),
+    )
+
+    status = cursor.fetchone()
+
+    if status == "canceled":
+        await ctx.send("The trade been canceled.")
         return
 
     # Check if all the gold in the trade has been traded
@@ -1073,9 +1131,9 @@ async def return_gold_real(ctx, in_game_id: str):
         FROM trades
         WHERE channel_id = ?
         """,
-        (ctx.channel.id)
-        )
-    
+        (ctx.channel.id),
+    )
+
     status = cursor.fetchone()
 
     if status != "canceled":
@@ -1142,9 +1200,9 @@ async def return_items_real(ctx, in_game_id: str):
         FROM trades
         WHERE channel_id = ?
         """,
-        (ctx.channel.id)
-        )
-    
+        (ctx.channel.id),
+    )
+
     status = cursor.fetchone()
 
     if status != "canceled":
