@@ -717,17 +717,22 @@ async def pay_fee_real(ctx, in_game_id: str):
 
     cursor.execute(
         """
-        SELECT status
+        SELECT status, locked
         FROM trades
         WHERE channel_id = ?
         """,
         (ctx.channel.id),
     )
 
-    status = cursor.fetchone()
+    (status, locked) = cursor.fetchall()
 
     if status == "canceled":
         await ctx.send("The trade been canceled.")
+        return
+    elif not locked:
+        await ctx.send(
+            "The trade is not locked. In order to continue the trade a trader has to do !lock in order for the trade to continue."
+        )
         return
 
     from helpers.has_paid_gold_fee import has_user_paid_fee
@@ -792,17 +797,22 @@ async def deposit_real(ctx, in_game_id: str):
 
     cursor.execute(
         """
-        SELECT status
+        SELECT status, locked
         FROM trades
         WHERE channel_id = ?
         """,
         (ctx.channel.id),
     )
 
-    status = cursor.fetchone()
+    (status, locked) = cursor.fetchall()
 
     if status == "canceled":
         await ctx.send("The trade been canceled.")
+        return
+    elif not locked:
+        await ctx.send(
+            "The trade is not locked. In order to continue the trade a trader has to do !lock in order for the trade to continue."
+        )
         return
 
     from helpers.has_paid_gold_fee import has_user_paid_fee
@@ -879,17 +889,22 @@ async def claim_items_real(ctx, in_game_id: str):
 
     cursor.execute(
         """
-        SELECT status
+        SELECT status, locked
         FROM trades
         WHERE channel_id = ?
         """,
         (ctx.channel.id),
     )
 
-    status = cursor.fetchone()
+    (status, locked) = cursor.fetchall()
 
     if status == "canceled":
         await ctx.send("The trade been canceled.")
+        return
+    elif not locked:
+        await ctx.send(
+            "The trade is not locked. In order to continue the trade a trader has to do !lock in order for the trade to continue."
+        )
         return
 
     # Check if all the gold in the trade has been traded to the bot or claimed by trader.
@@ -1009,17 +1024,22 @@ async def claim_gold_real(ctx, in_game_id: str):
 
     cursor.execute(
         """
-        SELECT status
+        SELECT status, locked
         FROM trades
         WHERE channel_id = ?
         """,
         (ctx.channel.id),
     )
 
-    status = cursor.fetchone()
+    (status, locked) = cursor.fetchall()
 
     if status == "canceled":
         await ctx.send("The trade been canceled.")
+        return
+    elif not locked:
+        await ctx.send(
+            "The trade is not locked. In order to continue the trade a trader has to do !lock in order for the trade to continue."
+        )
         return
 
     # Check if all the gold in the trade has been traded
