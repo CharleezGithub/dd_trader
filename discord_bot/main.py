@@ -29,6 +29,17 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 # Dictionary to store trade requests. Format: {requester_id: requestee_id}
 trade_requests = {}
 
+# Dict to store unlock requests from traders. It requires both traders to unlock a trade.
+# Format:
+"""
+{
+    "channel_id_1": ["discord_id_of_trader1", "discord_id_of_trader2"],
+    "channel_id_2": ["discord_id_of_trader3"],
+    # ... additional entries for other trade channels
+}
+"""
+unlock_requests = {}
+
 # Instantiate the queue
 trade_queue = queue.Queue()
 
@@ -743,6 +754,31 @@ async def lock_trade(ctx):
     )
     return
 
+@bot.command(name="unlock-trade")
+async def request_unlock(ctx, channel_id: str):
+    discord_id = str(ctx.author.id) # Discord ID of the user who initiated the request
+    # Check if there is already an unlock request for this channel
+    if channel_id in unlock_requests:
+        # Add the user to the unlock request if they are not already in it
+        if discord_id not in unlock_requests[channel_id]:
+            unlock_requests[channel_id].append(discord_id)
+            # If both traders have requested unlock, perform the unlock
+            if len(unlock_requests[channel_id]) == 2:
+                conn = sqlite3.connect("trading_bot.db")
+                cursor = conn.cursor()
+                # Unlock the trade by setting the 'locked' field to 0 (False)
+                cursor.execute("UPDATE trades SET locked = 0 WHERE channel_id = ?", (channel_id,))
+                conn.commit()
+                conn.close()
+                await ctx.send("Trade has been unlocked!")
+                # Clear the unlock request as it is no longer needed
+                del unlock_requests[channel_id]
+            else:
+                await ctx.send("Unlock request has been noted. Waiting for the other trader.")
+    else:
+        # Start a new unlock request with the current user
+        unlock_requests[channel_id] = [discord_id]
+        await ctx.send("Unlock request has been initiated. Waiting for the other trader.")
 
 @bot.command(name="pay-fee")
 async def pay_fee(ctx, in_game_id: str):
