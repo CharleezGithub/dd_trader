@@ -965,7 +965,7 @@ async def deposit_real(ctx, in_game_id: str):
         (ctx.channel.id,),
     )
 
-    (status, locked) = cursor.fetchall()
+    (status, locked) = cursor.fetchone()
 
     if status == "canceled":
         await ctx.send("The trade been canceled.")
