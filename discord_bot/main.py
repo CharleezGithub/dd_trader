@@ -798,6 +798,12 @@ async def request_unlock(ctx, channel_id: str):
 
 @bot.command(name="end-trade")
 async def end_trade(ctx):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+    
     result = end_trade_check(ctx.channel.id)
 
     if not result:
@@ -819,6 +825,12 @@ async def end_trade(ctx):
 
 @bot.command(name="reset-deletion")
 async def reset_deletion(ctx):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+    
     if ctx.channel.id in channels_to_be_deleted.keys():
         await ctx.send("You cannot reset the deletion time for this trade.")
         return
