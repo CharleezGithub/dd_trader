@@ -1154,6 +1154,11 @@ async def claim_items_real(ctx, in_game_id: str):
                 await ctx.send(
                     f"TradeBot successfully traded items to {ctx.author.name}!"
                 )
+
+                result = end_trade_check(ctx.channel.id)
+                if result == True:
+                    await ctx.send("This trade looks to be complete!\nDo !end-trade in order to end this trade.")
+
                 return
             else:
                 await ctx.send(data)
@@ -1297,6 +1302,11 @@ async def claim_gold_real(ctx, in_game_id: str):
                 await ctx.send(
                     f"TradeBot successfully traded gold to {ctx.author.name}!"
                 )
+
+                result = end_trade_check(ctx.channel.id)
+                if result == True:
+                    await ctx.send("This trade looks to be complete!\nDo !end-trade in order to end this trade.")
+
                 return
             else:
                 await ctx.send(data)
@@ -1366,6 +1376,11 @@ async def return_gold_real(ctx, in_game_id: str):
                 await ctx.send(
                     f"TradeBot successfully returned gold to {ctx.author.name}!"
                 )
+
+                result = end_trade_check(ctx.channel.id)
+                if result == True:
+                    await ctx.send("This trade looks to be complete!\nDo !end-trade in order to end this trade.")
+
                 return
             else:
                 await ctx.send(data)
@@ -1435,6 +1450,11 @@ async def return_items_real(ctx, in_game_id: str):
                 await ctx.send(
                     f"TradeBot successfully returned items to {ctx.author.name}!"
                 )
+
+                result = end_trade_check(ctx.channel.id)
+                if result == True:
+                    await ctx.send("This trade looks to be complete!\nDo !end-trade in order to end this trade.")
+
                 return
             else:
                 await ctx.send(data)
