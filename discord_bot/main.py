@@ -1525,6 +1525,38 @@ def delete_records_by_channel(channel_id):
     print(f"Records associated with channel_id {channel_id} deleted successfully!")
 
 
+# Returns False if trade cannot be closed and True if it can be
+def close_trade_check(channel_id) -> bool:
+    try:
+        # Connect to the database
+        conn = sqlite3.connect("trading_bot.db")
+        cursor = conn.cursor()
+
+        # Item status check
+        cursor.execute("SELECT id FROM trades WHERE channel_id=?", (channel_id,))
+        trade_id = cursor.fetchone()
+
+        cursor.execute("SELECT status FROM items WHERE trade_id = ?", (trade_id,))
+
+        item_statuses = cursor.fetchall()
+
+        for status in item_statuses:
+            if status == "ongoing" or status == "in escrow":
+                return False
+
+        # Gold status check
+        cursor.execute("SELECT trader1_gold, trader2_gold, trader1_gold_traded, trader2_gold_traded FROM trades WHERE channel_id = ?", (channel_id,))
+
+        (trader1_gold, trader2_gold, trader1_gold_traded, trader2_gold_traded) = cursor.fetchone()
+
+        if trader1_gold > 30 or trader2_gold > 30 or trader1_gold_traded > 30 or trader2_gold_traded > 30:
+            return False
+    except:
+        return False
+    return True
+
+
+
 response_file_path = "shared/ipc_communication.txt"
 
 
