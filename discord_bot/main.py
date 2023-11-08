@@ -771,6 +771,12 @@ async def lock_trade(ctx):
 
 @bot.command(name="unlock-trade")
 async def request_unlock(ctx, channel_id: str):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+    
     discord_id = str(ctx.author.id) # Discord ID of the user who initiated the request
     # Check if there is already an unlock request for this channel
     if channel_id in unlock_requests:
