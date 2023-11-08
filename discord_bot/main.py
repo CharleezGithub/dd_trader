@@ -759,7 +759,7 @@ async def lock_trade(ctx):
         """,
         (ctx.channel.id,),
     )
-    (status, locked) = cursor.fetchall()
+    (status, locked) = cursor.fetchone() or (None, None)
 
     if status == "canceled":
         await ctx.send("The trade been canceled.")
@@ -885,7 +885,7 @@ async def pay_fee_real(ctx, in_game_id: str):
         (ctx.channel.id,),
     )
 
-    (status, locked) = cursor.fetchall()
+    (status, locked) = cursor.fetchone() or (None, None)
 
     if status == "canceled":
         await ctx.send("The trade been canceled.")
@@ -1057,7 +1057,7 @@ async def claim_items_real(ctx, in_game_id: str):
         (ctx.channel.id,),
     )
 
-    (status, locked) = cursor.fetchall()
+    (status, locked) = cursor.fetchone() or (None, None)
 
     if status == "canceled":
         await ctx.send("The trade been canceled.")
@@ -1197,7 +1197,7 @@ async def claim_gold_real(ctx, in_game_id: str):
         (ctx.channel.id,),
     )
 
-    (status, locked) = cursor.fetchall()
+    (status, locked) = cursor.fetchone() or (None, None)
 
     if status == "canceled":
         await ctx.send("The trade been canceled.")
@@ -1498,7 +1498,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         (channel_id,),
     )
 
-    trader1_id, trader2_id = cursor.fetchall()
+    trader1_id, trader2_id = cursor.fetchone() or (None, None)
 
     if trader_id == trader1_id:
         trader_1_or_2 = True
@@ -1521,7 +1521,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         trader2_gold_claimed,
         trader1_gold_traded,
         trader2_gold_traded,
-    ) = cursor.fetchall()
+    ) = cursor.cursor.fetchone() or (None, None, None, None)
 
     if trader_1_or_2 and trader1_gold_traded > 30:
         gold_in_escrow = True
