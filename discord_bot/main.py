@@ -49,6 +49,19 @@ trade_queue = queue.Queue()
 
 response_file_path = "shared/ipc_communication.txt"
 
+def delete_ended_trade_channels():
+    while True:
+        try:
+            for channel_id, deletion_time_unix in channels_to_be_deleted:
+                if time.time() > deletion_time_unix:
+                    channel = bot.get_channel(channel_id)
+                    channel.delete()
+        except Exception as e:
+            print("Error looking through dict.\nError:", e)
+        time.sleep(120)
+
+t = threading.Thread(delete_ended_trade_channels, deamon=True)
+t.start()
 
 def read_file_contents(path):
     with open(path, "r") as file:
