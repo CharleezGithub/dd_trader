@@ -132,6 +132,9 @@ async def help_command(ctx, *, command_name=None):
             name="!add-items", value="Adds items to the current trade.", inline=True
         )
         embed.add_field(
+            name="!end-trade", value="End the current trade. ", inline=True
+        )
+        embed.add_field(
             name="!cancel-trade", value="Cancel the current trade.", inline=True
         )
 
@@ -278,6 +281,14 @@ async def help_command(ctx, *, command_name=None):
             embed = discord.Embed(
                 title="!cancel-trade",
                 description="Cancel the trade. You can only cancel the trade if no items or gold have been claimed by either trader.\nAfter canceling the trade do !return-items [in_game_name] and or !return-gold [in_game_name]",
+                color=0x55A7F7,
+            )
+            embed.add_field(name="Usage", value="!claim-gold [in_game_name]")
+            await ctx.send(embed=embed)
+        elif command_name.lower() in ["end-trade", "!end-trade"]:
+            embed = discord.Embed(
+                title="!end-trade",
+                description="End the trade. This command will close the trade. You can only end a trade if there are no items pending.\nIf you wish to cancel the trade, to !cancel-trade.",
                 color=0x55A7F7,
             )
             embed.add_field(name="Usage", value="!claim-gold [in_game_name]")
@@ -779,6 +790,11 @@ async def request_unlock(ctx, channel_id: str):
         # Start a new unlock request with the current user
         unlock_requests[channel_id] = [discord_id]
         await ctx.send("Unlock request has been initiated. Waiting for the other trader.")
+
+
+@bot.command(name="")
+async def pay_fee(ctx, in_game_id: str):
+
 
 @bot.command(name="pay-fee")
 async def pay_fee(ctx, in_game_id: str):
