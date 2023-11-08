@@ -60,7 +60,7 @@ def delete_ended_trade_channels():
             print("Error looking through dict.\nError:", e)
         time.sleep(120)
 
-t = threading.Thread(delete_ended_trade_channels, deamon=True)
+t = threading.Thread(target=delete_ended_trade_channels, deamon=True)
 t.start()
 
 def read_file_contents(path):
@@ -756,7 +756,7 @@ async def lock_trade(ctx):
         FROM trades
         WHERE channel_id = ?
         """,
-        (ctx.channel.id),
+        (ctx.channel.id,),
     )
     (status, locked) = cursor.fetchall()
 
@@ -775,7 +775,7 @@ async def lock_trade(ctx):
         SET locked = 1
         WHERE channel_id = ?
         """,
-        (ctx.channel.id),
+        (ctx.channel.id,),
     )
     await ctx.send(
         "Trade has been locked!"
@@ -881,7 +881,7 @@ async def pay_fee_real(ctx, in_game_id: str):
         FROM trades
         WHERE channel_id = ?
         """,
-        (ctx.channel.id),
+        (ctx.channel.id,),
     )
 
     (status, locked) = cursor.fetchall()
@@ -961,7 +961,7 @@ async def deposit_real(ctx, in_game_id: str):
         FROM trades
         WHERE channel_id = ?
         """,
-        (ctx.channel.id),
+        (ctx.channel.id,),
     )
 
     (status, locked) = cursor.fetchall()
@@ -1053,7 +1053,7 @@ async def claim_items_real(ctx, in_game_id: str):
         FROM trades
         WHERE channel_id = ?
         """,
-        (ctx.channel.id),
+        (ctx.channel.id,),
     )
 
     (status, locked) = cursor.fetchall()
@@ -1193,7 +1193,7 @@ async def claim_gold_real(ctx, in_game_id: str):
         FROM trades
         WHERE channel_id = ?
         """,
-        (ctx.channel.id),
+        (ctx.channel.id,),
     )
 
     (status, locked) = cursor.fetchall()
@@ -1340,7 +1340,7 @@ async def return_gold_real(ctx, in_game_id: str):
         FROM trades
         WHERE channel_id = ?
         """,
-        (ctx.channel.id),
+        (ctx.channel.id,),
     )
 
     status = cursor.fetchone()
@@ -1414,7 +1414,7 @@ async def return_items_real(ctx, in_game_id: str):
         FROM trades
         WHERE channel_id = ?
         """,
-        (ctx.channel.id),
+        (ctx.channel.id,),
     )
 
     status = cursor.fetchone()
