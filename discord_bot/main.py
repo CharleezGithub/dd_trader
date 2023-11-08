@@ -40,6 +40,10 @@ trade_requests = {}
 """
 unlock_requests = {}
 
+# Stores channels and their time to be deleted. They are set to be deleted 1 hour after a user requests to end a trade
+# Format: {channel_id: 1 hour ahead in unix time}
+channels_to_be_deleted = {}
+
 # Instantiate the queue
 trade_queue = queue.Queue()
 
@@ -792,8 +796,36 @@ async def request_unlock(ctx, channel_id: str):
         await ctx.send("Unlock request has been initiated. Waiting for the other trader.")
 
 
-@bot.command(name="")
-async def pay_fee(ctx, in_game_id: str):
+@bot.command(name="end-trade")
+async def end_trade(ctx):
+    result = end_trade_check(ctx.channel.id)
+
+    if not result:
+        await ctx.send("Trade cannot end at this current time. Do !show-trade to check if any gold or items are pending to be traded.")
+        return
+
+    # Archive trade
+    from helpers.archive import archive_trades_by_channel
+
+    archive_trades_by_channel(ctx.channel.id)
+
+    # Delete from active database
+    delete_records_by_channel(ctx.channel.id)
+
+    channels_to_be_deleted[ctx.channel.id] = time.time() + 1 * 60 * 60
+
+    await ctx.send("The trade has now been ended Successfully!\nThis channel will be deleted in exactly one hour from now.\nIf you wish to reset this timer do !reset-deletion")
+
+
+@bot.command(name="reset-deletion")
+async def reset_deletion(ctx):
+    if ctx.channel.id in channels_to_be_deleted.keys():
+        await ctx.send("You cannot reset the deletion time for this trade.")
+        return
+
+    channels_to_be_deleted[ctx.channel.id] = time.time() + 1 * 60 * 60
+
+    await ctx.send("This channel's deletion schedule has been reset to one hour from now!")
 
 
 @bot.command(name="pay-fee")
@@ -1542,7 +1574,7 @@ def delete_records_by_channel(channel_id):
 
 
 # Returns False if trade cannot be closed and True if it can be
-def close_trade_check(channel_id) -> bool:
+def end_trade_check(channel_id) -> bool:
     try:
         # Connect to the database
         conn = sqlite3.connect("trading_bot.db")
