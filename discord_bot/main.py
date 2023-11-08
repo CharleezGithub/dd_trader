@@ -60,7 +60,8 @@ def delete_ended_trade_channels():
             print("Error looking through dict.\nError:", e)
         time.sleep(120)
 
-t = threading.Thread(target=delete_ended_trade_channels, deamon=True)
+t = threading.Thread(target=delete_ended_trade_channels)
+t.setDaemon(True)
 t.start()
 
 def read_file_contents(path):
