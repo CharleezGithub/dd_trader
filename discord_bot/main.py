@@ -782,7 +782,7 @@ async def lock_trade(ctx):
     )
 
     conn.close()
-    
+
     await ctx.send(
         "Trade has been locked!"
     )
@@ -892,6 +892,8 @@ async def pay_fee_real(ctx, in_game_id: str):
 
     (status, locked) = cursor.fetchone() or (None, None)
 
+    conn.close()
+
     if status == "canceled":
         await ctx.send("The trade been canceled.")
         return
@@ -971,6 +973,8 @@ async def deposit_real(ctx, in_game_id: str):
     )
 
     (status, locked) = cursor.fetchone()
+
+    conn.close()
 
     if status == "canceled":
         await ctx.send("The trade been canceled.")
@@ -1063,6 +1067,8 @@ async def claim_items_real(ctx, in_game_id: str):
     )
 
     (status, locked) = cursor.fetchone() or (None, None)
+
+    conn.close()
 
     if status == "canceled":
         await ctx.send("The trade been canceled.")
@@ -1203,6 +1209,8 @@ async def claim_gold_real(ctx, in_game_id: str):
     )
 
     (status, locked) = cursor.fetchone() or (None, None)
+
+    conn.close()
 
     if status == "canceled":
         await ctx.send("The trade been canceled.")
@@ -1351,11 +1359,14 @@ async def return_gold_real(ctx, in_game_id: str):
 
     status = cursor.fetchone()
 
+    conn.close()
+    
     if status != "canceled":
         await ctx.send(
             "The trade has not yet been canceled. Do !cancel-trade first and try again."
         )
         return
+    
 
     # Construct the API endpoint URL
     api_endpoint = f"http://127.0.0.1:8051/return_gold/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
@@ -1430,6 +1441,8 @@ async def return_items_real(ctx, in_game_id: str):
             "The trade has not yet been canceled. Do !cancel-trade first and try again."
         )
         return
+
+
 
     # Construct the API endpoint URL
     api_endpoint = f"http://127.0.0.1:8051/return_items/{in_game_id}/{ctx.channel.id}/{ctx.author.id}"
@@ -1598,6 +1611,9 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         (channel_id, trader2_id),
     )
     trader2_count = cursor.fetchall()
+
+    conn.close()
+
     if trader1_count > 0 or trader2_count > 0:
         return False
 
@@ -1653,6 +1669,8 @@ def end_trade_check(channel_id) -> bool:
         cursor.execute("SELECT trader1_gold, trader2_gold, trader1_gold_traded, trader2_gold_traded FROM trades WHERE channel_id = ?", (channel_id,))
 
         (trader1_gold, trader2_gold, trader1_gold_traded, trader2_gold_traded) = cursor.fetchone()
+
+        conn.close()
 
         if trader1_gold > 30 or trader2_gold > 30 or trader1_gold_traded > 30 or trader2_gold_traded > 30:
             return False
