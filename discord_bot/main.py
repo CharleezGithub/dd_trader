@@ -611,6 +611,8 @@ async def cancel_trade(ctx):
         (ctx.channel.id,),
     )
 
+    conn.close()
+
 
 @bot.command(name="add-gold")
 async def add_gold(ctx, gold: int):
@@ -778,6 +780,9 @@ async def lock_trade(ctx):
         """,
         (ctx.channel.id,),
     )
+
+    conn.close()
+    
     await ctx.send(
         "Trade has been locked!"
     )
