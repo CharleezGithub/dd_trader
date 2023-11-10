@@ -611,6 +611,8 @@ async def cancel_trade(ctx):
         (ctx.channel.id,),
     )
 
+
+    conn.commit()
     conn.close()
 
 
@@ -780,7 +782,8 @@ async def lock_trade(ctx):
         """,
         (ctx.channel.id,),
     )
-
+    
+    conn.commit()
     conn.close()
 
     await ctx.send(
