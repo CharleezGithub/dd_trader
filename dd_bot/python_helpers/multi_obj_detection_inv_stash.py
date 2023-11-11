@@ -9,6 +9,7 @@ sensitive = False
 cool = False
 super_cool = False
 fast = False
+super_fast = False
 
 # Will grayscale both the image and the screenshot if True.
 grayscale = False
@@ -26,6 +27,8 @@ elif len(sys.argv) > 2:
             super_cool = True
         elif arg.strip() == "F":
             fast = True
+        elif arg.strip() == "SF":
+            super_fast = True
         elif arg.strip() == "G":
             grayscale = True
 else:
@@ -46,6 +49,8 @@ else:
 
 if fast:
     max_tries = 5
+elif super_fast:
+    max_tries = 2
 else:
     max_tries = 240
 

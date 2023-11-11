@@ -469,6 +469,7 @@ pub fn deposit(
     // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
     enigo.mouse_click(MouseButton::Left);
 
+    
     // Download 1 image set into temp_images folder at a time and check for a match
     let info_vec = &trader.unwrap().info_images;
     let item_vec = &trader.unwrap().item_images;
@@ -491,7 +492,7 @@ pub fn deposit(
             .arg("python_helpers/multi_obj_detection_narrow.py")
             .arg("temp_images/item/image.png")
             .arg("SC")
-            .arg("F")
+            .arg("SF")
             .arg("G")
             .output()
             .expect("Failed to execute command");
