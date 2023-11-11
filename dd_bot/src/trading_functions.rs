@@ -2102,7 +2102,7 @@ pub fn return_items(
         // Convert the output bytes to a string
         let output_str = {
             let output = Command::new("python")
-                .arg("python_helpers/multi_obj_detection.py")
+                .arg("python_helpers/multi_obj_detection_inv_stash.py")
                 .arg("temp_images/item/image.png")
                 .arg("SC")
                 .arg("F")
@@ -2131,7 +2131,7 @@ pub fn return_items(
 
             println!("Test4");
             let output_retry = Command::new("python")
-                .arg("python_helpers/multi_obj_detection_narrow.py")
+                .arg("python_helpers/multi_obj_detection_inv_stash.py")
                 .arg("temp_images/item/image.png")
                 .arg("SC")
                 .arg("F")
