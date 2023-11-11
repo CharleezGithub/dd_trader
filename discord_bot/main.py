@@ -99,7 +99,7 @@ async def on_ready():
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
     await bot.change_presence(
         activity=discord.Game(
-            name="!help - Keeping the trading community happy and healthy"
+            name="!help - Most advanced DaD bot.\nKeeping the trading community happy and healthy :)"
         )
     )
     # This endless loop runs the functions in the que with a first in first out principle. In the future there will be priority que for paying members hopefully.
