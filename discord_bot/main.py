@@ -875,6 +875,12 @@ async def reset_deletion(ctx):
 
 @bot.command(name="pay-fee")
 async def pay_fee(ctx, in_game_id: str):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+    
     trade_queue.put(pay_fee_real(ctx, in_game_id))
 
 
@@ -957,6 +963,11 @@ async def pay_fee_real(ctx, in_game_id: str):
 
 @bot.command(name="deposit")
 async def deposit(ctx, in_game_id: str):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
     trade_queue.put(deposit_real(ctx, in_game_id))
 
 
@@ -1051,6 +1062,11 @@ async def deposit_real(ctx, in_game_id: str):
 
 @bot.command(name="claim-items")
 async def claim_items(ctx, in_game_id: str):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
     trade_queue.put(claim_items_real(ctx, in_game_id))
 
 
@@ -1193,6 +1209,11 @@ async def claim_items_real(ctx, in_game_id: str):
 
 @bot.command(name="claim-gold")
 async def claim_gold(ctx, in_game_id: str):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
     trade_queue.put(claim_gold_real(ctx, in_game_id))
 
 
@@ -1343,6 +1364,11 @@ async def claim_gold_real(ctx, in_game_id: str):
 
 @bot.command(name="return-gold")
 async def return_gold(ctx, in_game_id: str):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
     trade_queue.put(return_gold_real(ctx, in_game_id))
 
 
@@ -1420,6 +1446,11 @@ async def return_gold_real(ctx, in_game_id: str):
 
 @bot.command(name="return-items")
 async def return_items(ctx, in_game_id: str):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
     trade_queue.put(return_items_real(ctx, in_game_id))
 
 
