@@ -1542,7 +1542,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         trader2_gold_claimed,
         trader1_gold_traded,
         trader2_gold_traded,
-    ) = cursor.cursor.fetchone() or (None, None, None, None)
+    ) = cursor.fetchone() or (None, None, None, None)
 
     if trader_1_or_2 and trader1_gold_traded > 30:
         gold_in_escrow = True
