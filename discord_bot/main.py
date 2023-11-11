@@ -183,8 +183,13 @@ async def help_command(ctx, *, command_name=None):
             inline=True,
         )
         embed.add_field(
-            name="!claim-gold in_game_name",
-            value="Claim gold that you've traded for from the in-game bot.",
+            name="!return-items in_game_name",
+            value="Return items that you've traded to the in-game bot.",
+            inline=True,
+        )
+        embed.add_field(
+            name="!return-gold in_game_name",
+            value="Return gold that you've traded to the in-game bot.",
             inline=True,
         )
 
