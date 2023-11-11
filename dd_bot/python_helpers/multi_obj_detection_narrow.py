@@ -42,7 +42,7 @@ if sensitive:
 elif cool:
     limit = 0.70
 elif super_cool:
-    limit = 0.40
+    limit = 0.55
 else:
     limit = 0.90
 

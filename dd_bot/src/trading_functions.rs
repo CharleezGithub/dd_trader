@@ -458,6 +458,8 @@ pub fn deposit(
         // Convert the output bytes to a string
         let output_str = str::from_utf8(&output.stdout).unwrap().trim();
 
+        println!("detected items: \n{}", output_str);
+
         // Split the string on newlines to get the list of coordinates
         let coords: Vec<&str> = output_str.split('\n').collect();
 
