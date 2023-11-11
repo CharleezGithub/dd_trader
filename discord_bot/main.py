@@ -1564,9 +1564,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         WHERE items.status = 'in_escrow'
         AND trades.channel_id = ?
         AND traders.discord_id = ?,
-        """,
-        (channel_id, trader1_id),
-    )
+        """, (channel_id, trader1_id))
     trader1_item_escrow_count = cursor.fetchall()
 
     cursor.execute(
