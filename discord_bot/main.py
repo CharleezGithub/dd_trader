@@ -1563,7 +1563,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         JOIN traders ON items.trader_id = traders.id
         WHERE items.status = 'in_escrow'
         AND trades.channel_id = ?
-        AND traders.discord_id = ?,
+        AND traders.discord_id = ?
         """, (channel_id, trader1_id))
     trader1_item_escrow_count = cursor.fetchall()
 
@@ -1575,7 +1575,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         JOIN traders ON items.trader_id = traders.id
         WHERE items.status = 'in_escrow'
         AND trades.channel_id = ?
-        AND traders.discord_id = ?,
+        AND traders.discord_id = ?
         """,
         (channel_id, trader2_id),
     )
@@ -1594,7 +1594,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         JOIN traders ON items.trader_id = traders.id
         WHERE items.status = 'traded'
         AND trades.channel_id = ?
-        AND traders.discord_id = ?,
+        AND traders.discord_id = ?
         """,
         (channel_id, trader1_id),
     )
@@ -1607,7 +1607,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         JOIN traders ON items.trader_id = traders.id
         WHERE items.status = 'traded'
         AND trades.channel_id = ?
-        AND traders.discord_id = ?,
+        AND traders.discord_id = ?
         """,
         (channel_id, trader2_id),
     )
