@@ -561,11 +561,10 @@ pub fn deposit(
                         }
                     }
 
-                    // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it wont wait for 4 minutes of there is no match
                     let output = Command::new("python")
                         .arg("python_helpers/obj_detection.py")
                         .arg("temp_images/info/image.png")
-                        .arg("F")
+                        .arg("SF")
                         .output();
 
                     match output {
@@ -1006,7 +1005,7 @@ pub fn claim_items(
                     let output = Command::new("python")
                         .arg("python_helpers/obj_detection.py")
                         .arg("temp_images/info/image.png")
-                        .arg("F")
+                        .arg("SF")
                         //.arg("C")
                         .output();
 
@@ -1236,10 +1235,10 @@ pub fn claim_items(
                             }
 
                             println!("Test31");
-                            // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it won't wait for 4 minutes if there is no match
                             let output = Command::new("python")
                                 .arg("python_helpers/obj_detection.py")
                                 .arg("temp_images/info/image.png")
+                                .arg("SF")
                                 .output();
 
                             println!("Test32");
@@ -2442,11 +2441,10 @@ pub fn return_items(
                     }
 
                     println!("Test15");
-                    // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it wont wait for 4 minutes of there is no match
                     let output = Command::new("python")
                         .arg("python_helpers/obj_detection.py")
                         .arg("temp_images/info/image.png")
-                        .arg("F")
+                        .arg("SF")
                         .output();
 
                     println!("Test16");
@@ -2680,6 +2678,7 @@ pub fn return_items(
                             let output = Command::new("python")
                                 .arg("python_helpers/obj_detection.py")
                                 .arg("temp_images/info/image.png")
+                                .arg("SF")
                                 .output();
 
                             println!("Test32");
