@@ -20,11 +20,19 @@ async def stitch_images(user1_urls, user2_urls):
     side_padding = 20  # Added space on each side of the items
 
     # Determine max width and total height for each user's images
-    max_width_user1 = max(img.width for img in user1_images) + 2 * side_padding
-    max_width_user2 = max(img.width for img in user2_images) + 2 * side_padding
-
-    total_height_user1 = sum(img.height for img in user1_images)
-    total_height_user2 = sum(img.height for img in user2_images)
+    # If there is no image then use a default value of 300x300
+    try:
+        max_width_user1 = max(img.width for img in user1_images) + 2 * side_padding
+        total_height_user1 = sum(img.height for img in user1_images)
+    except:
+        max_width_user1 = 300
+        total_height_user1 = 300
+    try:
+        max_width_user2 = max(img.width for img in user2_images) + 2 * side_padding
+        total_height_user2 = sum(img.height for img in user2_images)
+    except:
+        max_width_user2 = 300
+        total_height_user2 = 300
 
     # If both user1_images and user2_images are empty, return None or some default image
     if not max_width_user1 and not max_width_user2:
