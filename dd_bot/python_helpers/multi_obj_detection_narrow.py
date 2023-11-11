@@ -7,6 +7,7 @@ from imutils.object_detection import non_max_suppression
 
 sensitive = False
 cool = False
+super_cool = False
 
 fast = False
 
@@ -23,6 +24,8 @@ elif len(sys.argv) > 2:
             sensitive = True
         elif arg.strip() == "C":
             cool = True
+        elif arg.strip() == "SC":
+            super_cool = True
         elif arg.strip() == "F":
             fast = True
         elif arg.strip() == "G":
@@ -38,6 +41,8 @@ if sensitive:
     limit = 0.98
 elif cool:
     limit = 0.70
+elif super_cool:
+    limit = 0.40
 else:
     limit = 0.90
 

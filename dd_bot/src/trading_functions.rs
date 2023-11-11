@@ -464,7 +464,7 @@ pub fn deposit(
         // Now, coords contains each of the coordinates
         for coord_str in coords.iter() {
             if *coord_str == "Could not detect" || *coord_str == "" {
-                println!("Count not find item");
+                println!("Counld not find item");
                 continue;
             }
             let coord: Vec<i32> = coord_str
