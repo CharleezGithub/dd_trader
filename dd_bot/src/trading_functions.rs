@@ -421,7 +421,7 @@ pub fn deposit(
     match enigo_functions::move_to_location_fast(
         &mut enigo,
         rng.gen_range(25..50),
-        rng.gen_range(25..50),
+        rng.gen_range(200..300),
         true,
     ) {
         Ok(_) => println!("Successfully moved to this location!"),
@@ -549,12 +549,15 @@ pub fn deposit(
     match enigo_functions::move_to_location_fast(
         &mut enigo,
         rng.gen_range(25..50),
-        rng.gen_range(25..50),
+        rng.gen_range(200..300),
         true,
     ) {
         Ok(_) => println!("Successfully moved to this location!"),
         Err(err) => println!("Got error while trying to move cursor: {:?}", err),
     }
+
+    // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+    enigo.mouse_click(MouseButton::Left);
 
     // After checking all the items check the gold amount
     // The bot ensures that the trade went through by making sure that it is the last link in the trade.
@@ -1090,7 +1093,7 @@ pub fn claim_items(
                                     match enigo_functions::move_to_location_fast(
                                         &mut enigo,
                                         rng.gen_range(25..50),
-                                        rng.gen_range(25..50),
+                                        rng.gen_range(200..300),
                                         true,
                                     ) {
                                         Ok(_) => println!("Successfully moved to this location!"),
@@ -1099,6 +1102,9 @@ pub fn claim_items(
                                             err
                                         ),
                                     }
+
+                                    // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+                                    enigo.mouse_click(MouseButton::Left);
                                 }
                                 // Might not work...
                                 Err(_) => {
@@ -2396,7 +2402,7 @@ pub fn return_items(
                                     match enigo_functions::move_to_location_fast(
                                         &mut enigo,
                                         rng.gen_range(25..50),
-                                        rng.gen_range(25..50),
+                                        rng.gen_range(200..300),
                                         true,
                                     ) {
                                         Ok(_) => println!("Successfully moved to this location!"),
@@ -2405,6 +2411,9 @@ pub fn return_items(
                                             err
                                         ),
                                     }
+
+                                    // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+                                    enigo.mouse_click(MouseButton::Left);
                                 }
                                 // Might not work...
                                 Err(_) => {
