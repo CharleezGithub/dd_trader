@@ -903,7 +903,7 @@ pub fn claim_items(
                         .arg("python_helpers/obj_detection.py")
                         .arg("temp_images/info/item.png")
                         .arg("F")
-                        .arg("C")
+                        //.arg("C")
                         .output();
 
                     println!("Test16");
@@ -926,8 +926,6 @@ pub fn claim_items(
         }
     }
 
-    // Add gold here maybe?
-
     println!("Test20");
     // Click checkbox to get into the confirmation trading window.
     let output = Command::new("python")
@@ -942,6 +940,23 @@ pub fn claim_items(
     }
     println!("Test21");
 
+    // Check that the trader also has checked the checkbox and that we are now in the trading phase 2/2
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/second_phase_check.png")
+        .output();
+
+    match output {
+        Ok(_) => {
+            println!("Trader accepted the trade!")
+        }
+        Err(_) => {
+            println!("User did not accept trade.");
+            // GO TO LOBBY
+            return_to_lobby();
+            return Err(String::from("User did not accept trade"));
+        }
+    }
     // Now the bot is in the double check trade window box.
     // Click the magnifying glasses on top of the items, incase the trader put anything in there
     let output = Command::new("python")
