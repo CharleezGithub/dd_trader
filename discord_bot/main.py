@@ -635,6 +635,32 @@ async def add_gold(ctx, gold: int):
     if gold % 50 != 0:
         await ctx.send("Gold has to be in increments of 50!")
         return
+    
+    # Check if the trade is canceled
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT status, locked
+        FROM trades
+        WHERE channel_id = ?
+        """,
+        (ctx.channel.id,),
+    )
+
+    (status, locked) = cursor.fetchone() or (None, None)
+
+    conn.close()
+
+    if status == "canceled":
+        await ctx.send("The trade been canceled.")
+        return
+    elif locked:
+        await ctx.send(
+            "The trade is locked. In order to continue the trade both traders have to do !unlock-trade in order to complete this action."
+        )
+        return
 
     discord_id = str(ctx.author.id)  # Get user ID from context
     channel_id = str(ctx.channel.id)  # Get channel ID from context
@@ -702,6 +728,32 @@ async def add_items(ctx, *args: str):
     # Ensure the user provided pairs of links
     if len(args) % 2 != 0:
         await ctx.send("Please provide pairs of item_image_url and info_image_url!")
+        return
+    
+    # Check if the trade is canceled
+    conn = sqlite3.connect("trading_bot.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT status, locked
+        FROM trades
+        WHERE channel_id = ?
+        """,
+        (ctx.channel.id,),
+    )
+
+    (status, locked) = cursor.fetchone() or (None, None)
+
+    conn.close()
+
+    if status == "canceled":
+        await ctx.send("The trade been canceled.")
+        return
+    elif locked:
+        await ctx.send(
+            "The trade is locked. In order to continue the trade both traders have to do !unlock-trade in order to complete this action."
+        )
         return
 
     # Validate links
