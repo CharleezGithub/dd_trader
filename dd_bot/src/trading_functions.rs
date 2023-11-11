@@ -680,6 +680,7 @@ pub fn deposit(
             return Ok(String::from("Trade successful"));
         }
         Err(err) => {
+            println!("Returning to lobby");
             return_to_lobby();
             return Err(err);
         }
