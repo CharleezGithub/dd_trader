@@ -10,6 +10,9 @@ cool = False
 
 fast = False
 
+# Will grayscale both the image and the screenshot if True.
+grayscale = False
+
 if len(sys.argv) > 1 and not len(sys.argv) > 2:
     image_name = sys.argv[1]
 elif len(sys.argv) > 2:
@@ -21,6 +24,8 @@ elif len(sys.argv) > 2:
             cool = True
         elif arg.strip() == "F":
             fast = True
+        elif arg.strip() == "G":
+            grayscale = True
 else:
     image_name = "images/35_gold_pouch.png"
 
@@ -74,6 +79,10 @@ try:
 
         template = cv2.imread(image_name, cv2.IMREAD_COLOR)
         template = preprocess(template)
+
+        if grayscale:
+            main_image = cv2.cvtColor(main_image, cv2.COLOR_RGB2GRAY)
+            template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
 
         result = cv2.matchTemplate(main_image, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
