@@ -451,6 +451,7 @@ pub fn deposit(
             .arg("temp_images/item/image.png")
             .arg("C")
             .arg("F")
+            .arg("G")
             .output()
             .expect("Failed to execute command");
 
@@ -786,6 +787,7 @@ pub fn claim_items(
                 .arg("temp_images/item/image.png")
                 .arg("C")
                 .arg("F")
+                .arg("G")
                 .output()
                 .expect("Failed to execute command");
             println!("Coords: {:?}", output);
@@ -814,6 +816,7 @@ pub fn claim_items(
                 .arg("temp_images/item/image.png")
                 .arg("C")
                 .arg("F")
+                .arg("G")
                 .output()
                 .expect("Failed to execute command");
 
@@ -1008,6 +1011,7 @@ pub fn claim_items(
             .arg("temp_images/item/image.png")
             .arg("C")
             .arg("F")
+            .arg("G")
             .output();
 
         println!("Test26");
@@ -2089,6 +2093,7 @@ pub fn return_items(
                 .arg("temp_images/item/image.png")
                 .arg("C")
                 .arg("F")
+                .arg("G")
                 .output()
                 .expect("Failed to execute command");
             println!("Coords: {:?}", output);
@@ -2117,6 +2122,7 @@ pub fn return_items(
                 .arg("temp_images/item/image.png")
                 .arg("C")
                 .arg("F")
+                .arg("G")
                 .output()
                 .expect("Failed to execute command");
 
@@ -2311,6 +2317,7 @@ pub fn return_items(
             .arg("temp_images/item/image.png")
             .arg("C")
             .arg("F")
+            .arg("G")
             .output();
 
         println!("Test26");
