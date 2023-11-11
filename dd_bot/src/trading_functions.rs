@@ -211,6 +211,25 @@ pub fn collect_gold_fee(
 
     // Now, coords contains each of the coordinates
     for coord_str in coords.iter() {
+        let mut rng = rand::thread_rng();
+
+        if *coord_str == "Could not detect" || *coord_str == "" {
+            println!("Counld not find item");
+            // Moving away from items for obj detection purposes.
+            match enigo_functions::move_to_location_fast(
+                &mut enigo,
+                rng.gen_range(25..50),
+                rng.gen_range(200..300),
+                true,
+            ) {
+                Ok(_) => println!("Successfully moved to this location!"),
+                Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+            }
+
+            // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+            enigo.mouse_click(MouseButton::Left);
+            continue;
+        }
         let coord: Vec<i32> = coord_str
             .split_whitespace()
             .map(|s| s.parse().expect("Failed to parse coordinate"))
@@ -380,6 +399,25 @@ pub fn deposit(
 
     // Now, coords contains each of the coordinates
     for coord_str in coords.iter() {
+        let mut rng = rand::thread_rng();
+
+        if *coord_str == "Could not detect" || *coord_str == "" {
+            println!("Counld not find item");
+            // Moving away from items for obj detection purposes.
+            match enigo_functions::move_to_location_fast(
+                &mut enigo,
+                rng.gen_range(25..50),
+                rng.gen_range(200..300),
+                true,
+            ) {
+                Ok(_) => println!("Successfully moved to this location!"),
+                Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+            }
+
+            // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+            enigo.mouse_click(MouseButton::Left);
+            continue;
+        }
         let coord: Vec<i32> = coord_str
             .split_whitespace()
             .map(|s| s.parse().expect("Failed to parse coordinate"))
@@ -470,6 +508,19 @@ pub fn deposit(
         for coord_str in coords.iter() {
             if *coord_str == "Could not detect" || *coord_str == "" {
                 println!("Counld not find item");
+                // Moving away from items for obj detection purposes.
+                match enigo_functions::move_to_location_fast(
+                    &mut enigo,
+                    rng.gen_range(25..50),
+                    rng.gen_range(200..300),
+                    true,
+                ) {
+                    Ok(_) => println!("Successfully moved to this location!"),
+                    Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+                }
+
+                // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+                enigo.mouse_click(MouseButton::Left);
                 continue;
             }
             let coord: Vec<i32> = coord_str
@@ -528,6 +579,22 @@ pub fn deposit(
                             for coord_str in coords.iter() {
                                 if *coord_str == "Could not detect" || *coord_str == "" {
                                     println!("Could not find match");
+                                    // Moving away from items for obj detection purposes.
+                                    match enigo_functions::move_to_location_fast(
+                                        &mut enigo,
+                                        rng.gen_range(25..50),
+                                        rng.gen_range(200..300),
+                                        true,
+                                    ) {
+                                        Ok(_) => println!("Successfully moved to this location!"),
+                                        Err(err) => println!(
+                                            "Got error while trying to move cursor: {:?}",
+                                            err
+                                        ),
+                                    }
+
+                                    // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+                                    enigo.mouse_click(MouseButton::Left);
                                     continue;
                                 }
                                 println!("Found match!");
@@ -650,6 +717,25 @@ pub fn deposit(
 
             // Now, coords contains each of the coordinates
             for coord_str in coords.iter() {
+                let mut rng = rand::thread_rng();
+
+                if *coord_str == "Could not detect" || *coord_str == "" {
+                    println!("Counld not find item");
+                    // Moving away from items for obj detection purposes.
+                    match enigo_functions::move_to_location_fast(
+                        &mut enigo,
+                        rng.gen_range(25..50),
+                        rng.gen_range(200..300),
+                        true,
+                    ) {
+                        Ok(_) => println!("Successfully moved to this location!"),
+                        Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+                    }
+
+                    // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+                    enigo.mouse_click(MouseButton::Left);
+                    continue;
+                }
                 let coord: Vec<i32> = coord_str
                     .split_whitespace()
                     .map(|s| s.parse().expect("Failed to parse coordinate"))
@@ -851,6 +937,25 @@ pub fn claim_items(
         println!("Test10");
         // Now, coords contains each of the coordinates
         for coord_str in coords.iter() {
+            let mut rng = rand::thread_rng();
+
+            if *coord_str == "Could not detect" || *coord_str == "" {
+                println!("Counld not find item");
+                // Moving away from items for obj detection purposes.
+                match enigo_functions::move_to_location_fast(
+                    &mut enigo,
+                    rng.gen_range(25..50),
+                    rng.gen_range(200..300),
+                    true,
+                ) {
+                    Ok(_) => println!("Successfully moved to this location!"),
+                    Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+                }
+
+                // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+                enigo.mouse_click(MouseButton::Left);
+                continue;
+            }
             let coord: Vec<i32> = coord_str
                 .split_whitespace()
                 .map(|s| s.parse().expect("Failed to parse coordinate"))
@@ -972,6 +1077,25 @@ pub fn claim_items(
     println!("Test22");
     // Now, coords contains each of the coordinates
     for coord_str in coords.iter() {
+        let mut rng = rand::thread_rng();
+
+        if *coord_str == "Could not detect" || *coord_str == "" {
+            println!("Counld not find item");
+            // Moving away from items for obj detection purposes.
+            match enigo_functions::move_to_location_fast(
+                &mut enigo,
+                rng.gen_range(25..50),
+                rng.gen_range(200..300),
+                true,
+            ) {
+                Ok(_) => println!("Successfully moved to this location!"),
+                Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+            }
+
+            // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+            enigo.mouse_click(MouseButton::Left);
+            continue;
+        }
         let coord: Vec<i32> = coord_str
             .split_whitespace()
             .map(|s| s.parse().expect("Failed to parse coordinate"))
@@ -1046,6 +1170,27 @@ pub fn claim_items(
 
                 // Now, coords contains each of the coordinates
                 for coord_str in coords.iter() {
+                    let mut rng = rand::thread_rng();
+
+                    if *coord_str == "Could not detect" || *coord_str == "" {
+                        println!("Counld not find item");
+                        // Moving away from items for obj detection purposes.
+                        match enigo_functions::move_to_location_fast(
+                            &mut enigo,
+                            rng.gen_range(25..50),
+                            rng.gen_range(200..300),
+                            true,
+                        ) {
+                            Ok(_) => println!("Successfully moved to this location!"),
+                            Err(err) => {
+                                println!("Got error while trying to move cursor: {:?}", err)
+                            }
+                        }
+
+                        // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+                        enigo.mouse_click(MouseButton::Left);
+                        continue;
+                    }
                     let coord: Vec<i32> = coord_str
                         .split_whitespace()
                         .map(|s| s.parse().expect("Failed to parse coordinate"))
@@ -1181,6 +1326,27 @@ pub fn claim_items(
                 println!("Test39");
                 // Now, coords contains each of the coordinates
                 for coord_str in coords.iter() {
+                    let mut rng = rand::thread_rng();
+
+                    if *coord_str == "Could not detect" || *coord_str == "" {
+                        println!("Counld not find item");
+                        // Moving away from items for obj detection purposes.
+                        match enigo_functions::move_to_location_fast(
+                            &mut enigo,
+                            rng.gen_range(25..50),
+                            rng.gen_range(200..300),
+                            true,
+                        ) {
+                            Ok(_) => println!("Successfully moved to this location!"),
+                            Err(err) => {
+                                println!("Got error while trying to move cursor: {:?}", err)
+                            }
+                        }
+
+                        // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+                        enigo.mouse_click(MouseButton::Left);
+                        continue;
+                    }
                     let coord: Vec<i32> = coord_str
                         .split_whitespace()
                         .map(|s| s.parse().expect("Failed to parse coordinate"))
@@ -1519,6 +1685,25 @@ pub fn claim_gold(
 
     // Now, coords contains each of the coordinates
     for coord_str in coords.iter() {
+        let mut rng = rand::thread_rng();
+
+        if *coord_str == "Could not detect" || *coord_str == "" {
+            println!("Counld not find item");
+            // Moving away from items for obj detection purposes.
+            match enigo_functions::move_to_location_fast(
+                &mut enigo,
+                rng.gen_range(25..50),
+                rng.gen_range(200..300),
+                true,
+            ) {
+                Ok(_) => println!("Successfully moved to this location!"),
+                Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+            }
+
+            // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+            enigo.mouse_click(MouseButton::Left);
+            continue;
+        }
         let coord: Vec<i32> = coord_str
             .split_whitespace()
             .map(|s| s.parse().expect("Failed to parse coordinate"))
@@ -1906,6 +2091,25 @@ pub fn return_gold(
 
     // Now, coords contains each of the coordinates
     for coord_str in coords.iter() {
+        let mut rng = rand::thread_rng();
+
+        if *coord_str == "Could not detect" || *coord_str == "" {
+            println!("Counld not find item");
+            // Moving away from items for obj detection purposes.
+            match enigo_functions::move_to_location_fast(
+                &mut enigo,
+                rng.gen_range(25..50),
+                rng.gen_range(200..300),
+                true,
+            ) {
+                Ok(_) => println!("Successfully moved to this location!"),
+                Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+            }
+
+            // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+            enigo.mouse_click(MouseButton::Left);
+            continue;
+        }
         let coord: Vec<i32> = coord_str
             .split_whitespace()
             .map(|s| s.parse().expect("Failed to parse coordinate"))
@@ -2173,6 +2377,25 @@ pub fn return_items(
         println!("Test10");
         // Now, coords contains each of the coordinates
         for coord_str in coords.iter() {
+            let mut rng = rand::thread_rng();
+
+            if *coord_str == "Could not detect" || *coord_str == "" {
+                println!("Counld not find item");
+                // Moving away from items for obj detection purposes.
+                match enigo_functions::move_to_location_fast(
+                    &mut enigo,
+                    rng.gen_range(25..50),
+                    rng.gen_range(200..300),
+                    true,
+                ) {
+                    Ok(_) => println!("Successfully moved to this location!"),
+                    Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+                }
+
+                // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+                enigo.mouse_click(MouseButton::Left);
+                continue;
+            }
             let coord: Vec<i32> = coord_str
                 .split_whitespace()
                 .map(|s| s.parse().expect("Failed to parse coordinate"))
@@ -2294,6 +2517,25 @@ pub fn return_items(
     println!("Test22");
     // Now, coords contains each of the coordinates
     for coord_str in coords.iter() {
+        let mut rng = rand::thread_rng();
+
+        if *coord_str == "Could not detect" || *coord_str == "" {
+            println!("Counld not find item");
+            // Moving away from items for obj detection purposes.
+            match enigo_functions::move_to_location_fast(
+                &mut enigo,
+                rng.gen_range(25..50),
+                rng.gen_range(200..300),
+                true,
+            ) {
+                Ok(_) => println!("Successfully moved to this location!"),
+                Err(err) => println!("Got error while trying to move cursor: {:?}", err),
+            }
+
+            // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+            enigo.mouse_click(MouseButton::Left);
+            continue;
+        }
         let coord: Vec<i32> = coord_str
             .split_whitespace()
             .map(|s| s.parse().expect("Failed to parse coordinate"))
@@ -2368,6 +2610,27 @@ pub fn return_items(
 
                 // Now, coords contains each of the coordinates
                 for coord_str in coords.iter() {
+                    let mut rng = rand::thread_rng();
+
+                    if *coord_str == "Could not detect" || *coord_str == "" {
+                        println!("Counld not find item");
+                        // Moving away from items for obj detection purposes.
+                        match enigo_functions::move_to_location_fast(
+                            &mut enigo,
+                            rng.gen_range(25..50),
+                            rng.gen_range(200..300),
+                            true,
+                        ) {
+                            Ok(_) => println!("Successfully moved to this location!"),
+                            Err(err) => {
+                                println!("Got error while trying to move cursor: {:?}", err)
+                            }
+                        }
+
+                        // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+                        enigo.mouse_click(MouseButton::Left);
+                        continue;
+                    }
                     let coord: Vec<i32> = coord_str
                         .split_whitespace()
                         .map(|s| s.parse().expect("Failed to parse coordinate"))
@@ -2503,6 +2766,27 @@ pub fn return_items(
                 println!("Test39");
                 // Now, coords contains each of the coordinates
                 for coord_str in coords.iter() {
+                    let mut rng = rand::thread_rng();
+
+                    if *coord_str == "Could not detect" || *coord_str == "" {
+                        println!("Counld not find item");
+                        // Moving away from items for obj detection purposes.
+                        match enigo_functions::move_to_location_fast(
+                            &mut enigo,
+                            rng.gen_range(25..50),
+                            rng.gen_range(200..300),
+                            true,
+                        ) {
+                            Ok(_) => println!("Successfully moved to this location!"),
+                            Err(err) => {
+                                println!("Got error while trying to move cursor: {:?}", err)
+                            }
+                        }
+
+                        // Click to avoid having selected an item. If not it might result in the item having the gold select border. This can cause the image detection to not detect the item.
+                        enigo.mouse_click(MouseButton::Left);
+                        continue;
+                    }
                     let coord: Vec<i32> = coord_str
                         .split_whitespace()
                         .map(|s| s.parse().expect("Failed to parse coordinate"))
