@@ -14,6 +14,7 @@ use rocket::response::stream::EventStream;
 
 use rocket::response::stream::Event;
 use rocket::time::Duration;
+use trading_functions::collect_gold_fee;
 
 mod database_functions;
 mod enigo_functions;
@@ -142,14 +143,32 @@ fn gold_fee(
     let bot_info_cloned = bot_info.inner().clone();
     let traders_container_cloned = traders_container.inner().clone();
     let in_game_id_clone = in_game_id.clone();
-    
-    tokio::task::spawn_blocking(move || {
-        let _ = trading_functions::collect_gold_fee(
-            (&enigo_cloned).into(),
-            (&bot_info_cloned).into(),
-            &in_game_id_clone,
-            (&traders_container_cloned).into(),
-        );
+
+    // Spawn the trading function in a non-blocking way
+    tokio::spawn(async move {
+        // Any code that runs here is non-blocking to the main thread
+        let result = tokio::task::spawn_blocking(move || {
+            trading_functions::collect_gold_fee(
+                (&enigo_cloned).into(),
+                (&bot_info_cloned).into(),
+                &in_game_id_clone,
+                (&traders_container_cloned).into(),
+            )
+        }).await.unwrap_or_else(|e| Err(e.to_string())); // Handle errors
+
+        tokio::task::yield_now().await;
+
+        // Log the result or handle it further, based on requirements
+        match result {
+            Ok(s) => {
+                let _ = update_status(s.as_str());
+                println!("Trade result: {}", s);
+            }
+            Err(e) => {
+                let _ = update_status(format!("{:?}", e).as_str());
+                eprintln!("Trade error: {:?}", e)
+            }
+        }
     });
     
     let info = bot_info.lock().unwrap();
