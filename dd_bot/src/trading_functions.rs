@@ -514,7 +514,6 @@ pub fn deposit(
                     let output = Command::new("python")
                         .arg("python_helpers/obj_detection.py")
                         .arg("temp_images/info/image.png")
-                        .arg("C")
                         .arg("F")
                         .output();
 
@@ -901,7 +900,7 @@ pub fn claim_items(
                     // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it wont wait for 4 minutes of there is no match
                     let output = Command::new("python")
                         .arg("python_helpers/obj_detection.py")
-                        .arg("temp_images/info/item.png")
+                        .arg("temp_images/info/image.png")
                         .arg("F")
                         //.arg("C")
                         .output();
@@ -1095,7 +1094,7 @@ pub fn claim_items(
                             // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it won't wait for 4 minutes if there is no match
                             let output = Command::new("python")
                                 .arg("python_helpers/obj_detection.py")
-                                .arg("temp_images/info/item.png")
+                                .arg("temp_images/info/image.png")
                                 .output();
 
                             println!("Test32");
@@ -2223,9 +2222,8 @@ pub fn return_items(
                     // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it wont wait for 4 minutes of there is no match
                     let output = Command::new("python")
                         .arg("python_helpers/obj_detection.py")
-                        .arg("temp_images/info/item.png")
+                        .arg("temp_images/info/image.png")
                         .arg("F")
-                        .arg("C")
                         .output();
 
                     println!("Test16");
@@ -2418,7 +2416,7 @@ pub fn return_items(
                             // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it won't wait for 4 minutes if there is no match
                             let output = Command::new("python")
                                 .arg("python_helpers/obj_detection.py")
-                                .arg("temp_images/info/item.png")
+                                .arg("temp_images/info/image.png")
                                 .output();
 
                             println!("Test32");
