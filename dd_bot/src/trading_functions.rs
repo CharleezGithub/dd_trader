@@ -3010,7 +3010,7 @@ fn return_to_lobby() {
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/leave_post.png")
-        .arg("SF")
+        .arg("F")
         .arg("C")
         .output()
         .expect("Failed to execute command");
@@ -3027,7 +3027,7 @@ fn return_to_lobby() {
                 let output = Command::new("python")
                     .arg("python_helpers/obj_detection.py")
                     .arg("images/play_tab.png")
-                    .arg("SF")
+                    .arg("F")
                     .output()
                     .expect("Failed to execute command");
 
@@ -3049,7 +3049,7 @@ fn return_to_lobby() {
                 let output = Command::new("python")
                     .arg("python_helpers/obj_detection.py")
                     .arg("images/leave_channel.png")
-                    .arg("SF")
+                    .arg("F")
                     .output()
                     .expect("Failed to execute command");
 
@@ -3068,7 +3068,7 @@ fn return_to_lobby() {
                 let output = Command::new("python")
                     .arg("python_helpers/obj_detection.py")
                     .arg("images/play_tab.png")
-                    .arg("SF")
+                    .arg("F")
                     .output()
                     .expect("Failed to execute command");
 
