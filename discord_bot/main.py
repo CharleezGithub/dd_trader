@@ -620,6 +620,8 @@ async def cancel_trade(ctx):
     conn.commit()
     conn.close()
 
+    await ctx.send("Trade has been canceled successfully!")
+
 
 @bot.command(name="add-gold")
 async def add_gold(ctx, gold: int):
