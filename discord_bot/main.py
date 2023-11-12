@@ -1445,7 +1445,7 @@ async def return_gold_real(ctx, in_game_id: str):
         (ctx.channel.id,),
     )
 
-    status = cursor.fetchone()
+    status = cursor.fetchone()[0]
 
     conn.close()
     
@@ -1527,7 +1527,7 @@ async def return_items_real(ctx, in_game_id: str):
         (ctx.channel.id,),
     )
 
-    status = cursor.fetchone()
+    status = cursor.fetchone()[0]
 
     if status != "canceled":
         await ctx.send(
@@ -1598,7 +1598,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         """,
         (channel_id,),
     )
-    status = cursor.fetchone()
+    status = cursor.fetchone()[0]
 
     if status == "canceled":
         return False
