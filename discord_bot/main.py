@@ -1669,9 +1669,9 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
     )
     trader2_item_escrow_count = cursor.fetchone()
 
-    if trader_1_or_2 and trader1_item_escrow_count[0][0] > 0:
+    if trader_1_or_2 and trader1_item_escrow_count[0] > 0:
         items_in_escrow = True
-    elif not trader_1_or_2 and trader2_item_escrow_count[0][0] > 0:
+    elif not trader_1_or_2 and trader2_item_escrow_count[0] > 0:
         items_in_escrow = True
 
     # Retrieve the trade ID with the given channel ID
