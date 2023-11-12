@@ -1674,39 +1674,27 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
     elif not trader_1_or_2 and trader2_item_escrow_count[0][0] > 0:
         items_in_escrow = True
 
-    cursor.execute(
-        """
-        SELECT COUNT(*)
-        FROM items
-        JOIN trades ON items.trade_id = trades.id
-        JOIN traders ON items.trader_id = traders.id
-        WHERE items.status = 'traded'
-        AND trades.channel_id = ?
-        AND traders.id = ?
-        """,
-        (channel_id, trader1_id),
-    )
-    trader1_count = cursor.fetchall()
-    cursor.execute(
-        """
-        SELECT COUNT(*)
-        FROM items
-        JOIN trades ON items.trade_id = trades.id
-        JOIN traders ON items.trader_id = traders.id
-        WHERE items.status = 'traded'
-        AND trades.channel_id = ?
-        AND traders.id = ?
-        """,
-        (channel_id, trader2_id),
-    )
-    trader2_count = cursor.fetchall()
+    # Retrieve the trade ID with the given channel ID
+    cursor.execute("SELECT id FROM trades WHERE channel_id=?", (channel_id,))
+    trade_id = cursor.fetchone()
+
+    # If no trade exists for the given channel, return False
+    if not trade_id:
+        conn.close()
+        return False
+
+    trade_id = trade_id[0]  # get the actual trade ID value
+
+    # Check for items with the status "not traded" linked with the trade
+    cursor.execute("SELECT id FROM items WHERE trade_id=? AND status='traded'", (trade_id,))
+    items = cursor.fetchall()
 
     conn.close()
     print(f"trader_item_escrow_countt:\n{trader1_item_escrow_count[0]}\n{trader2_item_escrow_count[0]}\n{trader1_id}")
     print(f"gold in escrow:\n{trader1_gold_traded}\n{trader2_gold_traded}")
 
-    print(f"trader_count:\n{trader1_count[0][0]}\n{trader2_count[0][0]}")
-    if trader1_count[0][0] > 0 or trader2_count[0][0] > 0:
+    print(f"items count:\n{len(items)}")
+    if len(items) > 0:
         return False
 
     # Change to OR!!!
