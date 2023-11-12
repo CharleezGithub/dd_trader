@@ -1702,7 +1702,10 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
     trader2_count = cursor.fetchall()
 
     conn.close()
+    print("trader_item_escrow_countt:\n{trader1_item_escrow_count[0][0]}\n{trader2_item_escrow_count[0][0]}")
+    print("gold in escrow:\n{trader1_gold_traded}\n{trader2_gold_traded}")
 
+    print("trader_count:\n{trader1_count[0][0]}\n{trader2_count[0][0]}")
     if trader1_count[0][0] > 0 or trader2_count[0][0] > 0:
         return False
 
