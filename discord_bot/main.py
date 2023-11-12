@@ -1649,7 +1649,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         FROM items
         JOIN trades ON items.trade_id = trades.id
         JOIN traders ON items.trader_id = traders.id
-        WHERE items.status = 'in_escrow'
+        WHERE items.status = 'in escrow'
         AND trades.channel_id = ?
         AND traders.id = ?
         """, (channel_id, trader1_id))
@@ -1661,7 +1661,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         FROM items
         JOIN trades ON items.trade_id = trades.id
         JOIN traders ON items.trader_id = traders.id
-        WHERE items.status = 'in_escrow'
+        WHERE items.status = 'in escrow'
         AND trades.channel_id = ?
         AND traders.id = ?
         """,
@@ -1697,8 +1697,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
     if len(items) > 0:
         return False
 
-    # Change to OR!!!
-    if not gold_in_escrow or not items_in_escrow:
+    if not gold_in_escrow and not items_in_escrow:
         return False
     return True
 
