@@ -923,6 +923,8 @@ pub fn claim_items(
                 let output_stash = Command::new("python")
                     .arg("python_helpers/obj_detection.py")
                     .arg("images/stash.png")
+                    .arg("F")
+                    .arg("C")
                     .output()
                     .expect("Failed to execute command");
 
@@ -1656,6 +1658,8 @@ pub fn claim_gold(
             let stash_output = Command::new("python")
                 .arg("python_helpers/obj_detection.py")
                 .arg("images/stash.png")
+                .arg("F")
+                .arg("C")
                 .output()
                 .expect("Failed to execute command");
 
@@ -2060,6 +2064,8 @@ pub fn return_gold(
             let stash_output = Command::new("python")
                 .arg("python_helpers/obj_detection.py")
                 .arg("images/stash.png")
+                .arg("F")
+                .arg("C")
                 .output()
                 .expect("Failed to execute command");
 
@@ -2370,6 +2376,8 @@ pub fn return_items(
                 let output_stash = Command::new("python")
                     .arg("python_helpers/obj_detection.py")
                     .arg("images/stash.png")
+                    .arg("F")
+                    .arg("C")
                     .output()
                     .expect("Failed to execute command");
 
