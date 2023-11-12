@@ -1890,6 +1890,7 @@ pub fn return_gold(
         let traders = traders_container.lock().unwrap();
         let trader = traders.get_trader_by_in_game_id(in_game_id).unwrap();
 
+
         let trader_gold = trader.gold;
 
         if trader_gold < 30 {
@@ -2476,10 +2477,12 @@ pub fn return_items(
                         }
 
                         println!("Test15");
+                        // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it wont wait for 4 minutes of there is no match
                         let output = Command::new("python")
                             .arg("python_helpers/obj_detection.py")
                             .arg("temp_images/info/image.png")
                             .arg("SF")
+                            //.arg("C")
                             .output();
 
                         println!("Test16");
@@ -2533,7 +2536,6 @@ pub fn return_items(
                 return Err(String::from("User did not accept trade"));
             }
         }
-
         // Now the bot is in the double check trade window box.
         // Click the magnifying glasses on top of the items, incase the trader put anything in there
         let output = Command::new("python")
@@ -2709,7 +2711,6 @@ pub fn return_items(
                                 }
 
                                 println!("Test31");
-                                // SHOULD USE A VERSION OF OBJ DETECTION WITH A FASTER TIMEOUT. So that it won't wait for 4 minutes if there is no match
                                 let output = Command::new("python")
                                     .arg("python_helpers/obj_detection.py")
                                     .arg("temp_images/info/image.png")
