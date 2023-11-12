@@ -1592,6 +1592,19 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
     # Get trader's internal ID using discord_id (user_id)
     cursor.execute(
         """
+        SELECT status
+        FROM trades
+        WHERE channel_id = ?
+        """,
+        (channel_id,),
+    )
+    status = cursor.fetchone()
+
+    if status == "canceled":
+        return False
+
+    cursor.execute(
+        """
         SELECT id
         FROM traders
         WHERE discord_id = ?
