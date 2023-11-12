@@ -1653,7 +1653,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         AND trades.channel_id = ?
         AND traders.id = ?
         """, (channel_id, trader1_id))
-    trader1_item_escrow_count = cursor.fetchall()
+    trader1_item_escrow_count = cursor.fetchone()
 
     cursor.execute(
         """
@@ -1667,7 +1667,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
         """,
         (channel_id, trader2_id),
     )
-    trader2_item_escrow_count = cursor.fetchall()
+    trader2_item_escrow_count = cursor.fetchone()
 
     if trader_1_or_2 and trader1_item_escrow_count[0][0] > 0:
         items_in_escrow = True
@@ -1709,6 +1709,7 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
     if trader1_count[0][0] > 0 or trader2_count[0][0] > 0:
         return False
 
+    # Change to OR!!!
     if not gold_in_escrow or not items_in_escrow:
         return False
     return True
