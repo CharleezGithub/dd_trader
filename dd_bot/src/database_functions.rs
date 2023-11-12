@@ -236,7 +236,7 @@ pub fn populate_traders_from_db(traders_container: &Arc<Mutex<TradersContainer>>
         FROM traders t
         JOIN trades tr ON t.id = tr.trader1_id OR t.id = tr.trader2_id
         LEFT JOIN items i ON tr.id = i.trade_id AND t.id = i.trader_id
-        WHERE tr.status = 'ongoing'
+        WHERE tr.status = 'ongoing' OR tr.status = 'canceled'
     ",
     )?;
 
