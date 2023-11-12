@@ -1890,27 +1890,12 @@ pub fn return_gold(
         let traders = traders_container.lock().unwrap();
         let trader = traders.get_trader_by_in_game_id(in_game_id).unwrap();
 
-        let trader_discord_id = &trader.discord_id;
-        let trader_channel_id = &trader.discord_channel_id;
-
         let trader_gold = trader.gold;
 
         if trader_gold < 30 {
             return Err(String::from(
                 "User did not have enough gold left for a trade",
             ));
-        }
-
-        // Check if the trade can be canceled
-        match database_functions::cancel_trade_check(&trader_discord_id, &trader_channel_id) {
-            Ok(val) => {
-                if val == false {
-                    return Err(String::from("Trade cannot be canceled"));
-                }
-            }
-            Err(err) => {
-                return Err(format!("Something went wrong. Error {:?}", err));
-            }
         }
 
         // Go into the trading tab and send a trade to the trader. Exact same as before with the gold fee.
@@ -2306,21 +2291,6 @@ pub fn return_items(
         // Get the trader with that in-game name
         let traders = traders_container.lock().unwrap();
         let trader = traders.get_trader_by_in_game_id(in_game_id).unwrap();
-
-        let trader_discord_id = &trader.discord_id;
-        let trader_channel_id = &trader.discord_channel_id;
-
-        // Check if the trade can be canceled
-        match database_functions::cancel_trade_check(&trader_discord_id, &trader_channel_id) {
-            Ok(val) => {
-                if val == false {
-                    return Err(String::from("Trade cannot be canceled"));
-                }
-            }
-            Err(err) => {
-                return Err(format!("Something went wrong. Error {:?}", err));
-            }
-        }
 
         let items_escrow_count = database_functions::items_in_escrow_count(trader);
 
