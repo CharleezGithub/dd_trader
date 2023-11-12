@@ -465,6 +465,8 @@ pub fn items_in_escrow_count(trader: &Trader) -> Result<i32> {
     Ok(count)
 }
 
+// This function does 2 things.
+// It both adds the specified gold amount to the "trader_gold_traded" and it also subtracts that same amount from the "trader_gold" value for that same trader.
 pub fn add_gold_to_trader(
     channel_id: &String,
     discord_id: &String,
@@ -489,18 +491,24 @@ pub fn add_gold_to_trader(
     match trader_role_result {
         Ok(role) => {
             // Determine which trader's gold needs to be updated (trader1_gold_traded or trader2_gold_traded)
-            let gold_column = if &role == "trader1" {
+            let gold_traded_column = if &role == "trader1" {
                 "trader1_gold_traded"
             } else {
                 "trader2_gold_traded"
+            };
+            let gold_column = if &role == "trader1_gold_traded" {
+                "trader1_gold"
+            } else {
+                "trader2_gold"
             };
 
             conn.execute(
                 &format!(
                     "UPDATE trades 
+                    SET {} = {} - ?1 
                     SET {} = {} + ?1 
                     WHERE channel_id = ?2",
-                    gold_column, gold_column
+                    gold_column, gold_column, gold_traded_column, gold_traded_column
                 ),
                 params![gold_to_add, channel_id],
             )?;
