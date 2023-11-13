@@ -139,6 +139,16 @@ async def help_command(ctx, *, command_name=None):
             inline=True,
         )
         embed.add_field(
+            name="!lock-trade",
+            value="Locks the trade.",
+            inline=True,
+        )
+        embed.add_field(
+            name="!unlock-trade",
+            value="Unlocks the trade.",
+            inline=True,
+        )
+        embed.add_field(
             name="!show-trade",
             value="Provides a visual representation of the current trade.",
             inline=True,
@@ -430,7 +440,7 @@ async def trade_accept(ctx, user: discord.Member):
         )
 
         await trade_channel.send(
-            f"This channel has been created for {ctx.author.mention} and {user.mention} to discuss their trade. Please keep all trade discussions in this channel.\nThe processing fee is 50 gold."
+            f"This channel has been created for {ctx.author.mention} and {user.mention} to discuss their trade. Please keep all trade discussions in this channel.\n\nIMPORTANT! Do this command: !tutorial if this is your first time with this bot.\n\nThe processing fee is 50 gold."
         )
 
         del trade_requests[user.id]
@@ -439,6 +449,116 @@ async def trade_accept(ctx, user: discord.Member):
             f"{ctx.author.mention}, you don't have a pending trade request from {user.mention}!"
         )
 
+@bot.command()
+async def tutorial(ctx):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+
+    embed = discord.Embed(
+        title="🌟 Trading Tutorial: How to Trade Like a Pro! 🌟",
+        description="Follow these simple steps to ensure a smooth and secure trading experience!",
+        color=discord.Color.blue()
+    )
+
+    embed.add_field(
+        name="1️⃣ Starting Off",
+        value="Agree upon a trade with your fellow trader. 🤝",
+        inline=False
+    )
+
+    embed.add_field(
+        name="2️⃣ Capture Your Items",
+        value=(
+            "Take **high-quality screenshots** of your items:\n"
+            "- 📸 One screenshot of the item icon.\n"
+            "- 📸 One screenshot of the item's info page.\n"
+            "Then paste these screenshots into this private channel (You will need them later)\n"
+            "**Tip**: Use the built in `Windows Snipping Tool` or `Windows Key + Shift + S`\n"
+            "Ensure the screenshots are within the item's bounds. Here's an example:"
+        ),
+        inline=False
+    )
+
+    await ctx.send(embed=embed)
+    
+
+    dos = discord.Embed(color=discord.Color.green())
+    donts = discord.Embed(color=discord.Color.red())
+
+    # Set the images for each embed
+    dos.set_image(url="https://cdn.discordapp.com/attachments/1147789906165383209/1173675869542301706/dos.png?ex=6564d1d5&is=65525cd5&hm=f51138bbe6e73049ce5615bbdd2ba33e0a5fab5e9f5744b683ec3043e96a1f3a&")
+    donts.set_image(url="https://cdn.discordapp.com/attachments/1147789906165383209/1173675869223518248/donts.png?ex=6564d1d5&is=65525cd5&hm=d8aae082897aa4b4cd12888813cbe8a13f308d0a5d89696af28d95edf69962e4&")
+
+    await ctx.send(embed=dos)
+    await ctx.send(embed=donts)
+
+
+    embed = discord.Embed(color=discord.Color.blue())
+
+    embed.add_field(
+        name="3️⃣ Adding Items to the Trade",
+        value=(
+            "Use `!add-items` followed by the screenshot links.\n"
+            "🔗 Example: `!add-items {item icon link} {item info link}`\n"
+            "To add multiple items, repeat the pattern for each item."
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="4️⃣ Trading Gold",
+        value=(
+            "Add gold with `!add-gold {amount}`.\n"
+            "💰 Example: `!add-gold 1000`\n"
+            "To adjust gold amount, use `!add-gold -{amount}`."
+        ),
+        inline=False
+    )
+    embed.add_field(
+        name="5️⃣ Visualizing the trade",
+        value=(
+            "Generate a visual representation of the trade with `!show-trade`."
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="6️⃣ Locking the Trade",
+        value=(
+            "Finalize the trade with `!lock-trade`.\n"
+            "🔒 This prevents any changes during the process.\n"
+            "To unlock, both traders must use `!unlock-trade`."
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="7️⃣ In-Game Steps",
+        value=(
+            "Be in the game's Bard trading channel before using these commands. 🎮\n"
+            "Pay the gold fee: `!pay-fee {in-game ID}`.\n"
+            "Deposit items: `!deposit {in-game ID}`.\n"
+            "Claim items or gold: `!claim-items` or `!claim-gold {in-game ID}`."
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="8️⃣ Ending or Cancelling the Trade",
+        value=(
+            "End the trade with `!end-trade`.\n"
+            "🚫 To cancel, use `!cancel-trade` (conditions apply).\n"
+            "Return items: `!return-items {in-game ID}` and `!return-gold {in-game ID}`."
+        ),
+        inline=False
+    )
+
+    embed.set_footer(text="Happy Trading! Remember to trade responsibly and securely. ✨")
+
+    await ctx.send(embed=embed)
 
 @bot.command(name="show-trade")
 async def show_trade(ctx):
