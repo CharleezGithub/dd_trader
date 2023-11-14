@@ -102,6 +102,19 @@ async def on_ready():
             name="!help - Keeping the trading community happy and healthy :)\nThe most advanced DaD bot."
         )
     )
+
+    api_endpoint = (
+        f"http://127.0.0.1:8051/go_lobby"
+    )
+    while True:
+        # Make the API request
+        request = requests.get(api_endpoint)
+
+        if request.ok:
+            break
+
+        time.sleep(1)
+
     # This endless loop runs the functions in the que with a first in first out principle. In the future there will be priority que for paying members hopefully.
     while True:
         if not trade_queue.empty():
@@ -357,6 +370,38 @@ async def on_command_error(ctx, error):
             type(error), error, error.__traceback__
         )
         print("".join(error_traceback))
+
+
+
+@bot.command(name="restart-bot")
+async def restart_entire_bot(ctx):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+    
+    await ctx.send("Restarting bot. Wait at least 30 seconds...")
+    threading.Thread(target=restart_in_game_bot).start()
+
+    import sys
+    
+    exe_path = sys.executable
+    script_path = sys.argv[0]
+
+    os.execl(exe_path, script_path, *sys.argv[1:])
+
+
+
+def restart_in_game_bot():
+    # Construct the API endpoint URL
+    api_endpoint = (
+        f"http://127.0.0.1:8051/restart"
+    )
+
+    # Make the API request
+    requests.get(api_endpoint)
+
 
 
 @bot.command()
