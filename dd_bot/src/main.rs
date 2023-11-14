@@ -617,6 +617,12 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
         trading_functions::open_game_go_to_lobby(bot_info_clone).await;
     });
     */
+    
+    // Going back to lobby
+    // This is only useful if the bot was restarted and not already in the lobby
+    tokio::spawn(async move {
+        trading_functions::return_to_lobby();
+    });
 
     rocket::build()
         .manage(enigo) // Add the enigo as managed state

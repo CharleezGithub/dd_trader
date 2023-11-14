@@ -1894,7 +1894,6 @@ pub fn return_gold(
         let traders = traders_container.lock().unwrap();
         let trader = traders.get_trader_by_in_game_id(in_game_id).unwrap();
 
-
         let trader_gold = trader.gold;
 
         if trader_gold < 30 {
@@ -3021,7 +3020,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     }
 }
 
-fn return_to_lobby() {
+pub fn return_to_lobby() {
     let mut enigo = Enigo::new();
 
     // Check if bot is already in the play tab
