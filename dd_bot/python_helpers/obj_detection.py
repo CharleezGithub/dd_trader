@@ -18,7 +18,7 @@ super_fast = False
 longer = False
 
 # Will grayscale both the image and the screenshot if True.
-grayscale = False
+grayscale = True
 
 if len(sys.argv) > 1 and not len(sys.argv) > 2:
     image_name = sys.argv[1]
