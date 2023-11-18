@@ -99,21 +99,9 @@ async def on_ready():
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
     await bot.change_presence(
         activity=discord.Game(
-            name="!help - Keeping the trading community happy and healthy :)\nThe most advanced DaD bot."
+            name="!help - The most advanced DaD bot."
         )
     )
-
-    api_endpoint = (
-        f"http://127.0.0.1:8051/go_lobby"
-    )
-    while True:
-        # Make the API request
-        request = requests.get(api_endpoint)
-
-        if request.ok:
-            break
-
-        time.sleep(1)
 
     # This endless loop runs the functions in the que with a first in first out principle. In the future there will be priority que for paying members hopefully.
     while True:
@@ -383,6 +371,8 @@ async def restart_entire_bot(ctx):
     
     await ctx.send("Restarting bot. Wait at least 30 seconds...")
     threading.Thread(target=restart_in_game_bot).start()
+
+    time.sleep(1)
 
     import sys
     

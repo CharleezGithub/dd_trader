@@ -1,7 +1,7 @@
+use std::process::{exit, Command};
 use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::{result, str};
-use std::process::{Command, exit};
 
 use enigo::*;
 
@@ -617,7 +617,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
         trading_functions::open_game_go_to_lobby(bot_info_clone).await;
     });
     */
-    
+
     // Going back to lobby
     // This is only useful if the bot was restarted and not already in the lobby
     tokio::spawn(async move {
