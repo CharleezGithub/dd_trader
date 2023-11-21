@@ -384,7 +384,14 @@ async def restart_entire_bot(ctx):
         )
         return
     
+    await ctx.send(
+        "Restarting bot...\nWait at least 30 seconds before using any commands that interact with the game."
+    )
+
     # Send ipc con to process manager
+    with open("shared/ipc_restart.txt", "w") as f:
+        f.write("restart request")
+
 
 @bot.command()
 async def trade(ctx, user: discord.Member):

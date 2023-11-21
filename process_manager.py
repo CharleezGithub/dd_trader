@@ -8,6 +8,8 @@ import os
 import signal
 import subprocess
 import sys
+import time
+
 
 rust_app = None
 python_proc = None
@@ -47,19 +49,18 @@ def python_shutdown():
     print("Python app shutdown gracefully")
 
 def restart_both():
-    print('Restarting rust app...')
+    print('Shutting down rust app...')
     rust_shutdown()
-    print('Restarting python app...')
+    print('Shutting down python app...')
     python_shutdown()
 
-    print("Gracefully shut down both")
-    print("Starting up rust app")
+    print("Gracefully shut down both apps")
+    print("Starting up again...")
 
     start_rust("./dd_bot/target/debug/")
     start_python("./discord_bot/main.py")
 
     print("All systems live!")
-
 
 
 start_rust("./dd_bot/target/debug/")
@@ -77,9 +78,40 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-# Keep the script running to listen for signals
-try:
+def read_file_contents(path):
+    with open(path, "r") as file:
+        return file.read()
+
+
+def file_has_changed(path, last_mod_time):
+    try:
+        current_mod_time = os.stat(path).st_mtime
+        if current_mod_time != last_mod_time:
+            contents = read_file_contents(path)
+            return True, current_mod_time, contents
+        else:
+            return False, current_mod_time, None
+    except FileNotFoundError:
+        return None, None, None  # Indicate the file is not accessible
+
+
+def monitor_file_changes(path_to_watch, interval=1):
+    last_mod_time = os.stat(path_to_watch).st_mtime
+
     while True:
-        pass
-except KeyboardInterrupt:
-    pass
+        changed, new_mod_time, contents = file_has_changed(path_to_watch, last_mod_time)
+        if changed is None:  # File not found or inaccessible
+            return  # Stop the generator
+        if changed:
+            yield contents  # Yield the new contents of the file
+            last_mod_time = new_mod_time
+        time.sleep(interval)
+
+path_to_monitor = "shared/ipc_restart.txt"
+polling_interval = 1  # seconds
+
+# Every time the data in ipc_communication.txt is changed this will run again.
+# It will run forever untill stopped.
+for data in monitor_file_changes(path_to_monitor, polling_interval):
+    if "restart request" == data:
+        restart_both()
