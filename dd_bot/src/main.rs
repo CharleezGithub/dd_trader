@@ -124,19 +124,6 @@ impl TradersContainer {
     }
 }
 
-#[get("/restart")]
-fn restart() {
-    use std::env;
-
-    let exe_path = env::current_exe().unwrap();
-
-    Command::new(exe_path)
-        .spawn()
-        .expect("Failed to restart the program");
-
-    exit(0);
-}
-
 #[get("/gold_fee/<in_game_id>/<discord_channel_id>/<discord_id>")]
 fn gold_fee(
     in_game_id: String,
@@ -636,8 +623,7 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
                 claim_items,
                 claim_gold,
                 return_items,
-                return_gold,
-                restart
+                return_gold
             ],
         )
 }
