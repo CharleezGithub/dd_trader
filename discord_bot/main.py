@@ -369,30 +369,22 @@ async def restart_entire_bot(ctx):
         )
         return
     
-    await ctx.send("Restarting bot. Wait at least 30 seconds...")
-    threading.Thread(target=restart_in_game_bot).start()
+    # Get the role names for the author
+    role_names = [role.name for role in ctx.author.roles if role.name != "@everyone"]
 
-    time.sleep(1)
+    testing_role_present = False
 
-    import sys
+    for role in role_names:
+        if role == "Tester":
+            testing_role_present = True
+
+    if not testing_role_present:
+        await ctx.send(
+            "This command can only be used by testers."
+        )
+        return
     
-    exe_path = sys.executable
-    script_path = sys.argv[0]
-
-    os.execl(exe_path, script_path, *sys.argv[1:])
-
-
-
-def restart_in_game_bot():
-    # Construct the API endpoint URL
-    api_endpoint = (
-        f"http://127.0.0.1:8051/restart"
-    )
-
-    # Make the API request
-    requests.get(api_endpoint)
-
-
+    # Send ipc con to process manager
 
 @bot.command()
 async def trade(ctx, user: discord.Member):
