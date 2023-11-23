@@ -38,7 +38,13 @@ trade_requests = {}
     # ... additional entries for other trade channels
 }
 """
+# Unlock requests to unlock the trade again. Requires both traders to unlock
 unlock_requests = {}
+
+# Used for checking if the trader is ready to trade or not.
+# Contains the traders discord id followed by the last time they ran the command in unix.
+# Format: {discord_id: unix_time}
+trader_ready_collection = {}
 
 # Stores channels and their time to be deleted. They are set to be deleted 1 hour after a user requests to end a trade
 # Format: {channel_id: 1 hour ahead in unix time}
@@ -594,6 +600,20 @@ async def tutorial(ctx):
 
     await ctx.send(embed=embed)
 
+
+@bot.command(name="ready")
+async def trader_ready(ctx):
+    if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
+        await ctx.send(
+            "This command can only be used within the 'Middleman Trades' category!"
+        )
+        return
+
+    global trader_ready_collection
+
+    trader_ready_collection[ctx.author.id] = time.time()
+
+
 @bot.command(name="show-trade")
 async def show_trade(ctx):
     """Display the items and gold for both users in a specific trade."""
@@ -1089,6 +1109,12 @@ async def pay_fee(ctx, in_game_id: str):
         )
         return
     
+    if not check_ready_state:
+        await ctx.send(
+            "Start `Dark and Darker`. Then enter the `Bard trading channel`. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
+        )
+        return
+    
     trade_queue.put(pay_fee_real(ctx, in_game_id))
 
 
@@ -1176,6 +1202,13 @@ async def deposit(ctx, in_game_id: str):
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
+    
+    if not check_ready_state:
+        await ctx.send(
+            "Start `Dark and Darker`. Then enter the `Bard trading channel`. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
+        )
+        return
+    
     trade_queue.put(deposit_real(ctx, in_game_id))
 
 
@@ -1275,6 +1308,13 @@ async def claim_items(ctx, in_game_id: str):
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
+    
+    if not check_ready_state:
+        await ctx.send(
+            "Start `Dark and Darker`. Then enter the `Bard trading channel`. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
+        )
+        return
+
     trade_queue.put(claim_items_real(ctx, in_game_id))
 
 
@@ -1422,6 +1462,13 @@ async def claim_gold(ctx, in_game_id: str):
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
+    
+    if not check_ready_state:
+        await ctx.send(
+            "Start `Dark and Darker`. Then enter the `Bard trading channel`. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
+        )
+        return
+    
     trade_queue.put(claim_gold_real(ctx, in_game_id))
 
 
@@ -1577,6 +1624,13 @@ async def return_gold(ctx, in_game_id: str):
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
+    
+    if not check_ready_state:
+        await ctx.send(
+            "Start `Dark and Darker`. Then enter the `Bard trading channel`. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
+        )
+        return
+    
     trade_queue.put(return_gold_real(ctx, in_game_id))
 
 
@@ -1659,6 +1713,13 @@ async def return_items(ctx, in_game_id: str):
             "This command can only be used within the 'Middleman Trades' category!"
         )
         return
+    
+    if not check_ready_state:
+        await ctx.send(
+            "Start `Dark and Darker`. Then enter the `Bard trading channel`. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
+        )
+        return
+    
     trade_queue.put(return_items_real(ctx, in_game_id))
 
 
@@ -1869,6 +1930,25 @@ def cancel_trade_check(discord_id, channel_id) -> bool:
     if not gold_in_escrow and not items_in_escrow:
         return False
     return True
+
+
+def check_ready_state(discord_id):
+    global trader_ready_collection
+
+    try:
+        last_time_plus_5min = trader_ready_collection[discord_id] + 300
+
+        # Check if the ready state expired
+        if last_time_plus_5min < time.time():
+            return False
+        
+        # If not return True
+        return True
+    
+    except Exception as e:
+        print("Error checking ready state. Error:\n", e)
+        return False
+
 
 
 # Deletes all records that have anything to do with that channel. (Keeps users)
