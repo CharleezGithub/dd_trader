@@ -135,6 +135,7 @@ async def help_command(ctx, *, command_name=None):
             inline=False,
         )
         embed.add_field(name="!help", value="Displays this help message.", inline=True)
+        embed.add_field(name="!tutorial", value="Provides a step by step guide on how to trade with the bot.", inline=True)
         embed.add_field(
             name="!trade @user",
             value="Sends a trade request to the specified player.",
