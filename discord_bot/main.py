@@ -404,6 +404,12 @@ async def restart_entire_bot(ctx):
 @bot.command()
 async def trade(ctx, user: discord.Member):
     """Send a trade request to a user."""
+    if not ctx.channel.category or ctx.channel.category.name == "Middleman Trades":
+        await ctx.send(
+            "This command cannot be used inside an active trade!"
+        )
+        return
+    
     if user.bot:
         await ctx.send("You can't trade with bots!")
         return
@@ -411,6 +417,7 @@ async def trade(ctx, user: discord.Member):
     if ctx.author.id == user.id:
         await ctx.send("You can't trade with yourself!")
         return
+    
 
     trade_requests[ctx.author.id] = user.id
     await ctx.send(
@@ -421,6 +428,13 @@ async def trade(ctx, user: discord.Member):
 @bot.command(name="trade-accept")
 async def trade_accept(ctx, user: discord.Member):
     """Accept a trade request."""
+    if not ctx.channel.category or ctx.channel.category.name == "Middleman Trades":
+        await ctx.send(
+            "This command cannot be used inside an active trade!"
+        )
+        return
+    
+
     # Check if there's a pending trade from the mentioned user to the command user
     if user.id in trade_requests and trade_requests[user.id] == ctx.author.id:
         conn = sqlite3.connect("trading_bot.db")
