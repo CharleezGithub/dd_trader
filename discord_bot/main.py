@@ -373,7 +373,7 @@ async def on_command_error(ctx, error):
 async def restart_entire_bot(ctx):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
     
@@ -495,7 +495,7 @@ async def trade_accept(ctx, user: discord.Member):
 async def tutorial(ctx):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
 
@@ -607,7 +607,7 @@ async def tutorial(ctx):
 async def trader_ready(ctx):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
 
@@ -622,7 +622,7 @@ async def show_trade(ctx):
 
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
 
@@ -769,7 +769,7 @@ async def cancel_trade(ctx):
     # Ensure the command is used in the "Middleman Trades" category
     if ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
 
@@ -806,7 +806,7 @@ async def add_gold(ctx, gold: int):
     # Ensure the command is used in the "Middleman Trades" category
     if ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
 
@@ -899,7 +899,7 @@ async def add_items(ctx, *args: str):
     # Ensure the command is used in the "Middleman Trades" category
     if ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
 
@@ -982,7 +982,7 @@ async def add_items(ctx, *args: str):
 async def lock_trade(ctx):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
 
@@ -1030,7 +1030,7 @@ async def lock_trade(ctx):
 async def request_unlock(ctx, channel_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
     
@@ -1063,7 +1063,7 @@ async def request_unlock(ctx, channel_id: str):
 async def end_trade(ctx):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
     
@@ -1090,7 +1090,7 @@ async def end_trade(ctx):
 async def reset_deletion(ctx):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
     
@@ -1107,7 +1107,7 @@ async def reset_deletion(ctx):
 async def pay_fee(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
     
@@ -1123,7 +1123,7 @@ async def pay_fee(ctx, in_game_id: str):
 async def pay_fee_real(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
 
@@ -1201,7 +1201,7 @@ async def pay_fee_real(ctx, in_game_id: str):
 async def deposit(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
     
@@ -1217,7 +1217,7 @@ async def deposit(ctx, in_game_id: str):
 async def deposit_real(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
 
@@ -1307,7 +1307,7 @@ async def deposit_real(ctx, in_game_id: str):
 async def claim_items(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
     
@@ -1323,7 +1323,7 @@ async def claim_items(ctx, in_game_id: str):
 async def claim_items_real(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
 
@@ -1461,7 +1461,7 @@ async def claim_items_real(ctx, in_game_id: str):
 async def claim_gold(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
     
@@ -1477,7 +1477,7 @@ async def claim_gold(ctx, in_game_id: str):
 async def claim_gold_real(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
 
@@ -1623,7 +1623,7 @@ async def claim_gold_real(ctx, in_game_id: str):
 async def return_gold(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
     
@@ -1639,7 +1639,7 @@ async def return_gold(ctx, in_game_id: str):
 async def return_gold_real(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
     # Check if the trade is canceled
@@ -1712,7 +1712,7 @@ async def return_gold_real(ctx, in_game_id: str):
 async def return_items(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
     
@@ -1728,7 +1728,7 @@ async def return_items(ctx, in_game_id: str):
 async def return_items_real(ctx, in_game_id: str):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used within the 'Middleman Trades' category!"
+            "This command can only be used inside an active trade!"
         )
         return
     # Check if the trade is canceled
