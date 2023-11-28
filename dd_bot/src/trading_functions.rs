@@ -34,7 +34,7 @@ fn start_game(enigo: &mut Enigo, launcher_name: &str) {
 // 1. Opens the blacksmith launcher and presses play
 // 2. Goes into the lobby.
 // 3. Changes the TradeBotInfo ready variable to true when ready.
-pub async fn open_game_go_to_lobby(bot_info: Arc<Mutex<TradeBotInfo>>) {
+pub async fn open_game_go_to_lobby(bot_info: Arc<Mutex<TradeBotInfo>>, start_launcher: bool, ) {
     let enigo = Arc::new(Mutex::new(Enigo::new()));
 
     println!("Opening game!");
@@ -46,17 +46,21 @@ pub async fn open_game_go_to_lobby(bot_info: Arc<Mutex<TradeBotInfo>>) {
 
     let mut enigo = enigo.lock().unwrap();
 
-    // Minimizes all tabs so that only the game is opened. To avoid clicking on other tabs
-    enigo.key_sequence_parse("{+META}m{-META}");
+    // If the launcher is already open, for example if we are restarting the game, then we do not need to open the launcher again.
+    if start_launcher {
 
-    // Start the launcher
-    start_game(&mut enigo, "blacksmith");
+        // Minimizes all tabs so that only the game is opened. To avoid clicking on other tabs
+        enigo.key_sequence_parse("{+META}m{-META}");
+        
+        // Start the launcher
+        start_game(&mut enigo, "blacksmith");
+    }
 
     // Quickly check if the game needs to update
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/update.png")
-        .arg("F")
+        .arg("SF")
         .output()
         .expect("Failed to execute command");
 
@@ -137,7 +141,7 @@ pub fn collect_gold_fee(
             match info.ready {
                 ReadyState::False => {
                     tokio::spawn(async move {
-                        open_game_go_to_lobby(bot_info_clone).await;
+                        open_game_go_to_lobby(bot_info_clone, true).await;
                     });
                 }
                 ReadyState::Starting => sleep(Duration::from_secs(2)),
@@ -333,7 +337,7 @@ pub fn deposit(
             match info.ready {
                 ReadyState::False => {
                     tokio::spawn(async move {
-                        open_game_go_to_lobby(bot_info_clone).await;
+                        open_game_go_to_lobby(bot_info_clone, true).await;
                     });
                 }
                 ReadyState::Starting => sleep(Duration::from_secs(2)),
@@ -826,7 +830,7 @@ pub fn claim_items(
             match info.ready {
                 ReadyState::False => {
                     tokio::spawn(async move {
-                        open_game_go_to_lobby(bot_info_clone).await;
+                        open_game_go_to_lobby(bot_info_clone, true).await;
                     });
                 }
                 ReadyState::Starting => sleep(Duration::from_secs(2)),
@@ -1469,7 +1473,7 @@ pub fn claim_gold(
             match info.ready {
                 ReadyState::False => {
                     tokio::spawn(async move {
-                        open_game_go_to_lobby(bot_info_clone).await;
+                        open_game_go_to_lobby(bot_info_clone, true).await;
                     });
                 }
                 ReadyState::Starting => sleep(Duration::from_secs(2)),
@@ -1882,7 +1886,7 @@ pub fn return_gold(
             match info.ready {
                 ReadyState::False => {
                     tokio::spawn(async move {
-                        open_game_go_to_lobby(bot_info_clone).await;
+                        open_game_go_to_lobby(bot_info_clone, true).await;
                     });
                 }
                 ReadyState::Starting => sleep(Duration::from_secs(2)),
@@ -2286,7 +2290,7 @@ pub fn return_items(
             match info.ready {
                 ReadyState::False => {
                     tokio::spawn(async move {
-                        open_game_go_to_lobby(bot_info_clone).await;
+                        open_game_go_to_lobby(bot_info_clone, true).await;
                     });
                 }
                 ReadyState::Starting => sleep(Duration::from_secs(2)),
@@ -3019,8 +3023,146 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
         return Err("Could not detect trading window");
     }
 }
-
 pub fn return_to_lobby() {
+    let mut enigo = Enigo::new();
+
+    // Check if in play tab
+    // If yes then return
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/in_play_tab.png")
+        .arg("SF")
+        .arg("C")
+        .output()
+        .expect("Failed to execute command");
+
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    if output_str != "Could not detect" {
+        println!("Already in play tab");
+        return;
+    }
+
+    // Check if can go to play tab
+    // If yes then return
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/play_tab.png")
+        .arg("SF")
+        .output()
+        .expect("Failed to execute command");
+
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    if output_str != "Could not detect" {
+        match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+            Ok(_) => {
+                println!("Successfully clicked button!");
+                return;
+            }
+            Err(err) => println!("Got error while trying to click button: {:?}", err),
+        }
+    }
+
+    // Run this code twice.
+    // It presses escape and clicks yes.
+    // If we are in an active trade then it will only go out of the active trade and into the trading channel.
+    // If we are in the trading channel then it will go out and into the "trade" tab
+    // This loop will run twice if we are in an active trade and only run once if the bot is in a trading channel
+    // When the loop is done the bot should have returned to the lobby and be ready again.
+    // If not then it will continue and restart the game.
+    for _ in 0..2 {
+        // Press escape and press button "yes"
+        enigo.key_click(Key::Escape);
+
+        let output = Command::new("python")
+            .arg("python_helpers/obj_detection.py")
+            .arg("images/leave_post.png")
+            .arg("F")
+            .arg("C")
+            .output()
+            .expect("Failed to execute command");
+
+        let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+        if output_str != "Could not detect" {
+            match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+                Ok(_) => {
+                    println!("Successfully clicked button!");
+                }
+                Err(err) => println!("Got error while trying to click button: {:?}", err),
+            }
+        }
+        // Check if can go to play tab
+        // If yes then go and return
+        let output = Command::new("python")
+            .arg("python_helpers/obj_detection.py")
+            .arg("images/play_tab.png")
+            .arg("SF")
+            .output()
+            .expect("Failed to execute command");
+
+        let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+        if output_str != "Could not detect" {
+            match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+                Ok(_) => {
+                    println!("Successfully clicked button!");
+                    return;
+                }
+                Err(err) => println!("Got error while trying to click button: {:?}", err),
+            }
+        }
+    }
+    // Press windows key and go to blacksmith launcher
+    // Minize game
+    enigo.key_sequence_parse("{+META}m{-META}");
+
+    // Press "Stop" button
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/stop_game.png")
+        .arg("F")
+        .output()
+        .expect("Failed to execute command");
+
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    if output_str != "Could not detect" {
+        match enigo_functions::click_buton(&mut enigo, output, false, 0, 0) {
+            Ok(_) => {
+                println!("Successfully clicked button!");
+            }
+            Err(err) => println!("Got error while trying to click button: {:?}", err),
+        }
+    }
+    
+    // Press "Ok" button to confirm closing game
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/close_game_ok.png")
+        .arg("F")
+        .output()
+        .expect("Failed to execute command");
+
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    if output_str != "Could not detect" {
+        match enigo_functions::click_buton(&mut enigo, output, false, 0, 0) {
+            Ok(_) => {
+                println!("Successfully clicked button!");
+            }
+            Err(err) => println!("Got error while trying to click button: {:?}", err),
+        }
+    }
+
+    // Run open_game_go_to_lobby
+    let _ = open_game_go_to_lobby_no_state_change(false);
+    // Return
+    return;
+}
+
+pub fn return_to_lobby_old() {
     let mut enigo = Enigo::new();
 
     // Check if bot is already in the play tab
@@ -3344,4 +3486,86 @@ fn click_pouches(
         }
     }
     clicked_pouches
+}
+
+
+// Needed for return to lobby as return to lobby cannot have the bot_info param as it interfers too much with other functions
+pub async fn open_game_go_to_lobby_no_state_change(start_launcher: bool, ) {
+    let enigo = Arc::new(Mutex::new(Enigo::new()));
+
+    println!("Opening game!");
+    //tokio::time::sleep(tokio::time::Duration::from_secs(10000)).await;
+
+    let mut enigo = enigo.lock().unwrap();
+
+    // If the launcher is already open, for example if we are restarting the game, then we do not need to open the launcher again.
+    if start_launcher {
+
+        // Minimizes all tabs so that only the game is opened. To avoid clicking on other tabs
+        enigo.key_sequence_parse("{+META}m{-META}");
+        
+        // Start the launcher
+        start_game(&mut enigo, "blacksmith");
+    }
+
+    // Quickly check if the game needs to update
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/update.png")
+        .arg("SF")
+        .output()
+        .expect("Failed to execute command");
+
+    // Convert the output bytes to a string
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    // If the update menu was found then click the update button
+    if output_str != "Could not find" {
+        match enigo_functions::click_buton(&mut enigo, output, false, 0, 0) {
+            Ok(_) => println!("Successfully clicked button!"),
+            Err(err) => println!("Got error while trying to click button: {:?}", err),
+        }
+    }
+
+    // Run the launcher play button detector
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/play.png")
+        .arg("L")
+        .output()
+        .expect("Failed to execute command");
+
+    println!("Output: {:?}", output);
+
+    match enigo_functions::click_buton(&mut enigo, output, false, 0, 0) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    // Now we are opening the game
+    // Run the "Ok" button detector (Will run once we enter the game)
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/okay_start.png")
+        .output()
+        .expect("Failed to execute command");
+
+    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    // Run the "Enter the lobby" button detector
+    let output = Command::new("python")
+        .arg("python_helpers/obj_detection.py")
+        .arg("images/enter_lobby.png")
+        .output()
+        .expect("Failed to execute command");
+
+    match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
+        Ok(_) => println!("Successfully clicked button!"),
+        Err(err) => println!("Got error while trying to click button: {:?}", err),
+    }
+
+    // Now the bot is in the lobby "play" tab
 }
