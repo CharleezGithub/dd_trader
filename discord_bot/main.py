@@ -395,10 +395,21 @@ async def restart_entire_bot(ctx):
     await ctx.send(
         "Restarting bot...\nWait at least 30 seconds before using any commands that interact with the game."
     )
+    await ctx.send(
+        "(Currently only the ingame bot will be restarted. If the bot is still broken after this command and you have waited at least 5 minutes. Then message @asdgew)"
+    )
 
-    # Send ipc con to process manager
+    # Construct the API endpoint URL
+    api_endpoint = (
+        f"http://127.0.0.1:8051/reset_in_game"
+    )
+
+    # Make the API request
+    response = requests.get(api_endpoint)
+
+    """# Send ipc con to process manager
     with open("shared/ipc_restart.txt", "w") as f:
-        f.write("restart request")
+        f.write("restart request")"""
 
 
 @bot.command()

@@ -578,6 +578,10 @@ fn return_gold(
         in_game_id
     )
 }
+#[get("/reset_in_game")]
+fn reset_in_game() {
+    trading_functions::return_to_lobby();
+}
 
 fn rocket() -> rocket::Rocket<rocket::Build> {
     // Create 2 instances of enigo because Enigo does not implement Copy.
@@ -623,7 +627,8 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
                 claim_items,
                 claim_gold,
                 return_items,
-                return_gold
+                return_gold,
+                reset_in_game
             ],
         )
 }
