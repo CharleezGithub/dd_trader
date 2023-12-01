@@ -16,15 +16,15 @@ python_proc = None
 
 def start_rust(rust_app_dir):
     global rust_app
-    # Specify the path to the Rust application binary
     rust_app_binary = os.path.join(rust_app_dir, "dd_bot")
-
-    rust_app = subprocess.Popen([rust_app_binary], cwd=rust_app_dir)
+    # Open in a new command prompt window
+    rust_app = subprocess.Popen(f'start cmd /c {rust_app_binary}', cwd=rust_app_dir, shell=True)
     print(f"Started Rust app with PID: {rust_app.pid}")
 
 def start_python(python_main_dir):
     global python_proc
-    python_proc = subprocess.Popen(["python", python_main_dir])
+    # Open in a new command prompt window
+    python_proc = subprocess.Popen(f'start cmd /c python {python_main_dir}', shell=True)
     print(f"Started Python app with PID: {python_proc.pid}")
 
 
