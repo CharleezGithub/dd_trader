@@ -186,7 +186,7 @@ fn gold_fee(
         ReadyState::True => {
             let _ = update_status("TradeBot ready");
             return format!(
-                "Sending `{}` a trade request in `The Bard's Theater #1` trading channel",
+                "Sending `{}` a trade request in `Utility Trade #1` trading channel",
                 in_game_id
             );
         }
@@ -260,7 +260,7 @@ fn deposit(
 
     // Return a response indicating the trade request is in progress
     format!(
-        "Sending `{}` a trade request in `The Bard's Theater #1` trading channel",
+        "Sending `{}` a trade request in `Utility Trade #1` trading channel",
         in_game_id
     )
 }
@@ -339,7 +339,7 @@ fn claim_items(
 
     // Return a response indicating the trade request is in progress
     format!(
-        "Sending `{}` a trade request in `The Bard's Theater #1` trading channel",
+        "Sending `{}` a trade request in `Utility Trade #1` trading channel",
         in_game_id
     )
 }
@@ -417,7 +417,7 @@ fn claim_gold(
 
     // Return a response indicating the trade request is in progress
     format!(
-        "Sending `{}` a trade request in `The Bard's Theater #1` trading channel",
+        "Sending `{}` a trade request in `Utility Trade #1` trading channel",
         in_game_id
     )
 }
@@ -496,7 +496,7 @@ fn return_items(
 
     // Return a response indicating the trade request is in progress
     format!(
-        "Sending `{}` a trade request in `The Bard's Theater #1` trading channel",
+        "Sending `{}` a trade request in `Utility Trade #1` trading channel",
         in_game_id
     )
 }
@@ -574,7 +574,7 @@ fn return_gold(
 
     // Return a response indicating the trade request is in progress
     format!(
-        "Sending `{}` a trade request in `The Bard's Theater #1` trading channel",
+        "Sending `{}` a trade request in `Utility Trade #1` trading channel",
         in_game_id
     )
 }

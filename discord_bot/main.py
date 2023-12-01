@@ -594,7 +594,7 @@ async def tutorial(ctx):
     embed.add_field(
         name="7️⃣ In-Game Steps",
         value=(
-            "Be in the game's Bard trading channel before using these commands. 🎮\n"
+            "Be in the `Utility Trade #1` trading channel before using these commands. 🎮\n"
             "Pay the gold fee: `!pay-fee {in-game ID}`.\n"
             "Deposit items: `!deposit {in-game ID}`.\n"
             "Claim items or gold: `!claim-items` or `!claim-gold {in-game ID}`."
@@ -1127,7 +1127,7 @@ async def pay_fee(ctx, in_game_id: str):
     
     if not check_ready_state:
         await ctx.send(
-            "Start `Dark and Darker`. Then enter the `Bard trading channel`. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
+            "Start `Dark and Darker`. Then enter the `Utility Trade #1` trading channel. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
         )
         return
     
@@ -1221,7 +1221,7 @@ async def deposit(ctx, in_game_id: str):
     
     if not check_ready_state:
         await ctx.send(
-            "Start `Dark and Darker`. Then enter the `Bard trading channel`. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
+            "Start `Dark and Darker`. Then enter the `Utility Trade #1` trading channel. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
         )
         return
     
@@ -1327,7 +1327,7 @@ async def claim_items(ctx, in_game_id: str):
     
     if not check_ready_state:
         await ctx.send(
-            "Start `Dark and Darker`. Then enter the `Bard trading channel`. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
+            "Start `Dark and Darker`. Then enter the `Utility Trade #1` trading channel. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
         )
         return
 
@@ -1481,7 +1481,7 @@ async def claim_gold(ctx, in_game_id: str):
     
     if not check_ready_state:
         await ctx.send(
-            "Start `Dark and Darker`. Then enter the `Bard trading channel`. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
+            "Start `Dark and Darker`. Then enter the `Utility Trade #1` trading channel. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
         )
         return
     
@@ -1583,7 +1583,7 @@ async def claim_gold_real(ctx, in_game_id: str):
     if has_other_trader_gold_left(ctx.author.id, ctx.channel.id):
         print("Other trader still has gold left to be claimed by trader.")
         await ctx.send(
-            "Gold is ready to be sent! Hop into the bard trading channel to collect your gold."
+            "Gold is ready to be sent! Hop into the `Utility Trade #1` trading channel to collect your gold."
         )
     else:
         await ctx.send(
@@ -1643,7 +1643,7 @@ async def return_gold(ctx, in_game_id: str):
     
     if not check_ready_state:
         await ctx.send(
-            "Start `Dark and Darker`. Then enter the `Bard trading channel`. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
+            "Start `Dark and Darker`. Then enter the `Utility Trade #1` trading channel. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
         )
         return
     
@@ -1732,7 +1732,7 @@ async def return_items(ctx, in_game_id: str):
     
     if not check_ready_state:
         await ctx.send(
-            "Start `Dark and Darker`. Then enter the `Bard trading channel`. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
+            "Start `Dark and Darker`. Then enter the `Utility Trade #1` trading channel. When ready to recive a trading request from the bot, do `!ready`, then try this command again."
         )
         return
     
