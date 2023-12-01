@@ -3153,9 +3153,10 @@ pub fn return_to_lobby() {
             Err(err) => println!("Got error while trying to click button: {:?}", err),
         }
     }
-
     // Run open_game_go_to_lobby
-    let _ = open_game_go_to_lobby_no_state_change(false);
+    tokio::spawn(async move { 
+        open_game_go_to_lobby_no_state_change(false).await;
+    });
     // Return
     return;
 }
@@ -3527,7 +3528,7 @@ pub async fn open_game_go_to_lobby_no_state_change(start_launcher: bool) {
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/play.png")
-        .arg("L")
+        .arg("F")
         .output()
         .expect("Failed to execute command");
 
