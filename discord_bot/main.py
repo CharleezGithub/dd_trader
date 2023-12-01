@@ -476,16 +476,32 @@ async def trade_accept(ctx, user: discord.Member):
             category = await ctx.guild.create_category(category_name)
 
         # Create a private channel with permissions for only the two trading users and the bot
-        overwrites = {
-            ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            ctx.author: discord.PermissionOverwrite(
-                read_messages=True, send_messages=True
-            ),
-            user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-            ctx.guild.me: discord.PermissionOverwrite(
-                read_messages=True, send_messages=True
-            ),
-        }
+        # Add myself to the private channels so that i can follow the testers actions
+        me = discord.utils.get(bot.get_all_members(), id="717964821965963336")
+        # If i am one of the 2 traders  then i dont need to be added to the trade as well
+        if me == user or me == ctx.author:
+            overwrites = {
+                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                ctx.author: discord.PermissionOverwrite(
+                    read_messages=True, send_messages=True
+                ),
+                user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                ctx.guild.me: discord.PermissionOverwrite(
+                    read_messages=True, send_messages=True
+                ),
+            }
+        else:
+            overwrites = {
+                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                ctx.author: discord.PermissionOverwrite(
+                    read_messages=True, send_messages=True
+                ),
+                user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                ctx.guild.me: discord.PermissionOverwrite(
+                    read_messages=True, send_messages=True
+                ),
+            }
 
         channel_name = f"trade-{ctx.author.name}-and-{user.name}"
         trade_channel = await ctx.guild.create_text_channel(
