@@ -536,10 +536,10 @@ async def trade_accept(ctx, user: discord.Member):
 async def tutorial(ctx):
     if not ctx.channel.category or ctx.channel.category.name != "Middleman Trades":
         await ctx.send(
-            "This command can only be used inside an active trade!\n",
-            "Start off by trading with a player.\n",
-            "Do the command !trade @user to send them a trade request.\n",
-            "If accepted, a private channel will be created for the two traders to discuss their trade."
+            """This command can only be used inside an active trade!\n
+            Start off by trading with a player.\n
+            Do the command !trade @user to send them a trade request.\n
+            If accepted, a private channel will be created for the two traders to discuss their trade."""
         )
         return
 
