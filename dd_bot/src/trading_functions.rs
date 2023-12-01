@@ -2924,10 +2924,10 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     }
 
     // Now enter bards trading post
-    // Run the "bard_trade" button detector
+    // Run the trade channel button detector
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
-        .arg("images/bard_trade.png")
+        .arg("images/utility_trade.png")
         .output()
         .expect("Failed to execute command");
 
