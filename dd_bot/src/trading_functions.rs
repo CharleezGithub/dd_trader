@@ -34,7 +34,7 @@ fn start_game(enigo: &mut Enigo, launcher_name: &str) {
 // 1. Opens the blacksmith launcher and presses play
 // 2. Goes into the lobby.
 // 3. Changes the TradeBotInfo ready variable to true when ready.
-pub async fn open_game_go_to_lobby(bot_info: Arc<Mutex<TradeBotInfo>>, start_launcher: bool, ) {
+pub async fn open_game_go_to_lobby(bot_info: Arc<Mutex<TradeBotInfo>>, start_launcher: bool) {
     let enigo = Arc::new(Mutex::new(Enigo::new()));
 
     println!("Opening game!");
@@ -48,10 +48,9 @@ pub async fn open_game_go_to_lobby(bot_info: Arc<Mutex<TradeBotInfo>>, start_lau
 
     // If the launcher is already open, for example if we are restarting the game, then we do not need to open the launcher again.
     if start_launcher {
-
         // Minimizes all tabs so that only the game is opened. To avoid clicking on other tabs
         enigo.key_sequence_parse("{+META}m{-META}");
-        
+
         // Start the launcher
         start_game(&mut enigo, "blacksmith");
     }
@@ -3132,25 +3131,24 @@ pub fn return_to_lobby() {
         match enigo_functions::click_buton(&mut enigo, output, false, 0, 0) {
             Ok(_) => {
                 println!("Successfully clicked button!");
-            }
-            Err(err) => println!("Got error while trying to click button: {:?}", err),
-        }
-    }
-    
-    // Press "Ok" button to confirm closing game
-    let output = Command::new("python")
-        .arg("python_helpers/obj_detection.py")
-        .arg("images/close_game_ok.png")
-        .arg("F")
-        .output()
-        .expect("Failed to execute command");
+                // Press "Ok" button to confirm closing game
+                let output = Command::new("python")
+                    .arg("python_helpers/obj_detection.py")
+                    .arg("images/close_game_ok.png")
+                    .arg("F")
+                    .output()
+                    .expect("Failed to execute command");
 
-    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+                let output_str = str::from_utf8(&output.stdout).unwrap().trim();
 
-    if output_str != "Could not detect" {
-        match enigo_functions::click_buton(&mut enigo, output, false, 0, 0) {
-            Ok(_) => {
-                println!("Successfully clicked button!");
+                if output_str != "Could not detect" {
+                    match enigo_functions::click_buton(&mut enigo, output, false, 0, 0) {
+                        Ok(_) => {
+                            println!("Successfully clicked button!");
+                        }
+                        Err(err) => println!("Got error while trying to click button: {:?}", err),
+                    }
+                }
             }
             Err(err) => println!("Got error while trying to click button: {:?}", err),
         }
@@ -3488,9 +3486,8 @@ fn click_pouches(
     clicked_pouches
 }
 
-
 // Needed for return to lobby as return to lobby cannot have the bot_info param as it interfers too much with other functions
-pub async fn open_game_go_to_lobby_no_state_change(start_launcher: bool, ) {
+pub async fn open_game_go_to_lobby_no_state_change(start_launcher: bool) {
     let enigo = Arc::new(Mutex::new(Enigo::new()));
 
     println!("Opening game!");
@@ -3500,10 +3497,9 @@ pub async fn open_game_go_to_lobby_no_state_change(start_launcher: bool, ) {
 
     // If the launcher is already open, for example if we are restarting the game, then we do not need to open the launcher again.
     if start_launcher {
-
         // Minimizes all tabs so that only the game is opened. To avoid clicking on other tabs
         enigo.key_sequence_parse("{+META}m{-META}");
-        
+
         // Start the launcher
         start_game(&mut enigo, "blacksmith");
     }
