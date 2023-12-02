@@ -527,7 +527,7 @@ pub fn deposit(
                 .arg("python_helpers/multi_obj_detection_narrow.py")
                 .arg("temp_images/item/image.png")
                 .arg("SC")
-                .arg("SF")
+                .arg("F")
                 .arg("G")
                 .output()
                 .expect("Failed to execute command");
