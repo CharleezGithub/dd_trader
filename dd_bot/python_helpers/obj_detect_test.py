@@ -38,7 +38,7 @@ elif len(sys.argv) > 2:
         elif arg.strip() == "G":
             grayscale = True
 else:
-    image_name = "test_info.png"
+    image_name = "dd_bot/temp_images/item/image.png"
 
 max_val = 0.00
 
@@ -86,7 +86,7 @@ while max_val < limit:
 
     tries += 1
     time.sleep(1)
-    # print(f"Certainty Score: {max_val:.2f}")
+    print(f"Certainty Score: {max_val:.2f}")
 
 
 if tries < max_tries:
@@ -97,41 +97,15 @@ if tries < max_tries:
     # Draw a rectangle around the matched object
     cv2.rectangle(main_image, top_left, bottom_right, (0, 255, 0), 2)
 
-    # Print the coordinates of the detected object directly
-    print(top_left[0], top_left[1], bottom_right[0], bottom_right[1])
-
-    # Draw a rectangle around the matched object
-    cv2.rectangle(
-        main_image, top_left, bottom_right, (0, 255, 0), 2
-    )  # Change rectangle color to green for visibility
-
     # Display the result in a named window
     window_name = "Detected Object"
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-    # Set the window to fullscreen
     cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-
     cv2.imshow(window_name, main_image)
 
-    # Get the screen coordinates of the window
-    x, y, w, h = cv2.getWindowImageRect(window_name)
-
-    # Calculate the screen coordinates of the detected object
-    screen_top_left = (x + top_left[0], y + top_left[1])
-    screen_bottom_right = (x + bottom_right[0], y + bottom_right[1])
-
-    # Top left coords, Bottom right coords. x1 y1 x2 y2
-    print(
-        screen_top_left[0],
-        screen_top_left[1],
-        screen_bottom_right[0],
-        screen_bottom_right[1],
-    )
-
-    # Print the certainty score (i.e., the maximum correlation coefficient)
-    print(f"Certainty Score: {max_val:.2f}")
-
-
+    # Print the coordinates of the detected object directly
+    print(top_left[0], top_left[1], bottom_right[0], bottom_right[1])
+    
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 else:
