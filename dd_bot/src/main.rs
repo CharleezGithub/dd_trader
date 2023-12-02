@@ -127,15 +127,15 @@ impl TradersContainer {
 #[get("/gold_fee/<in_game_id>/<discord_channel_id>/<discord_id>")]
 fn gold_fee(
     in_game_id: String,
-    discord_channel_id: &str,
-    discord_id: &str,
+    discord_channel_id: String,
+    discord_id: String,
     enigo: &State<Arc<Mutex<Enigo>>>,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) -> String {
     {
         let mut traders = traders_container.lock().unwrap();
-        traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id, discord_channel_id);
+        traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id.as_str(), discord_channel_id.as_str());
     }
 
     // Dereference `State` and clone the inner `Arc`.
@@ -143,6 +143,8 @@ fn gold_fee(
     let bot_info_cloned = bot_info.inner().clone();
     let traders_container_cloned = traders_container.inner().clone();
     let in_game_id_clone = in_game_id.clone();
+    let discord_id_cloned = discord_id.clone();
+    let discord_channel_id_cloned = discord_channel_id.clone();
 
     // Spawn the trading function in a non-blocking way
     tokio::spawn(async move {
@@ -152,6 +154,8 @@ fn gold_fee(
                 (&enigo_cloned).into(),
                 (&bot_info_cloned).into(),
                 &in_game_id_clone,
+                &discord_id_cloned,
+                &discord_channel_id_cloned,
                 (&traders_container_cloned).into(),
             )
         })

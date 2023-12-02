@@ -125,6 +125,8 @@ pub fn collect_gold_fee(
     enigo: &State<Arc<Mutex<Enigo>>>,
     bot_info: &State<Arc<Mutex<TradeBotInfo>>>,
     in_game_id: &str,
+    discord_id: &str,
+    discord_channel_id: &str,
     traders_container: &State<Arc<Mutex<TradersContainer>>>,
 ) -> Result<String, String> {
     let result_catch_panic = panic::catch_unwind(|| {
@@ -281,6 +283,8 @@ pub fn collect_gold_fee(
 
         // When paid, set has_paid_gold_fee to true
         let mut traders = traders_container.lock().unwrap();
+        traders.set_in_game_id_by_discord_info(&in_game_id, &discord_id, &discord_channel_id);
+
         let trader = traders.get_trader_by_in_game_id(in_game_id);
 
         // Check if trader exists
@@ -295,7 +299,9 @@ pub fn collect_gold_fee(
                     Err(err) => println!("Could not update gold status: Error \n{}", err),
                 }
             }
-            None => println!("Trader not found"),
+            None => {
+                println!("Trader not found");
+            }
         }
 
         // Make a copy of trader discord id. Else it would use traders as both mutable and imutable.
@@ -306,14 +312,25 @@ pub fn collect_gold_fee(
         return_to_lobby();
         return Ok(String::from("Successfully collected fee!"));
     });
-    match result_catch_panic.unwrap() {
-        Ok(message) => {
-            return Ok(message);
-        }
-        Err(err) => {
+    match result_catch_panic {
+        Ok(ok_result) => {
+            match ok_result {
+                Ok(message) => return Ok(message),
+                Err(err) => {
+                    return_to_lobby();
+                    // Handle the string error here, maybe log it or convert it to your error type
+                    return Err(err);
+                },
+            }
+        },
+        Err(panic_error) => {
+            // This branch handles the case where panic::catch_unwind caught a panic
+            // You can log the panic information, perform cleanup, or return an appropriate error
+            // Convert panic_error (Box<dyn Any + Send>) to a suitable error type if needed
             return_to_lobby();
-            return Err(err);
-        }
+            // Return a generic error message
+            return Err(format!("Got error while trying to unwrap panic. Error: {:?}", panic_error));
+        },
     }
 }
 
@@ -798,14 +815,25 @@ pub fn deposit(
             }
         }
     });
-    match result_catch_panic.unwrap() {
-        Ok(message) => {
-            return Ok(message);
-        }
-        Err(err) => {
+    match result_catch_panic {
+        Ok(ok_result) => {
+            match ok_result {
+                Ok(message) => return Ok(message),
+                Err(err) => {
+                    return_to_lobby();
+                    // Handle the string error here, maybe log it or convert it to your error type
+                    return Err(err);
+                },
+            }
+        },
+        Err(panic_error) => {
+            // This branch handles the case where panic::catch_unwind caught a panic
+            // You can log the panic information, perform cleanup, or return an appropriate error
+            // Convert panic_error (Box<dyn Any + Send>) to a suitable error type if needed
             return_to_lobby();
-            return Err(err);
-        }
+            // Return a generic error message
+            return Err(format!("Got error while trying to unwrap panic. Error: {:?}", panic_error));
+        },
     }
 }
 
@@ -1442,14 +1470,25 @@ pub fn claim_items(
         return_to_lobby();
         Ok(String::from("Trade successful"))
     });
-    match result_catch_panic.unwrap() {
-        Ok(message) => {
-            return Ok(message);
-        }
-        Err(err) => {
+    match result_catch_panic {
+        Ok(ok_result) => {
+            match ok_result {
+                Ok(message) => return Ok(message),
+                Err(err) => {
+                    return_to_lobby();
+                    // Handle the string error here, maybe log it or convert it to your error type
+                    return Err(err);
+                },
+            }
+        },
+        Err(panic_error) => {
+            // This branch handles the case where panic::catch_unwind caught a panic
+            // You can log the panic information, perform cleanup, or return an appropriate error
+            // Convert panic_error (Box<dyn Any + Send>) to a suitable error type if needed
             return_to_lobby();
-            return Err(err);
-        }
+            // Return a generic error message
+            return Err(format!("Got error while trying to unwrap panic. Error: {:?}", panic_error));
+        },
     }
 }
 
@@ -1855,14 +1894,25 @@ pub fn claim_gold(
             }
         }
     });
-    match result_catch_panic.unwrap() {
-        Ok(message) => {
-            return Ok(message);
-        }
-        Err(err) => {
+    match result_catch_panic {
+        Ok(ok_result) => {
+            match ok_result {
+                Ok(message) => return Ok(message),
+                Err(err) => {
+                    return_to_lobby();
+                    // Handle the string error here, maybe log it or convert it to your error type
+                    return Err(err);
+                },
+            }
+        },
+        Err(panic_error) => {
+            // This branch handles the case where panic::catch_unwind caught a panic
+            // You can log the panic information, perform cleanup, or return an appropriate error
+            // Convert panic_error (Box<dyn Any + Send>) to a suitable error type if needed
             return_to_lobby();
-            return Err(err);
-        }
+            // Return a generic error message
+            return Err(format!("Got error while trying to unwrap panic. Error: {:?}", panic_error));
+        },
     }
 }
 
@@ -2260,14 +2310,25 @@ pub fn return_gold(
             }
         }
     });
-    match result_catch_panic.unwrap() {
-        Ok(message) => {
-            return Ok(message);
-        }
-        Err(err) => {
+    match result_catch_panic {
+        Ok(ok_result) => {
+            match ok_result {
+                Ok(message) => return Ok(message),
+                Err(err) => {
+                    return_to_lobby();
+                    // Handle the string error here, maybe log it or convert it to your error type
+                    return Err(err);
+                },
+            }
+        },
+        Err(panic_error) => {
+            // This branch handles the case where panic::catch_unwind caught a panic
+            // You can log the panic information, perform cleanup, or return an appropriate error
+            // Convert panic_error (Box<dyn Any + Send>) to a suitable error type if needed
             return_to_lobby();
-            return Err(err);
-        }
+            // Return a generic error message
+            return Err(format!("Got error while trying to unwrap panic. Error: {:?}", panic_error));
+        },
     }
 }
 pub fn return_items(
@@ -2894,14 +2955,25 @@ pub fn return_items(
         return_to_lobby();
         Ok(String::from("Trade successful"))
     });
-    match result_catch_panic.unwrap() {
-        Ok(message) => {
-            return Ok(message);
-        }
-        Err(err) => {
+    match result_catch_panic {
+        Ok(ok_result) => {
+            match ok_result {
+                Ok(message) => return Ok(message),
+                Err(err) => {
+                    return_to_lobby();
+                    // Handle the string error here, maybe log it or convert it to your error type
+                    return Err(err);
+                },
+            }
+        },
+        Err(panic_error) => {
+            // This branch handles the case where panic::catch_unwind caught a panic
+            // You can log the panic information, perform cleanup, or return an appropriate error
+            // Convert panic_error (Box<dyn Any + Send>) to a suitable error type if needed
             return_to_lobby();
-            return Err(err);
-        }
+            // Return a generic error message
+            return Err(format!("Got error while trying to unwrap panic. Error: {:?}", panic_error));
+        },
     }
 }
 
@@ -3154,7 +3226,7 @@ pub fn return_to_lobby() {
         }
     }
     // Run open_game_go_to_lobby
-    tokio::spawn(async move { 
+    tokio::spawn(async move {
         open_game_go_to_lobby_no_state_change(false).await;
     });
     // Return
