@@ -320,17 +320,20 @@ pub fn collect_gold_fee(
                     return_to_lobby();
                     // Handle the string error here, maybe log it or convert it to your error type
                     return Err(err);
-                },
+                }
             }
-        },
+        }
         Err(panic_error) => {
             // This branch handles the case where panic::catch_unwind caught a panic
             // You can log the panic information, perform cleanup, or return an appropriate error
             // Convert panic_error (Box<dyn Any + Send>) to a suitable error type if needed
             return_to_lobby();
             // Return a generic error message
-            return Err(format!("Got error while trying to unwrap panic. Error: {:?}", panic_error));
-        },
+            return Err(format!(
+                "Got error while trying to unwrap panic. Error: {:?}",
+                panic_error
+            ));
+        }
     }
 }
 
@@ -823,17 +826,20 @@ pub fn deposit(
                     return_to_lobby();
                     // Handle the string error here, maybe log it or convert it to your error type
                     return Err(err);
-                },
+                }
             }
-        },
+        }
         Err(panic_error) => {
             // This branch handles the case where panic::catch_unwind caught a panic
             // You can log the panic information, perform cleanup, or return an appropriate error
             // Convert panic_error (Box<dyn Any + Send>) to a suitable error type if needed
             return_to_lobby();
             // Return a generic error message
-            return Err(format!("Got error while trying to unwrap panic. Error: {:?}", panic_error));
-        },
+            return Err(format!(
+                "Got error while trying to unwrap panic. Error: {:?}",
+                panic_error
+            ));
+        }
     }
 }
 
@@ -1478,17 +1484,20 @@ pub fn claim_items(
                     return_to_lobby();
                     // Handle the string error here, maybe log it or convert it to your error type
                     return Err(err);
-                },
+                }
             }
-        },
+        }
         Err(panic_error) => {
             // This branch handles the case where panic::catch_unwind caught a panic
             // You can log the panic information, perform cleanup, or return an appropriate error
             // Convert panic_error (Box<dyn Any + Send>) to a suitable error type if needed
             return_to_lobby();
             // Return a generic error message
-            return Err(format!("Got error while trying to unwrap panic. Error: {:?}", panic_error));
-        },
+            return Err(format!(
+                "Got error while trying to unwrap panic. Error: {:?}",
+                panic_error
+            ));
+        }
     }
 }
 
@@ -1902,17 +1911,20 @@ pub fn claim_gold(
                     return_to_lobby();
                     // Handle the string error here, maybe log it or convert it to your error type
                     return Err(err);
-                },
+                }
             }
-        },
+        }
         Err(panic_error) => {
             // This branch handles the case where panic::catch_unwind caught a panic
             // You can log the panic information, perform cleanup, or return an appropriate error
             // Convert panic_error (Box<dyn Any + Send>) to a suitable error type if needed
             return_to_lobby();
             // Return a generic error message
-            return Err(format!("Got error while trying to unwrap panic. Error: {:?}", panic_error));
-        },
+            return Err(format!(
+                "Got error while trying to unwrap panic. Error: {:?}",
+                panic_error
+            ));
+        }
     }
 }
 
@@ -2318,17 +2330,20 @@ pub fn return_gold(
                     return_to_lobby();
                     // Handle the string error here, maybe log it or convert it to your error type
                     return Err(err);
-                },
+                }
             }
-        },
+        }
         Err(panic_error) => {
             // This branch handles the case where panic::catch_unwind caught a panic
             // You can log the panic information, perform cleanup, or return an appropriate error
             // Convert panic_error (Box<dyn Any + Send>) to a suitable error type if needed
             return_to_lobby();
             // Return a generic error message
-            return Err(format!("Got error while trying to unwrap panic. Error: {:?}", panic_error));
-        },
+            return Err(format!(
+                "Got error while trying to unwrap panic. Error: {:?}",
+                panic_error
+            ));
+        }
     }
 }
 pub fn return_items(
@@ -2963,17 +2978,20 @@ pub fn return_items(
                     return_to_lobby();
                     // Handle the string error here, maybe log it or convert it to your error type
                     return Err(err);
-                },
+                }
             }
-        },
+        }
         Err(panic_error) => {
             // This branch handles the case where panic::catch_unwind caught a panic
             // You can log the panic information, perform cleanup, or return an appropriate error
             // Convert panic_error (Box<dyn Any + Send>) to a suitable error type if needed
             return_to_lobby();
             // Return a generic error message
-            return Err(format!("Got error while trying to unwrap panic. Error: {:?}", panic_error));
-        },
+            return Err(format!(
+                "Got error while trying to unwrap panic. Error: {:?}",
+                panic_error
+            ));
+        }
     }
 }
 
@@ -3081,6 +3099,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
         .arg("python_helpers/obj_detection.py")
         .arg("images/trade_screen_identifier.png")
         .arg("C")
+        .arg("F")
         .output()
         .expect("Failed to execute command");
 
