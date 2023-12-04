@@ -14,6 +14,8 @@ super_fast = False
 # Will grayscale both the image and the screenshot if True.
 grayscale = False
 
+crop = False
+
 if len(sys.argv) > 1 and not len(sys.argv) > 2:
     image_name = sys.argv[1]
 elif len(sys.argv) > 2:
@@ -31,6 +33,8 @@ elif len(sys.argv) > 2:
             super_fast = True
         elif arg.strip() == "G":
             grayscale = True
+        elif arg.strip() == "CR":
+            crop = True
 else:
     image_name = "images/35_gold_pouch.png"
 
@@ -88,6 +92,27 @@ try:
 
         template = cv2.imread(image_name, cv2.IMREAD_COLOR)
         template = preprocess(template)
+
+        if crop:
+            # The shape of an opencv image follows this format: Height (Rows), Width (Columns), Channels
+            height, width = template.shape
+
+            # 0.05 means 5% of the image will be cut off from every side of the image.
+            # This can be recalibrated.
+            # Smaller images should be cropped more drasticly as the in-game borders around the item do not change but only the size of the item
+            # Bigger items will get scaled too far.
+            if height < 70:
+                crop_height = int(height * 0.15)
+            else:
+                crop_height = int(height * 0.05)
+            
+            if width < 70:
+                crop_width = int(width * 0.15)
+            else:
+                crop_width = int(width * 0.05)
+
+            # Format of cropping is: [Start height:End Height, Start width:End width]
+            template = template[crop_height:-crop_height, crop_width:-crop_width]
 
         result = cv2.matchTemplate(main_image, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
