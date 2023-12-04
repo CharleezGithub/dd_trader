@@ -41,7 +41,13 @@ pub struct Trader {
     discord_channel_id: String,
     discord_id: String,
     item_images: Vec<String>,
+    //item_images_not_traded: Vec<String>,
+    //item_images_escrow: Vec<String>,
+    //item_images_traded: Vec<String>,
     info_images: Vec<String>,
+    //info_images_not_traded: Vec<String>,
+    //info_images_escrow: Vec<String>,
+    //info_images_traded: Vec<String>,
     gold: i32,
     has_paid_gold_fee: bool,
 }
