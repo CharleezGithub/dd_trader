@@ -529,6 +529,7 @@ pub fn deposit(
                 .arg("SC")
                 .arg("F")
                 .arg("G")
+                .arg("CR")
                 .output()
                 .expect("Failed to execute command");
 
@@ -601,6 +602,7 @@ pub fn deposit(
                             .arg("python_helpers/obj_detection.py")
                             .arg("temp_images/info/image.png")
                             .arg("SF")
+                            .arg("CR")
                             .output();
 
                         match output {
@@ -947,6 +949,7 @@ pub fn claim_items(
                     .arg("temp_images/item/image.png")
                     .arg("SC")
                     .arg("F")
+                    .arg("CR")
                     .output()
                     .expect("Failed to execute command");
                 println!("Coords: {:?}", output);
@@ -977,6 +980,7 @@ pub fn claim_items(
                     .arg("temp_images/item/image.png")
                     .arg("SC")
                     .arg("F")
+                    .arg("CR")
                     .output()
                     .expect("Failed to execute command");
 
@@ -1074,6 +1078,7 @@ pub fn claim_items(
                             .arg("python_helpers/obj_detection.py")
                             .arg("temp_images/info/image.png")
                             .arg("SF")
+                            .arg("CR")
                             //.arg("C")
                             .output();
 
@@ -1225,6 +1230,7 @@ pub fn claim_items(
                 .arg("SC")
                 .arg("F")
                 .arg("G")
+                .arg("CR")
                 .output();
 
             println!("Test26");
@@ -1307,6 +1313,7 @@ pub fn claim_items(
                                     .arg("python_helpers/obj_detection.py")
                                     .arg("temp_images/info/image.png")
                                     .arg("SF")
+                                    .arg("CR")
                                     .output();
 
                                 println!("Test32");
@@ -2441,6 +2448,7 @@ pub fn return_items(
                     .arg("temp_images/item/image.png")
                     .arg("SC")
                     .arg("F")
+                    .arg("CR")
                     .output()
                     .expect("Failed to execute command");
                 println!("Coords: {:?}", output);
@@ -2471,6 +2479,7 @@ pub fn return_items(
                     .arg("temp_images/item/image.png")
                     .arg("SC")
                     .arg("F")
+                    .arg("CR")
                     .output()
                     .expect("Failed to execute command");
 
@@ -2568,6 +2577,7 @@ pub fn return_items(
                             .arg("python_helpers/obj_detection.py")
                             .arg("temp_images/info/image.png")
                             .arg("SF")
+                            .arg("CR")
                             //.arg("C")
                             .output();
 
@@ -2719,6 +2729,7 @@ pub fn return_items(
                 .arg("SC")
                 .arg("F")
                 .arg("G")
+                .arg("CR")
                 .output();
 
             println!("Test26");
@@ -2801,6 +2812,7 @@ pub fn return_items(
                                     .arg("python_helpers/obj_detection.py")
                                     .arg("temp_images/info/image.png")
                                     .arg("SF")
+                                    .arg("CR")
                                     .output();
 
                                 println!("Test32");
