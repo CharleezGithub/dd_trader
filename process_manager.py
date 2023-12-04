@@ -1,117 +1,79 @@
-"""
-Manages both the python and rust processes.
-This script will start both processes and if requested also restart both processes.
-"""
-
-
+import subprocess
+import ctypes
+import time
 import os
 import signal
-import subprocess
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 import sys
-import time
+
+class RestartHandler(FileSystemEventHandler):
+    def __init__(self):
+        self.last_modified = time.time()
+
+    def on_modified(self, event):
+        if event.src_path == "shared\ipc_restart.txt":
+            current_time = time.time()
+            # Check if at least 2 seconds have passed since the last modification
+            if current_time - self.last_modified > 10:
+                print("Restart file modified. Restarting processes...")
+                stop_processes()
+                start_processes()
+                self.last_modified = current_time
+
+def start_processes():
+    global process1, process2
+    # Start each process in a new console
+    process1 = subprocess.Popen(['cmd', '/c', 'cd dd_bot && cargo run'], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+    process2 = subprocess.Popen(['cmd', '/c', 'python discord_bot/main.py'], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+
+def send_ctrl_c(process):
+    if os.name == 'nt':  # Windows
+        # Send the Ctrl+C signal only to the process's console
+        os.kill(process.pid, signal.CTRL_C_EVENT)
+    else:  # Unix
+        # Send SIGINT (Ctrl+C)
+        os.kill(process.pid, signal.SIGINT)
+
+def stop_processes():
+    global process1, process2
+    #send_ctrl_c(process1)
+    os.kill(process1.pid, signal.CTRL_BREAK_EVENT)
+    os.kill(process2.pid, signal.CTRL_BREAK_EVENT)
+
+    # Wait for the processes to terminate
+    process1.wait()
+    process2.wait()
+
+    # Optional: add a delay
+    time.sleep(5)  # Delay for 5 seconds, adjust as needed
 
 
-rust_app = None
-python_proc = None
-
-def start_rust(rust_app_dir):
-    global rust_app
-    rust_app_binary = os.path.join(rust_app_dir, "dd_bot")
-    # Open in a new command prompt window
-    rust_app = subprocess.Popen(f'start cmd /c {rust_app_binary}', cwd=rust_app_dir, shell=True)
-    print(f"Started Rust app with PID: {rust_app.pid}")
-
-def start_python(python_main_dir):
-    global python_proc
-    # Open in a new command prompt window
-    python_proc = subprocess.Popen(f'start cmd /c python {python_main_dir}', shell=True)
-    print(f"Started Python app with PID: {python_proc.pid}")
-
-
-def rust_shutdown():
-    global rust_app
-    if rust_app == None:
-        print("Rust app not started")
-        return
-    os.kill(rust_app.pid, signal.SIGTERM)
-
-    rust_app.wait()
-    print("Rust app shutdown gracefully")
-
-def python_shutdown():
-    global python_proc
-    if python_proc == None:
-        print("Python app not started")
-        return
-    os.kill(python_proc.pid, signal.SIGTERM)
-
-    rust_app.wait()
-    print("Python app shutdown gracefully")
-
-def restart_both():
-    print('Shutting down rust app...')
-    rust_shutdown()
-    print('Shutting down python app...')
-    python_shutdown()
-
-    print("Gracefully shut down both apps")
-    print("Starting up again...")
-
-    start_rust("./dd_bot/target/debug/")
-    start_python("./discord_bot/main.py")
-
-    print("All systems live!")
-
-
-start_rust("./dd_bot/target/debug/")
-
-start_python("./discord_bot/main.py")
-
-
-def signal_handler(sig, frame):
-    print('Shutting down...')
-    rust_shutdown()
-    python_shutdown()
-    sys.exit(0)
-
-# Register the signal handler for graceful shutdown
-signal.signal(signal.SIGINT, signal_handler)
-
-
-def read_file_contents(path):
-    with open(path, "r") as file:
-        return file.read()
-
-
-def file_has_changed(path, last_mod_time):
+"""def is_admin():
     try:
-        current_mod_time = os.stat(path).st_mtime
-        if current_mod_time != last_mod_time:
-            contents = read_file_contents(path)
-            return True, current_mod_time, contents
-        else:
-            return False, current_mod_time, None
-    except FileNotFoundError:
-        return None, None, None  # Indicate the file is not accessible
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False"""
 
 
-def monitor_file_changes(path_to_watch, interval=1):
-    last_mod_time = os.stat(path_to_watch).st_mtime
+if __name__ == "__main__":
+    """if not is_admin():
+        # Re-run the program with admin rights
+        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+        exit()"""
 
-    while True:
-        changed, new_mod_time, contents = file_has_changed(path_to_watch, last_mod_time)
-        if changed is None:  # File not found or inaccessible
-            return  # Stop the generator
-        if changed:
-            yield contents  # Yield the new contents of the file
-            last_mod_time = new_mod_time
-        time.sleep(interval)
+    start_processes()
 
-path_to_monitor = "shared/ipc_restart.txt"
-polling_interval = 1  # seconds
+    event_handler = RestartHandler()
+    observer = Observer()
+    observer.schedule(event_handler, path='shared', recursive=False)
+    observer.start()
 
-# Every time the data in ipc_communication.txt is changed this will run again.
-# It will run forever untill stopped.
-for data in monitor_file_changes(path_to_monitor, polling_interval):
-    if "restart request" == data:
-        restart_both()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+
+    observer.join()
+    stop_processes()
