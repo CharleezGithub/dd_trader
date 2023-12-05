@@ -40,14 +40,14 @@ pub struct Trader {
     in_game_id: String,
     discord_channel_id: String,
     discord_id: String,
-    item_images: Vec<String>,
-    //item_images_not_traded: Vec<String>,
-    //item_images_escrow: Vec<String>,
-    //item_images_traded: Vec<String>,
-    info_images: Vec<String>,
-    //info_images_not_traded: Vec<String>,
-    //info_images_escrow: Vec<String>,
-    //info_images_traded: Vec<String>,
+    //item_images: Vec<String>,
+    item_images_not_traded: Vec<String>,
+    item_images_escrow: Vec<String>,
+    item_images_traded: Vec<String>,
+    //info_images: Vec<String>,
+    info_images_not_traded: Vec<String>,
+    info_images_escrow: Vec<String>,
+    info_images_traded: Vec<String>,
     gold: i32,
     has_paid_gold_fee: bool,
 }
@@ -141,7 +141,11 @@ fn gold_fee(
 ) -> String {
     {
         let mut traders = traders_container.lock().unwrap();
-        traders.set_in_game_id_by_discord_info(in_game_id.as_str(), discord_id.as_str(), discord_channel_id.as_str());
+        traders.set_in_game_id_by_discord_info(
+            in_game_id.as_str(),
+            discord_id.as_str(),
+            discord_channel_id.as_str(),
+        );
     }
 
     // Dereference `State` and clone the inner `Arc`.

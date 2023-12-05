@@ -232,10 +232,14 @@ pub fn populate_traders_from_db(traders_container: &Arc<Mutex<TradersContainer>>
             t.id, t.discord_id, tr.channel_id, 
             CASE WHEN t.id = tr.trader1_id THEN tr.trader1_gold ELSE tr.trader2_gold END,
             CASE WHEN t.id = tr.trader1_id THEN tr.trader1_paid ELSE tr.trader2_paid END,
-            i.item_image_url, i.info_image_url
+            not_traded.item_image_url, not_traded.info_image_url,
+            escrow.item_image_url, escrow.info_image_url,
+            traded.item_image_url, traded.info_image_url
         FROM traders t
         JOIN trades tr ON t.id = tr.trader1_id OR t.id = tr.trader2_id
-        LEFT JOIN items i ON tr.id = i.trade_id AND t.id = i.trader_id
+        LEFT JOIN items not_traded ON tr.id = not_traded.trade_id AND t.id = not_traded.trader_id AND not_traded.status = 'not traded'
+        LEFT JOIN items escrow ON tr.id = escrow.trade_id AND t.id = escrow.trader_id AND escrow.status = 'in escrow'
+        LEFT JOIN items traded ON tr.id = traded.trade_id AND t.id = traded.trader_id AND traded.status = 'traded'
         WHERE tr.status = 'ongoing' OR tr.status = 'canceled'
     ",
     )?;
@@ -246,48 +250,75 @@ pub fn populate_traders_from_db(traders_container: &Arc<Mutex<TradersContainer>>
             row.get::<_, String>(2)?,         // channel_id
             row.get::<_, i32>(3)?,            // gold
             row.get::<_, bool>(4)?,           // has_paid_gold_fee
-            row.get::<_, Option<String>>(5)?, // item_image_url
-            row.get::<_, Option<String>>(6)?, // info_image_url
+            row.get::<_, Option<String>>(5)?, // item_image_url, "not traded" status
+            row.get::<_, Option<String>>(6)?, // info_image_url, "not trade" status
+            row.get::<_, Option<String>>(7)?, // item_image_url, "in escrow" status
+            row.get::<_, Option<String>>(8)?, // info_image_url, "in escrow" status
+            row.get::<_, Option<String>>(9)?, // item_image_url, "traded" status
+            row.get::<_, Option<String>>(10)?, // info_image_url, "traded" status
         ))
     })?;
 
     let mut traders_map: std::collections::HashMap<
-        (String, String),
-        (Vec<String>, Vec<String>, i32, bool),
-    > = std::collections::HashMap::new();
-    for row in rows {
-        if let Ok((
-            discord_id,
-            channel_id,
-            gold,
-            has_paid_gold_fee,
-            item_image_url,
-            info_image_url,
-        )) = row
-        {
-            let entry = traders_map
-                .entry((discord_id.clone(), channel_id.clone()))
-                .or_insert((Vec::new(), Vec::new(), gold, has_paid_gold_fee));
-            if let (Some(item_image_url), Some(info_image_url)) = (item_image_url, info_image_url) {
-                entry.0.push(item_image_url);
-                entry.1.push(info_image_url);
-            }
+    (String, String),
+    (Vec<String>, Vec<String>, Vec<String>, Vec<String>, Vec<String>, Vec<String>, i32, bool),
+> = std::collections::HashMap::new();
+
+for row in rows {
+    if let Ok((
+        discord_id,
+        channel_id,
+        gold,
+        has_paid_gold_fee,
+        item_image_url_not_traded,
+        info_image_url_not_traded,
+        item_image_url_escrow,
+        info_image_url_escrow,
+        item_image_url_traded,
+        info_image_url_traded,
+    )) = row
+    {
+        let entry = traders_map
+            .entry((discord_id.clone(), channel_id.clone()))
+            .or_insert((Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new(), gold, has_paid_gold_fee));
+
+        if let Some(url) = item_image_url_not_traded {
+            entry.0.push(url);
+        }
+        if let Some(url) = info_image_url_not_traded {
+            entry.1.push(url);
+        }
+        if let Some(url) = item_image_url_escrow {
+            entry.2.push(url);
+        }
+        if let Some(url) = info_image_url_escrow {
+            entry.3.push(url);
+        }
+        if let Some(url) = item_image_url_traded {
+            entry.4.push(url);
+        }
+        if let Some(url) = info_image_url_traded {
+            entry.5.push(url);
         }
     }
+}
 
-    for ((discord_id, channel_id), (item_images, info_images, gold, has_paid_gold_fee)) in
-        traders_map
-    {
-        traders.append(Trader {
-            in_game_id: "".to_string(), // Empty, as this will be assigned later
-            discord_channel_id: channel_id,
-            discord_id,
-            item_images,
-            info_images,
-            gold,
-            has_paid_gold_fee,
-        });
-    }
+for ((discord_id, channel_id), (item_images_not_traded, info_images_not_traded, item_images_escrow, info_images_escrow, item_images_traded, info_images_traded, gold, has_paid_gold_fee)) in traders_map {
+    traders.append(Trader {
+        in_game_id: "".to_string(), // Empty, as this will be assigned later
+        discord_channel_id: channel_id,
+        discord_id,
+        item_images_not_traded,
+        item_images_escrow,
+        item_images_traded,
+        info_images_not_traded,
+        info_images_escrow,
+        info_images_traded,
+        gold,
+        has_paid_gold_fee,
+    });
+}
+
 
     Ok(())
 }

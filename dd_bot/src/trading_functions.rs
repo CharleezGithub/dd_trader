@@ -506,8 +506,8 @@ pub fn deposit(
         enigo.mouse_click(MouseButton::Left);
 
         // Download 1 image set into temp_images folder at a time and check for a match
-        let info_vec = &trader.unwrap().info_images;
-        let item_vec = &trader.unwrap().item_images;
+        let info_vec = &trader.unwrap().info_images_not_traded;
+        let item_vec = &trader.unwrap().item_images_not_traded;
 
         // For each image pair. Download the pair and if there is a matching pair in the trading window, add it to list in memory.
         // After trading successfully, change status to "in escrow" for the traded items in the database.
@@ -916,8 +916,8 @@ pub fn claim_items(
         // It should find matches in both the inventory and the stash and add them to the trading window.
 
         // These 2 vectors store the traders items. It loops through these and find pairs and adds them to the trade.
-        let info_vec = &other_trader.unwrap().info_images;
-        let item_vec = &other_trader.unwrap().item_images;
+        let info_vec = &other_trader.unwrap().info_images_escrow;
+        let item_vec = &other_trader.unwrap().item_images_escrow;
 
         // Store the items that made it through in this vector
         // Then when the trade is done loop through the list and change their status from "in escrow" to "traded"
@@ -2415,8 +2415,8 @@ pub fn return_items(
         // It should find matches in both the inventory and the stash and add them to the trading window.
 
         // These 2 vectors store the traders items. It loops through these and find pairs and adds them to the trade.
-        let info_vec = &trader.info_images;
-        let item_vec = &trader.item_images;
+        let info_vec = &trader.info_images_escrow;
+        let item_vec = &trader.item_images_escrow;
 
         // Store the items that made it through in this vector
         // Then when the trade is done loop through the list and change their status from "in escrow" to "traded"
