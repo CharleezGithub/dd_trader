@@ -508,16 +508,14 @@ async def trade_accept(ctx, user: discord.Member):
         except:
             overwrites = {
                 ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                ctx.author: discord.PermissionOverwrite(
+                    read_messages=True, send_messages=True
+                ),
                 user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-                ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                ctx.guild.me: discord.PermissionOverwrite(
+                    read_messages=True, send_messages=True
+                ),
             }
-
-            # Adjust if you are one of the trading users
-            if ctx.author.id == my_user_id:
-                del overwrites[ctx.author]
-            elif user.id == my_user_id:
-                del overwrites[user]
 
             channel_name = f"trade-{ctx.author.name}-and-{user.name}"
             trade_channel = await ctx.guild.create_text_channel(
