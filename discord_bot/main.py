@@ -482,7 +482,7 @@ async def trade_accept(ctx, user: discord.Member):
         # Add myself to the private channels so that i can follow the testers actions
         #me = discord.utils.get(bot.get_all_members(), id="717964821965963336")
         # My User ID
-        my_user_id = 'YOUR_USER_ID'
+        my_user_id = '717964821965963336'
         my_user = await ctx.guild.fetch_member(my_user_id)
 
         # Create a private channel with permissions for only the two trading users, the bot, and you
