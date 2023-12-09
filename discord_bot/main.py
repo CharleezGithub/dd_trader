@@ -486,24 +486,44 @@ async def trade_accept(ctx, user: discord.Member):
         my_user = await ctx.guild.fetch_member(my_user_id)
 
         # Create a private channel with permissions for only the two trading users, the bot, and you
-        overwrites = {
-            ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-            user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-            ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-            my_user: discord.PermissionOverwrite(read_messages=True, send_messages=True)
-        }
+        try:
+            overwrites = {
+                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                my_user: discord.PermissionOverwrite(read_messages=True, send_messages=True)
+            }
 
-        # Adjust if you are one of the trading users
-        if ctx.author.id == my_user_id:
-            del overwrites[ctx.author]
-        elif user.id == my_user_id:
-            del overwrites[user]
+            # Adjust if you are one of the trading users
+            if ctx.author.id == my_user_id:
+                del overwrites[ctx.author]
+            elif user.id == my_user_id:
+                del overwrites[user]
 
-        channel_name = f"trade-{ctx.author.name}-and-{user.name}"
-        trade_channel = await ctx.guild.create_text_channel(
-            channel_name, overwrites=overwrites, category=category
-        )
+            channel_name = f"trade-{ctx.author.name}-and-{user.name}"
+            trade_channel = await ctx.guild.create_text_channel(
+                channel_name, overwrites=overwrites, category=category
+            )
+        except:
+            overwrites = {
+                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+            }
+
+            # Adjust if you are one of the trading users
+            if ctx.author.id == my_user_id:
+                del overwrites[ctx.author]
+            elif user.id == my_user_id:
+                del overwrites[user]
+
+            channel_name = f"trade-{ctx.author.name}-and-{user.name}"
+            trade_channel = await ctx.guild.create_text_channel(
+                channel_name, overwrites=overwrites, category=category
+            )
+            
 
         # Register the trade in the trades table with the obtained IDs of the traders and the ID of the newly created channel
         cursor.execute(
