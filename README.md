@@ -50,7 +50,7 @@ The bot will automatically check if it is in the main lobby of the game and if n
 So make sure that you are in the lobby when starting the script and that the terminal window is not covering up the play tab at the top of the game screen.
 
 ## Configuration
-Envirement variables are to be used for the discord bot but not yet implemented
+Envirement variables are used for the discord bot token. Configuration of this can be found in the process manager script.
 
 ## Inter-component Communication
 ### IPC Connections
