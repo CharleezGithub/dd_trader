@@ -1,7 +1,29 @@
 # Dark and Darker Trading Bot
 
 ## Description
-A sophisticated trading bot for the game Dark and Darker, featuring a split architecture with a Discord bot for communication and an in-game bot for game interaction. Utilizes IPC connections and a local API for seamless operation between the two components.
+The Dark and Darker Trading Bot is designed to facilitate seamless trading within the game environment and through Discord. It offers a dual-component system with distinct functionalities:
+
+- **Discord Bot Features:**
+  - Provides a help guide with `!help`.
+  - Offers a tutorial for new traders using `!tutorial`.
+  - Ability to restart both bots if needed with `!restart-bot`.
+  - Initiates trade requests with `!trade`.
+  - Accepts incoming trade requests via `!trade-accept`.
+  - Locks and unlocks trades for security and management using `!lock-trade` and `!unlock-trade`.
+  - Displays current trade status and details with `!show-trade`.
+  - Adds gold to trades using `!add-gold`.
+  - Includes items in trades with `!add-items`.
+  - Concludes trades with `!end-trade`.
+  - Cancels trades when necessary with `!cancel-trade`.
+
+- **In-game Bot Features:**
+  - Sends in-game trade requests with `!pay-fee`.
+  - Handles the deposit of items or gold with `!deposit`.
+  - Allows players to claim their traded items or gold in-game through `!claim-items` and `!claim-gold`.
+  - Facilitates the return of items or gold with `!return-items` and `!return-gold`.
+
+This bot uses IPC connections for internal communication from the rust bot to the python discord bot and a local API for interactions from the Discord bot to the in-game rust bot.
+
 
 ## Table of Contents
 - [Installation](#installation)
