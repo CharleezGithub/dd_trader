@@ -44,4 +44,4 @@ Please read [CONTRIBUTING.md](#) for details on our code of conduct, and the pro
 CharleezGithub
 
 ## License
-This project is licensed under the GNU General Public License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the CC0-1.0 - see the [LICENSE.md](LICENSE.md) file for details
