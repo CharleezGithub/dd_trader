@@ -1,0 +1,2 @@
+These folders will contain the images that are downloaded from the links of the item and info images for obj detection.
+They are downloaded and named "image.png" and once a new one is downloaded the old gets overwritten.
