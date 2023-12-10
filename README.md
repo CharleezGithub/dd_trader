@@ -1,7 +1,8 @@
 # Dark and Darker Trading Bot
 
 ## Description
-The Dark and Darker Trading Bot is designed to facilitate seamless trading within the game environment and through Discord. It offers a dual-component system with distinct functionalities:
+A sophisticated trading bot for the game Dark and Darker:
+It Currently acts as an escrow bot keeping traders items safe doing bigger trades or trades where both traders cannot be online at the same time.
 
 - **Discord Bot Features:**
   - Provides a help guide with `!help`.
@@ -22,7 +23,10 @@ The Dark and Darker Trading Bot is designed to facilitate seamless trading withi
   - Allows players to claim their traded items or gold in-game through `!claim-items` and `!claim-gold`.
   - Facilitates the return of items or gold with `!return-items` and `!return-gold`.
 
-This bot uses IPC connections for internal communication from the rust bot to the python discord bot and a local API for interactions from the Discord bot to the in-game rust bot.
+### Todo
+- [ ] Trading between own accounts
+- [ ] Automatic fencing feature
+- [ ] Automatic discord auctions for items that have been sitting in escrow bot inventory / stash for too long.
 
 
 ## Table of Contents
