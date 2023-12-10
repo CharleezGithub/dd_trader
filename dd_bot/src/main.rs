@@ -1,5 +1,5 @@
-use std::sync::{Arc, Mutex};
 use std::str;
+use std::sync::{Arc, Mutex};
 
 use enigo::*;
 
@@ -7,7 +7,6 @@ use enigo::*;
 #[macro_use]
 extern crate rocket;
 use rocket::State;
-
 
 mod database_functions;
 mod enigo_functions;
@@ -607,11 +606,13 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
         Err(err) => println!("Could not populate traders containter. Error:\n{}", err),
     }
 
+    // Used for also starting the game when the program is run.
+    // Not useful for testing as we dont want the program to start the game every time we restart for debugging purposes
+    /*
     // Clone the Arc for use in main_func
     let bot_info_clone = bot_info.clone();
 
     // Spawn the open game function as a separate task
-    /*
     tokio::spawn(async move {
         trading_functions::open_game_go_to_lobby(bot_info_clone).await;
     });
