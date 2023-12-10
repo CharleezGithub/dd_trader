@@ -1,7 +1,5 @@
-use std::process::{exit, Command};
 use std::sync::{Arc, Mutex};
-use std::thread::sleep;
-use std::{result, str};
+use std::str;
 
 use enigo::*;
 
@@ -10,19 +8,13 @@ use enigo::*;
 extern crate rocket;
 use rocket::State;
 
-use rocket::futures::stream::iter;
-use rocket::response::stream::EventStream;
-
-use rocket::response::stream::Event;
-use rocket::time::Duration;
-use trading_functions::collect_gold_fee;
 
 mod database_functions;
 mod enigo_functions;
 mod trading_functions;
 
-use std::fs::{read_to_string, write, OpenOptions};
-use std::io::{self, Seek, SeekFrom};
+use std::fs::write;
+use std::io::{self};
 
 pub enum ReadyState {
     False,
@@ -43,10 +35,12 @@ pub struct Trader {
     //item_images: Vec<String>,
     item_images_not_traded: Vec<String>,
     item_images_escrow: Vec<String>,
+    // Might be useful later but not as of right now
     item_images_traded: Vec<String>,
     //info_images: Vec<String>,
     info_images_not_traded: Vec<String>,
     info_images_escrow: Vec<String>,
+    // Might be useful later but not as of right now
     info_images_traded: Vec<String>,
     gold: i32,
     has_paid_gold_fee: bool,
