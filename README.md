@@ -24,6 +24,7 @@ It Currently acts as an escrow bot keeping traders items safe doing bigger trade
   - Allows the return of items or gold with `!return-items` and `!return-gold`.
 
 ### Todo
+- [x] Escrow style middleman trading bot
 - [ ] Trading between own accounts
 - [ ] Automatic fencing feature
 - [ ] Automatic discord auctions for items that have been sitting in escrow bot inventory / stash for too long.
