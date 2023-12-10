@@ -18,10 +18,10 @@ It Currently acts as an escrow bot keeping traders items safe doing bigger trade
   - Cancels trades when necessary with `!cancel-trade`.
 
 - **In-game Bot Features:**
-  - Sends in-game trade requests with `!pay-fee`.
+  - Collects processin fee in gold with `!pay-fee`.
   - Handles the deposit of items or gold with `!deposit`.
   - Allows players to claim their traded items or gold in-game through `!claim-items` and `!claim-gold`.
-  - Facilitates the return of items or gold with `!return-items` and `!return-gold`.
+  - Allows the return of items or gold with `!return-items` and `!return-gold`.
 
 ### Todo
 - [ ] Trading between own accounts
