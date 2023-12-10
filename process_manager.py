@@ -7,6 +7,10 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import sys
 
+# Discord bot token to set as env for discord bot
+token = "Enter Token Here"
+
+
 class RestartHandler(FileSystemEventHandler):
     def __init__(self):
         self.last_modified = time.time()
@@ -22,10 +26,11 @@ class RestartHandler(FileSystemEventHandler):
                 self.last_modified = current_time
 
 def start_processes():
+    global env
     global process1, process2
     # Start each process in a new console
     process1 = subprocess.Popen(['cmd', '/c', 'cd dd_bot && cargo run'], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
-    process2 = subprocess.Popen(['cmd', '/c', 'python discord_bot/main.py'], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+    process2 = subprocess.Popen(['cmd', '/c', 'python discord_bot/main.py'], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP, env=env)
 
 def send_ctrl_c(process):
     if os.name == 'nt':  # Windows
@@ -61,6 +66,12 @@ if __name__ == "__main__":
         # Re-run the program with admin rights
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
         exit()"""
+    
+    # Set env variable for the discord bot token
+    os.environ['DISCORD_BOT_TOKEN'] = token
+    
+    global env
+    env = os.environ.copy()
 
     start_processes()
 

@@ -18,7 +18,8 @@ from PIL import ImageDraw, ImageFont
 
 from helpers.stitching import stitch_images
 
-TOKEN = "MTE1MTQ0MTUwMjk1NDg0ODMwNw.GtRAIh.YBUChh8QJi3Cs8jeFbuE18kRJYrAwiCpcxcnz8"
+# Env variable set in process manager
+TOKEN = os.getenv('DISCORD_BOT_TOKEN')
 
 intents = discord.Intents.default()
 intents.members = True
