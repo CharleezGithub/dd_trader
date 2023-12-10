@@ -1,3 +1,9 @@
+"""
+Debugging / helper script for getting the coords of the mouse.
+Not used by any other scripts
+"""
+
+
 import pyautogui
 import time
 

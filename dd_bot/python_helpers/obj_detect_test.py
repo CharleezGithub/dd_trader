@@ -1,3 +1,9 @@
+"""
+Mostly a copy of the normal obj_detect.py
+Difference is that the image and certainty is displayed
+"""
+
+
 import cv2
 import numpy as np
 from PIL import ImageGrab

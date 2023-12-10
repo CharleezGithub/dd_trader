@@ -1,3 +1,13 @@
+"""
+Inspect items script is another object detection script.
+This one is only used for clicking the little spyglasses that come up when both traders have clicked accept
+Format: x_top_left y_top_left x_bottom_right y_bottom_right
+Example:
+321 43 421 54
+42 542 54 734
+450 341 654 504
+"""
+
 import cv2
 import numpy as np
 import sys

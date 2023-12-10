@@ -1,3 +1,18 @@
+"""
+Narrow multiple object detection script.
+It's intended usecase is for looking at the trading window only.
+It narrows the image in the x axis from 600x to 1300x.
+This is used when trying to detect only in a trading window because with the regular, there is a chance that it might detect instances in the bot's inventory / stash.
+It detects multiple instances of an image and returns "prints" out the coordinates in a box like manner.
+Coordiantes start at the top left of the screen at (0,0) and increase on the x axis when going right and on the y axis when going down.
+Format: x_top_left y_top_left x_bottom_right y_bottom_right
+Example:
+321 43 421 54
+42 542 54 734
+450 341 654 504
+"""
+
+
 import cv2
 import numpy as np
 from PIL import ImageGrab

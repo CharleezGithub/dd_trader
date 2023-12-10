@@ -1,3 +1,10 @@
+"""
+Image recognition test script with ORB image recognition
+Did not show good results however it might be worth taking another look at if the regular template matching is too inconsistent.
+Results showed a very lenient model that (as it's job is to do) found patterns in items that were the same but without the same stats.
+So it needs a lot of tweaking.
+"""
+
 import cv2
 from PIL import ImageGrab
 import numpy as np

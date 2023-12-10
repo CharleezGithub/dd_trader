@@ -1,3 +1,9 @@
+"""
+A detection script that is used to find the total amount of gold in a trade.
+It looks at the lille box that says the total gold and reads it and returns "prints" it.
+"""
+
+
 import pytesseract
 from PIL import Image, ImageFilter, ImageGrab
 
