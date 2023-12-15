@@ -64,6 +64,9 @@ The local API is on the rust side a rocket webserver. Most of what happens on th
 It returns instantly, therefore providing an emidiate response to the discord bot.
 Then it spawns a new task that will do the actual trading. Once that task returns, the in-game bot will update the discord bot through the ipc_connection.text.
 
+Exposed ports:
+127.0.0.1::8051
+
 ## Contributing
 Please read [CONTRIBUTING.md](#) for details on our code of conduct, and the process for submitting pull requests to us.
 
