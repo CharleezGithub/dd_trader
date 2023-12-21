@@ -3192,7 +3192,7 @@ pub fn return_to_lobby() {
     // This loop will run twice if we are in an active trade and only run once if the bot is in a trading channel
     // When the loop is done the bot should have returned to the lobby and be ready again.
     // If not then it will continue and restart the game.
-    for _ in 0..2 {
+    for x in 0..2 {
         // Press escape and press button "yes"
         enigo.key_click(Key::Escape);
 
@@ -3214,12 +3214,20 @@ pub fn return_to_lobby() {
                 Err(err) => println!("Got error while trying to click button: {:?}", err),
             }
         }
+        // In the first itteration check very fast as it is unlikeley to be out yet
+        // Then at the second itteration check it slower to account for the popup delay
+        let super_fast: &str;
+        if x > 0 {
+            super_fast = "SF";
+        } else {
+            super_fast = "F";
+        }
         // Check if can go to play tab
         // If yes then go and return
         let output = Command::new("python")
             .arg("python_helpers/obj_detection.py")
             .arg("images/play_tab.png")
-            .arg("SF")
+            .arg(super_fast)
             .output()
             .expect("Failed to execute command");
 
