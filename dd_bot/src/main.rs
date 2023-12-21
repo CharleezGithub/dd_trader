@@ -1,6 +1,8 @@
 use std::str;
 use std::sync::{Arc, Mutex};
 
+use std::env;
+
 use enigo::*;
 
 // import Rocket
@@ -644,6 +646,9 @@ fn rocket() -> rocket::Rocket<rocket::Build> {
 
 #[rocket::main]
 async fn main() {
+    // Set rust backtrace for debugging purposes
+    env::set_var("RUST_BACKTRACE", "1");
+
     // Simply launch Rocket in the main function
     let rocket_instance = rocket();
     if let Err(err) = rocket_instance.launch().await {
