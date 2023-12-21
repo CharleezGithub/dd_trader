@@ -137,9 +137,9 @@ fn gold_fee(
     {
         let mut traders = traders_container.lock().unwrap();
         traders.set_in_game_id_by_discord_info(
-            in_game_id.as_str(),
-            discord_id.as_str(),
-            discord_channel_id.as_str(),
+            &in_game_id,
+            &discord_id,
+            &discord_channel_id,
         );
     }
 
