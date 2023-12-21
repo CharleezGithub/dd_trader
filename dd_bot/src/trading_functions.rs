@@ -492,6 +492,9 @@ pub fn deposit(
         let info_vec = &trader.unwrap().info_images_not_traded;
         let item_vec = &trader.unwrap().item_images_not_traded;
 
+        // List that stores the already matched images of the info items. The loop will skip over these.
+        let mut accepted_info_items = Vec::new();
+
         // For each image pair. Download the pair and if there is a matching pair in the trading window, add it to list in memory.
         // After trading successfully, change status to "in escrow" for the traded items in the database.
         let mut trading_window_items = Vec::new();
@@ -571,7 +574,14 @@ pub fn deposit(
                     }
 
                     // Tries to match every info image with the item and if there is a match then it will add it to the temporary vector variable.
-                    for info_image in info_vec.iter() {
+                    for (info_index, info_image) in info_vec.iter().enumerate() {
+                        // Check if the info image already has been found.
+                        // If so then it does not need to look for it again.
+                        for accepted_index in &accepted_info_items {
+                            if info_index == *accepted_index {
+                                continue;
+                            }
+                        }
                         match download_image(info_image, "temp_images/info/image.png") {
                             Ok(_) => println!("Successfully downloaded info image"),
                             Err(err) => {
@@ -621,6 +631,7 @@ pub fn deposit(
                                     }
                                     println!("Found match!");
                                     trading_window_items.push((info_image, item));
+                                    accepted_info_items.push(info_index);
                                 }
                             }
                             Err(_) => println!("No match. Checking next..."),
@@ -902,6 +913,8 @@ pub fn claim_items(
         let info_vec = &other_trader.unwrap().info_images_escrow;
         let item_vec = &other_trader.unwrap().item_images_escrow;
 
+        let mut accepted_info_items = Vec::new();
+
         // Store the items that made it through in this vector
         // Then when the trade is done loop through the list and change their status from "in escrow" to "traded"
         // (Info, item)
@@ -1045,7 +1058,14 @@ pub fn claim_items(
 
                     println!("Test14");
                     // Tries to match every info image with the item and if there is a match then it will add it to the temporary vector variable.
-                    for info_image in info_vec.iter() {
+                    for (info_index, info_image) in info_vec.iter().enumerate() {
+                        // Check if the info image already has been found.
+                        // If so then it does not need to look for it again.
+                        for accepted_index in &accepted_info_items {
+                            if info_index == *accepted_index {
+                                continue;
+                            }
+                        }
                         match download_image(info_image, "temp_images/info/image.png") {
                             Ok(_) => println!("Successfully downloaded info image"),
                             Err(err) => {
@@ -1074,6 +1094,7 @@ pub fn claim_items(
                             println!("Found match!");
                             enigo.mouse_click(MouseButton::Left);
                             in_window_items.push((info_image, item));
+                            accepted_info_items.push(info_index);
                             item_limit += -1;
                             println!("Test18");
                         } else {
@@ -1281,7 +1302,14 @@ pub fn claim_items(
 
                             println!("Test30");
                             // Tries to match every info image with the item and if there is a match then it will add it to the temporary vector variable.
-                            for info_image in info_vec.iter() {
+                            for (info_index, info_image) in info_vec.iter().enumerate() {
+                                // Check if the info image hasnt been matched
+                                // If not then it should not be borthered to be checked and there fore skipped over.
+                                for accepted_index in &accepted_info_items {
+                                    if info_index != *accepted_index {
+                                        continue;
+                                    }
+                                }
                                 match download_image(info_image, "temp_images/info/image.png") {
                                     Ok(_) => println!("Successfully downloaded info image"),
                                     Err(err) => {
@@ -2401,6 +2429,8 @@ pub fn return_items(
         let info_vec = &trader.info_images_escrow;
         let item_vec = &trader.item_images_escrow;
 
+        let mut accepted_info_items = Vec::new();
+
         // Store the items that made it through in this vector
         // Then when the trade is done loop through the list and change their status from "in escrow" to "traded"
         // (Info, item)
@@ -2544,7 +2574,14 @@ pub fn return_items(
 
                     println!("Test14");
                     // Tries to match every info image with the item and if there is a match then it will add it to the temporary vector variable.
-                    for info_image in info_vec.iter() {
+                    for (info_index, info_image) in info_vec.iter().enumerate() {
+                        // Check if the info image hasnt been matched
+                        // If not then it should not be borthered to be checked and there fore skipped over.
+                        for accepted_index in &accepted_info_items {
+                            if info_index == *accepted_index {
+                                continue;
+                            }
+                        }
                         match download_image(info_image, "temp_images/info/image.png") {
                             Ok(_) => println!("Successfully downloaded info image"),
                             Err(err) => {
@@ -2573,6 +2610,7 @@ pub fn return_items(
                             println!("Found match!");
                             enigo.mouse_click(MouseButton::Left);
                             in_window_items.push((info_image, item));
+                            accepted_info_items.push(info_index);
                             item_limit += -1;
                             println!("Test18");
                         } else {
@@ -2780,7 +2818,14 @@ pub fn return_items(
 
                             println!("Test30");
                             // Tries to match every info image with the item and if there is a match then it will add it to the temporary vector variable.
-                            for info_image in info_vec.iter() {
+                            for (info_index, info_image) in info_vec.iter().enumerate() {
+                                // Check if the info image hasnt been matched
+                                // If not then it should not be borthered to be checked and there fore skipped over.
+                                for accepted_index in &accepted_info_items {
+                                    if info_index != *accepted_index {
+                                        continue;
+                                    }
+                                }
                                 match download_image(info_image, "temp_images/info/image.png") {
                                     Ok(_) => println!("Successfully downloaded info image"),
                                     Err(err) => {
