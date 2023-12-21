@@ -283,31 +283,14 @@ pub fn collect_gold_fee(
 
         // When paid, set has_paid_gold_fee to true
         let mut traders = traders_container.lock().unwrap();
-        traders.set_in_game_id_by_discord_info(&in_game_id, &discord_id, &discord_channel_id);
 
-        let trader = traders.get_trader_by_in_game_id(in_game_id);
-
-        // Check if trader exists
-        match trader {
-            Some(trader) => {
-                match database_functions::set_gold_fee_status(
-                    trader.discord_channel_id.as_str(),
-                    trader.discord_id.as_str(),
-                    true,
-                ) {
-                    Ok(_) => println!("Succesfully updated gold fee status!"),
-                    Err(err) => println!("Could not update gold status: Error \n{}", err),
-                }
-            }
-            None => {
-                println!("Trader not found");
-            }
+        match database_functions::set_gold_fee_status(discord_channel_id, discord_id, true) {
+            Ok(_) => println!("Succesfully updated gold fee status!"),
+            Err(err) => println!("Could not update gold status: Error \n{}", err),
         }
 
         // Make a copy of trader discord id. Else it would use traders as both mutable and imutable.
-        let trader_discord_id = trader.unwrap().discord_id.as_str();
-        let trader_discord_id_copy: String = String::from(trader_discord_id);
-        traders.update_gold_fee_status(trader_discord_id_copy.as_str(), true);
+        traders.update_gold_fee_status(discord_id, true);
 
         return_to_lobby();
         return Ok(String::from("Successfully collected fee!"));
@@ -3263,7 +3246,6 @@ pub fn return_to_lobby() {
     // Return
     return;
 }
-
 
 fn download_image(url: &str, save_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     // Ensure the 'temp_images' directory exists
