@@ -3214,7 +3214,7 @@ pub fn return_to_lobby() {
                 Err(err) => println!("Got error while trying to click button: {:?}", err),
             }
         }
-        // In the first itteration check very fast as it is unlikeley to be out yet
+        // In the first itteration check very fast as it is unlikely to be out yet
         // Then at the second itteration check it slower to account for the popup delay
         let super_fast: &str;
         if x > 0 {
