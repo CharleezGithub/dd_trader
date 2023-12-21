@@ -136,11 +136,7 @@ fn gold_fee(
 ) -> String {
     {
         let mut traders = traders_container.lock().unwrap();
-        traders.set_in_game_id_by_discord_info(
-            &in_game_id,
-            &discord_id,
-            &discord_channel_id,
-        );
+        traders.set_in_game_id_by_discord_info(&in_game_id, &discord_id, &discord_channel_id);
     }
 
     // Dereference `State` and clone the inner `Arc`.
