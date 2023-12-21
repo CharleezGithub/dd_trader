@@ -3075,8 +3075,6 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     // Clear the search bar so that it is ready for a new id.
     enigo.key_sequence_parse("{+CONTROL}a{-CONTROL}{+DELETE}{-DELETE}");
 
-    let user_is_in_trade: bool;
-
     // Type in the name of the trader
     let in_game_id_lower = in_game_id.to_lowercase();
     let in_game_id_lower_str_red: &str = &in_game_id_lower;
