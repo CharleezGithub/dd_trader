@@ -2999,8 +2999,16 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/trade_tab.png")
+        .arg("F")
         .output()
         .expect("Failed to execute command");
+
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    if output_str == "Could not detect" {
+        return_to_lobby();
+        return Err("Trader was not present in trading channel");
+    }
 
     match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
         Ok(_) => println!("Successfully clicked button!"),
@@ -3012,8 +3020,16 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/utility_trade.png")
+        .arg("F")
         .output()
         .expect("Failed to execute command");
+
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    if output_str == "Could not detect" {
+        return_to_lobby();
+        return Err("Trader was not present in trading channel");
+    }
 
     match enigo_functions::click_buton(&mut enigo, output, true, 0, 0) {
         Ok(_) => println!("Successfully clicked button!"),
@@ -3031,6 +3047,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     let output_str = str::from_utf8(&output.stdout).unwrap().trim();
 
     if output_str == "Could not detect" {
+        return_to_lobby();
         return Err("Trader was not present in trading channel");
     }
 
@@ -3038,8 +3055,16 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/find_id.png")
+        .arg("F")
         .output()
         .expect("Failed to execute command");
+
+    let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+    if output_str == "Could not detect" {
+        return_to_lobby();
+        return Err("Trader was not present in trading channel");
+    }
 
     // Search after the trader in the trade tab
     match enigo_functions::click_buton(&mut enigo, output, true, 0, -33) {
@@ -3071,12 +3096,22 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
     let output = Command::new("python")
         .arg("python_helpers/obj_detection.py")
         .arg("images/trade_send_request.png")
+        .arg("F")
         .output();
 
-    user_is_in_trade = match &output {
-        Ok(_) => true,
+    let user_is_in_trade = match &output {
+        Ok(output) => {
+            let output_str = str::from_utf8(&output.stdout).unwrap().trim();
+
+            if output_str == "Could not detect" {
+                false
+            } else {
+                true
+            }
+        }
         Err(_) => false,
     };
+
     if user_is_in_trade {
         match enigo_functions::click_buton(&mut enigo, output.unwrap(), true, 0, 0) {
             Ok(_) => println!("Successfully clicked button!"),
@@ -3105,6 +3140,7 @@ fn send_trade_request(in_game_id: &str) -> Result<&str, &str> {
         return Ok("User accepted trade");
     } else {
         println!("Could not detect trading window");
+        return_to_lobby();
         return Err("Could not detect trading window");
     }
 }
